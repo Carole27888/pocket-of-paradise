@@ -14,11 +14,13 @@
 
 :root {
   /* brand */
-  --sidebar: #2E2114;            /* the logo's ink brown, deepened: calm, lets the content lead */
-  --sidebar-text: #F9EDD7;
-  --sidebar-muted: #BBA98C;
-  --sidebar-hover: rgba(79, 169, 159, .14);
-  --sidebar-active: rgba(79, 169, 159, .26);
+  --sidebar: #55A39A;            /* the logo's sea green */
+  --sidebar-text: #2B2014;       /* the logo's dark ink: light text is unreadable on this green */
+  --sidebar-strong: #1A130B;     /* hovered / current item text */
+  --sidebar-muted: #1B302D;      /* section labels; 4.5:1 on the green */
+  --sidebar-line: rgba(43, 32, 20, .22);
+  --sidebar-hover: #D98A22;      /* the logo's sun orange */
+  --sidebar-active: rgba(255, 255, 255, .32);
   --primary: #1F6F6B;            /* the logo's sea, darkened so white text passes contrast: buttons, links, accents */
   --primary-hover: #195D5A;
   --primary-active: #2A8A84;     /* active sidebar item, progress bars */
