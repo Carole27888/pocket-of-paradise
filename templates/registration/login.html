@@ -3,15 +3,25 @@
 {% block body %}
 <div class="auth-page">
   <section class="auth-art" aria-hidden="true">
-    <img class="silhouette" src="{% static 'brand/logo-source.png' %}" alt="">
-    <h2>Every trip to paradise starts with a well-run office.</h2>
-    <p>Travel Company</p>
+    <span class="auth-sun"></span>
+    <svg class="auth-birds" viewBox="0 0 120 60" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><path d="M8 28q10-10 20 0q10-10 20 0"/><path d="M72 46q7-7 14 0q7-7 14 0"/></svg>
+    <div class="auth-copy">
+      <span class="auth-kicker">Pocket of Paradise</span>
+      <h2>Every trip to paradise starts with a well-run office.</h2>
+      <p>Where everyday is an exploration</p>
+    </div>
+    <svg class="auth-waves" viewBox="0 0 1440 320" preserveAspectRatio="none">
+      <path fill="#2A8A84" d="M0 150c120-40 240-40 360 0s240 40 360 0 240-40 360 0 240 40 360 0v170H0z"/>
+      <path fill="#4FA99F" d="M0 210c120-36 240-36 360 0s240 36 360 0 240-36 360 0 240 36 360 0v110H0z"/>
+      <path fill="#EEB63F" d="M820 320c120-90 330-120 620-110v110z"/>
+    </svg>
   </section>
   <section class="auth-panel">
     <div class="auth-card">
-      <img class="logo" src="{% static 'brand/logo-full.png' %}" alt="Pocket of Paradise Travel Company">
-      <div class="card">
-        <h1 class="mb-2" style="font-size:22px">Sign in</h1>
+      <div class="card auth-form">
+        <img class="auth-badge" src="{% static 'brand/logo-source.png' %}" alt="Pocket of Paradise Travel Company" width="84" height="84">
+        <p class="auth-hello">Karibu tena!</p>
+        <h1 class="mb-2">Sign in</h1>
         <p class="text-muted text-sm mb-4">Use your work email. Staff accounts are created by the office Admin.</p>
         <form method="post" novalidate>
           {% csrf_token %}
