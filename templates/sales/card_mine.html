@@ -3,12 +3,16 @@
 {% block content %}
 <div class="page-header"><div><h1>My QR business card</h1><p>Print it, put it on your WhatsApp status or e-mail signature. Whoever scans it can save your contact and send you their trip request, which comes straight to you as a lead.</p></div></div>
 {% include "sales/_card_stats.html" %}
-<div class="grid grid-main-side mt-4" style="align-items:start">
+<div class="grid grid-2 mt-4" style="align-items:start">
   <div class="stack" style="gap:16px">
     <div class="card"><div class="card-head"><h2>Your card</h2><span class="pill {% if card.is_active %}pill-success{% else %}pill-neutral{% endif %}">{% if card.is_active %}Live{% else %}Switched off{% endif %}</span></div>
-      <img src="{% url 'public_card_image' card.token %}?v={{ card.pk }}" alt="Business card for {{ emp.full_name }}" style="width:100%;border-radius:12px;border:1px solid var(--border)">
+      <div class="grid grid-2" style="gap:12px">
+        <figure style="margin:0"><a href="{% url 'public_card_image' card.token %}" target="_blank" rel="noopener" title="Open the front full size"><img src="{% url 'public_card_image' card.token %}?v={{ card.pk }}" alt="Front of the business card for {{ emp.full_name }}" style="display:block;width:100%;border-radius:8px;border:1px solid var(--border)"></a><figcaption class="text-xs text-muted mt-1">Front</figcaption></figure>
+        <figure style="margin:0"><a href="{% url 'public_card_image' card.token %}?side=back" target="_blank" rel="noopener" title="Open the back full size"><img src="{% url 'public_card_image' card.token %}?side=back&v={{ card.pk }}" alt="Back of the business card" style="display:block;width:100%;border-radius:8px;border:1px solid var(--border)"></a><figcaption class="text-xs text-muted mt-1">Back</figcaption></figure>
+      </div>
       <div class="btn-row mt-3">
-        <a class="btn btn-primary btn-sm" href="{% url 'public_card_image' card.token %}?download=1">{% include "components/icon.html" with name="download" %} Download card</a>
+        <a class="btn btn-primary btn-sm" href="{% url 'public_card_image' card.token %}?download=1">{% include "components/icon.html" with name="download" %} Download front</a>
+        <a class="btn btn-secondary btn-sm" href="{% url 'public_card_image' card.token %}?side=back&download=1">{% include "components/icon.html" with name="download" %} Download back</a>
         <a class="btn btn-secondary btn-sm" href="{% url 'public_card_qr' card.token %}?download=1">{% include "components/icon.html" with name="download" %} QR code only</a>
         <a class="btn btn-secondary btn-sm" href="https://wa.me/?text={{ share }}" target="_blank" rel="noopener">{% include "components/icon.html" with name="whatsapp" %} Share on WhatsApp</a>
         <a class="btn btn-ghost btn-sm" href="{{ card.public_path }}" target="_blank" rel="noopener">{% include "components/icon.html" with name="eye" %} Open as a client sees it</a></div>

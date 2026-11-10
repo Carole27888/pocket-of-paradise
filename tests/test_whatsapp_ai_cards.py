@@ -322,6 +322,8 @@ def test_card_scan_save_and_lead_goes_to_the_agent(client, agent, django_capture
     assert card.stats() == {"scans": 1, "saved": 1, "leads": 1, "won": 0, "conversion": 0}
     assert client.get(reverse("public_card_qr", args=[card.token])).content.startswith(b"\x89PNG")
     assert client.get(reverse("public_card_image", args=[card.token])).content.startswith(b"\x89PNG")
+    back = client.get(reverse("public_card_image", args=[card.token]) + "?side=back&download=1")
+    assert back.content.startswith(b"\x89PNG") and "-back.png" in back["Content-Disposition"]
     card.is_active = False
     card.save()
     assert client.get(card.public_path).status_code == 404

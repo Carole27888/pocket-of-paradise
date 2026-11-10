@@ -110,6 +110,56 @@ def card_png(card: AgentCard) -> bytes:
     return buf.getvalue()
 
 
+BRAND_TAGLINE = "Where everyday is an exploration"
+
+
+def card_back_png(card: AgentCard) -> bytes:
+    """The back of the card (same 1050 x 600 size as the front): logo, company name, tagline and website on brand green."""
+    from pathlib import Path
+
+    from django.conf import settings
+    from PIL import Image, ImageDraw, ImageFont
+
+    from apps.core.models import CompanySetting
+
+    co = CompanySetting.load()
+    W, H = 1050, 600
+    img = Image.new("RGB", (W, H), "#1F6F6B")
+    d = ImageDraw.Draw(img)
+
+    def font(size, bold=False):
+        for name in (("DejaVuSans-Bold.ttf" if bold else "DejaVuSans.ttf"), "Arial.ttf"):
+            try:
+                return ImageFont.truetype(name, size)
+            except OSError:
+                continue
+        try:
+            return ImageFont.load_default(size=size)
+        except TypeError:  # very old Pillow
+            return ImageFont.load_default()
+
+    def centred(y, text, fill, f):
+        w = d.textlength(text, font=f)
+        d.text(((W - w) / 2, y), text, fill=fill, font=f)
+
+    mark = Path(settings.BASE_DIR) / "static" / "brand" / "logo-source.png"
+    y = 70
+    if mark.exists():                      # the logo emblem on its cream tile, centred
+        m = Image.open(mark).convert("RGB").resize((220, 220))
+        img.paste(m, ((W - 220) // 2, y))
+        y += 250
+    else:
+        y += 120
+    centred(y, (co.name or "Pocket of Paradise")[:40], "#F6DDA6", font(40, True))
+    centred(y + 64, BRAND_TAGLINE, "#F9EDD7", font(26))
+    d.rectangle([(W - 120) // 2, y + 118, (W + 120) // 2, y + 122], fill="#D98A22")   # the logo's sun, as a rule
+    if co.website:
+        centred(H - 70, co.website.replace("https://", "").replace("http://", "").rstrip("/"), "#F9EDD7", font(24))
+    buf = io.BytesIO()
+    img.save(buf, "PNG")
+    return buf.getvalue()
+
+
 def vcard(card: AgentCard) -> str:
     from apps.core.models import CompanySetting
 
@@ -281,9 +331,11 @@ def public_card_qr(request, token):
 
 def public_card_image(request, token):
     card = _card_or_404(token)
-    resp = HttpResponse(card_png(card), content_type="image/png")
+    back = request.GET.get("side") == "back"
+    resp = HttpResponse(card_back_png(card) if back else card_png(card), content_type="image/png")
     if request.GET.get("download"):
-        resp["Content-Disposition"] = f'attachment; filename="card-{card.employee.full_name.replace(" ", "-")}.png"'
+        side = "back" if back else "front"
+        resp["Content-Disposition"] = f'attachment; filename="card-{card.employee.full_name.replace(" ", "-")}-{side}.png"'
     resp["Cache-Control"] = "public, max-age=600"
     return resp
 
