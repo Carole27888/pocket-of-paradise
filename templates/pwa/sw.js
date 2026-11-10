@@ -4,6 +4,7 @@ const CACHE = "ds-shell-" + VERSION;
 const STATIC_PREFIX = "{{ static_prefix|escapejs }}";
 const PRECACHE = {{ precache|safe }};
 const OFFLINE_URL = "/offline/";
+const DEV = {{ debug|yesno:"true,false" }};
 // Never cache: auth, admin, API, exports/PDFs, media (personal/payment data) and non-GET requests.
 const NEVER = [/^\/accounts\/(login|logout)/, /^\/django-admin\//, /^\/api\//, /^\/media\//, /[?&]export=/, /\.pdf($|\?)/, /\/download\//, /^\/notifications\/push\//];
 
@@ -34,7 +35,15 @@ self.addEventListener("fetch", (event) => {
   if (url.origin !== self.location.origin) return;             // map tiles etc. go straight to network
   if (NEVER.some((re) => re.test(url.pathname + url.search))) return;
 
-  // Static files: cache first.
+  // Static files: cache first in production (filenames are content-hashed, so a change is a new URL).
+  // In development the URLs never change, so go to the network first and keep the cache for offline only.
+  if (url.pathname.startsWith(STATIC_PREFIX) && DEV) {
+    event.respondWith(fetch(req).then((res) => {
+      if (res.ok) { const copy = res.clone(); caches.open(CACHE).then((c) => c.put(req, copy)); }
+      return res;
+    }).catch(() => caches.match(req)));
+    return;
+  }
   if (url.pathname.startsWith(STATIC_PREFIX)) {
     event.respondWith(
       caches.match(req).then((hit) => hit || fetch(req).then((res) => {

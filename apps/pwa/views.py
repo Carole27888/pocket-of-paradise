@@ -67,6 +67,7 @@ def service_worker(request):
         "version": settings.PWA_VERSION,
         "precache": json.dumps(["/offline/"] + [static(p) for p in PRECACHE]),
         "static_prefix": settings.STATIC_URL,
+        "debug": settings.DEBUG,
     }
     resp = render(request, "pwa/sw.js", ctx, content_type="application/javascript")
     resp["Service-Worker-Allowed"] = "/"

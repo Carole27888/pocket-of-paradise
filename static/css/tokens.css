@@ -14,13 +14,14 @@
 
 :root {
   /* brand */
-  --sidebar: #55A39A;            /* the logo's sea green */
-  --sidebar-text: #2B2014;       /* the logo's dark ink: light text is unreadable on this green */
-  --sidebar-strong: #1A130B;     /* hovered / current item text */
-  --sidebar-muted: #1B302D;      /* section labels; 4.5:1 on the green */
-  --sidebar-line: rgba(43, 32, 20, .22);
+  --sidebar: #1F6F6B;            /* the brand green (same as the QR business card header) */
+  --sidebar-text: #F9EDD7;
+  --sidebar-strong: #FFFFFF;     /* current item / open module text */
+  --sidebar-muted: #D3E7E3;      /* section labels; 4.5:1 on the green */
+  --sidebar-line: rgba(255, 255, 255, .18);
   --sidebar-hover: #D98A22;      /* the logo's sun orange */
-  --sidebar-active: rgba(255, 255, 255, .32);
+  --sidebar-hover-text: #2B2014; /* dark ink: cream text is unreadable on the orange */
+  --sidebar-active: rgba(255, 255, 255, .16);
   --primary: #1F6F6B;            /* the logo's sea, darkened so white text passes contrast: buttons, links, accents */
   --primary-hover: #195D5A;
   --primary-active: #2A8A84;     /* active sidebar item, progress bars */

@@ -7,20 +7,20 @@
 .brand:hover { text-decoration: none; color: var(--sidebar-strong); }
 .brand img { width: 34px; height: 34px; flex: none; }
 .brand-name { font-family: var(--font-display); font-weight: 800; font-size: 13px; line-height: 1.05; letter-spacing: .02em; }
-.brand-name small { display: block; font-family: var(--font-ui); font-size: 8px; font-weight: 600; letter-spacing: .1em; color: var(--sidebar-muted); margin-top: 2px; text-transform: uppercase; }
+.brand-name small { display: block; font-family: var(--font-ui); font-size: 8px; font-weight: 600; letter-spacing: .1em; color: var(--sun); margin-top: 2px; text-transform: uppercase; }
 .back-link { display: flex; align-items: center; gap: 8px; padding: 8px 10px; margin-bottom: var(--s-4); color: var(--sidebar-muted); font-size: 13px; border-radius: var(--radius); }
-.back-link:hover { color: var(--sidebar-strong); background: var(--sidebar-hover); text-decoration: none; }
+.back-link:hover { color: var(--sidebar-hover-text); background: var(--sidebar-hover); text-decoration: none; }
 .nav-title { font-size: 11px; letter-spacing: .1em; text-transform: uppercase; color: var(--sidebar-muted); font-weight: 700; padding: 0 10px; margin: 0 0 var(--s-2); }
 .nav { display: flex; flex-direction: column; gap: 2px; margin-bottom: var(--s-5); }
 .nav a { display: flex; align-items: center; gap: 12px; min-height: var(--tap); padding: 0 12px; border-radius: var(--radius); color: var(--sidebar-text); font-weight: 600; font-size: 14px; }
 .nav a svg { width: 18px; height: 18px; flex: none; opacity: .9; }
-.nav a:hover { background: var(--sidebar-hover); text-decoration: none; color: var(--sidebar-strong); }
-.nav a.active { background: var(--sidebar-active); color: var(--sidebar-strong); box-shadow: inset 3px 0 0 var(--accent-strong); }
+.nav a:hover { background: var(--sidebar-hover); text-decoration: none; color: var(--sidebar-hover-text); }
+.nav a.active { background: var(--sidebar-active); color: var(--sidebar-strong); box-shadow: inset 3px 0 0 var(--sun); }
 .nav .count { margin-left: auto; background: var(--accent); color: #fff; font-size: 11px; font-weight: 800; border-radius: var(--radius-pill); padding: 1px 8px; }
 .sidebar-key { padding: 0 10px; font-size: 12.5px; color: var(--sidebar-muted); display: grid; gap: 6px; }
 .sidebar-key span { display: flex; align-items: center; gap: 8px; }
 .sidebar-key i { width: 8px; height: 8px; border-radius: 50%; display: inline-block; }
-.user-card { margin-top: auto; display: flex; align-items: center; gap: 10px; background: rgba(255, 255, 255, .22); padding: 12px; border-radius: var(--radius-card); }
+.user-card { margin-top: auto; display: flex; align-items: center; gap: 10px; background: rgba(255, 255, 255, .08); padding: 12px; border-radius: var(--radius-card); }
 .user-card .avatar { background: var(--peach); color: var(--primary); }
 .user-card strong { display: block; font-size: 13.5px; color: var(--sidebar-strong); }
 .user-card small { color: var(--sidebar-muted); font-size: 12px; }
@@ -110,7 +110,7 @@
 /* Sidebar dropdown (e.g. Sales → Itineraries) */
 .nav-parent { display: flex; align-items: center; gap: 12px; width: 100%; min-height: var(--tap); padding: 0 12px; border: 0; background: transparent; border-radius: var(--radius); color: var(--sidebar-text); font: inherit; font-weight: 600; font-size: 14px; cursor: pointer; text-align: left; }
 .nav-parent svg { width: 18px; height: 18px; flex: none; opacity: .9; }
-.nav-parent:hover { background: var(--sidebar-hover); color: var(--sidebar-strong); }
+.nav-parent:hover { background: var(--sidebar-hover); color: var(--sidebar-hover-text); }
 .nav-parent.active { color: var(--sidebar-strong); }
 .nav-parent .nav-caret { margin-left: auto; width: 14px; height: 14px; transition: transform .15s; }
 .nav-sub { display: flex; flex-direction: column; gap: 2px; margin: 2px 0 6px 20px; padding-left: 10px; border-left: 1px solid var(--sidebar-line); }
