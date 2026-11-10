@@ -1,0 +1,25 @@
+{% extends "base.html" %}{% load static %}
+{% block title %}Departures Board{% endblock %}
+{% block extra_css %}<link rel="stylesheet" href="{% static 'css/sales.css' %}">{% endblock %}
+{% block content %}
+<div class="page-header"><div><h1>Departures Board</h1><p>Move a departure forward once its stage is complete. Each move is stamped with who and when.</p></div>
+  <div class="actions">{% if can_manage %}<a class="btn btn-accent" href="{% url 'trips:create' %}">{% include "components/icon.html" with name="plus" %} New departure</a>{% endif %}</div></div>
+<div class="board" style="grid-auto-columns:minmax(270px,1fr)">
+  {% for c in cols %}
+  <section class="kcol"><header class="kcol-head"><div class="top">{% status_pill c.stage.label c.tone %}<span class="fw-800">{{ c.items|length }}</span></div></header>
+    <div class="kcol-body">
+      {% for d in c.items %}
+      <article class="dcard"><a class="t row-link" href="{{ d.get_absolute_url }}">{{ d.package.title|truncatechars:32 }}</a>
+        <div class="m">{{ d.reference }} · {{ d.start_date|ds_date }} · {{ d.seats_sold }}/{{ d.capacity }} seats</div>
+        <div class="m">{{ d.guide.short_name|default:"No guide" }} · {{ d.vehicle.registration_no|default:"No vehicle" }}</div>
+        <div class="bar {% if d.checklist_percent == 100 %}ok{% elif d.checklist_percent >= 50 %}warn{% else %}bad{% endif %}"><span style="width:{{ d.checklist_percent }}%"></span></div>
+        {% for r in d.attention %}<div class="text-xs text-late">{{ r }}</div>{% endfor %}
+        {% if can_manage %}{% if c.stage.value == "planned" %}<form hx-post="{% url 'trips:advance' d.pk %}"><input type="hidden" name="action" value="ready"><button class="btn btn-secondary btn-sm" type="submit">Mark resources ready →</button></form>
+        {% elif c.stage.value == "ready" %}<form hx-post="{% url 'trips:advance' d.pk %}"><input type="hidden" name="action" value="depart"><button class="btn btn-secondary btn-sm" type="submit">Mark departed →</button></form>
+        {% elif c.stage.value == "departed" %}<form hx-post="{% url 'trips:advance' d.pk %}"><input type="hidden" name="action" value="complete"><button class="btn btn-secondary btn-sm" type="submit">Mark completed →</button></form>{% endif %}{% endif %}
+      </article>
+      {% empty %}<p class="text-muted text-sm" style="padding:8px">Nothing here.</p>{% endfor %}
+    </div></section>
+  {% endfor %}
+</div>
+{% endblock %}

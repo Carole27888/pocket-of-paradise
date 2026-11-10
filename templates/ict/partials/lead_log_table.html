@@ -1,0 +1,19 @@
+<div class="table-wrap"><table class="table stack-phone">
+  <thead><tr><th>{% sort_link "created_at" "Received" %}</th><th>{% sort_link "client__full_name" "Client" %}</th><th>{% sort_link "source" "Source" %}</th>
+    <th>Channel · captured by</th><th>Interest · party</th><th>{% sort_link "stage" "Stage" %}</th><th>Agent</th></tr></thead>
+  <tbody>
+  {% for e in object_list %}
+    <tr>
+      <td data-label="Received">{{ e.created_at|ds_date }}<div class="cell-sub">{{ e.created_at|time:"H:i" }}</div></td>
+      <td class="cell-first">{% if can_open %}<a class="row-link cell-main" href="{{ e.get_absolute_url }}">{{ e.client.full_name }}</a>{% else %}<span class="cell-main">{{ e.client.full_name }}</span>{% endif %}
+        <div class="cell-sub">{{ e.reference }} · {{ e.client.phone|phone }}{% if e.is_returning_client %} · <span class="text-accent fw-700">Returning</span>{% endif %}</div></td>
+      <td data-label="Source">{% source_badge e True %}</td>
+      <td data-label="Channel">{{ e.channel_label }}<div class="cell-sub">{{ e.captured_by_label }}{% if e.campaign %} · {{ e.campaign }}{% endif %}</div></td>
+      <td data-label="Interest">{{ e.interest_label }}<div class="cell-sub">{{ e.party_label }}{% if e.budget_text %} · {{ e.budget_text }}{% endif %}</div></td>
+      <td data-label="Stage">{% stage_pill e %}</td>
+      <td data-label="Agent">{% if e.assigned_agent %}{{ e.assigned_agent.short_name }}{% else %}<span class="pill pill-danger">Unassigned</span>{% endif %}</td>
+    </tr>
+  {% empty %}<tr><td colspan="7">{% include "components/empty_state.html" with icon="inbox" title="No leads match" text="Change the filters or search." %}</td></tr>{% endfor %}
+  </tbody>
+</table></div>
+{% include "components/pagination.html" %}

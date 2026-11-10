@@ -1,0 +1,7 @@
+{% extends "base.html" %}
+{% block title %}Bot Analysis{% endblock %}
+{% block content %}
+<div class="page-header"><div><h1>Bot Analysis</h1><p>Last {{ days }} days.</p></div><form method="get"><select class="input select" name="days" onchange="this.form.submit()" aria-label="Period"><option value="7" {% if days == 7 %}selected{% endif %}>7 days</option><option value="30" {% if days == 30 %}selected{% endif %}>30 days</option><option value="90" {% if days == 90 %}selected{% endif %}>90 days</option></select></form></div>
+<div class="grid grid-4 mb-4">{% include "components/kpi_card.html" with label="Chats" value=a.chats accent=True %}{% include "components/kpi_card.html" with label="Leads captured" value=a.leads %}{% include "components/kpi_card.html" with label="Lead rate" value=a.conversion|add:"0" sub="% of chats" %}{% include "components/kpi_card.html" with label="Handed to a person" value=a.handoffs %}</div>
+<div class="card"><div class="card-head"><h2>Why chats were handed over</h2></div>{% for r in a.reasons %}<div class="list-item">{{ r }}</div>{% empty %}<p class="text-muted text-sm">None in this period.</p>{% endfor %}</div>
+{% endblock %}

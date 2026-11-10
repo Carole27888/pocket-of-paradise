@@ -1,0 +1,9 @@
+{% extends "base.html" %}
+{% block title %}Email Copy{% endblock %}
+{% block content %}
+<div class="page-header"><div><h1>Email copy settings</h1><p>Choose the address that is copied on every email an agent sends to a client from the system. Agents cannot turn this off. Message templates are edited in Administration.</p></div></div>
+<form method="post" class="card stack" style="max-width:560px">{% csrf_token %}
+<div class="field"><label>CC address</label><input class="input" type="email" name="director_cc" value="{{ cfg.director_cc }}" placeholder="ceo@yourcompany.com"></div>
+<label style="display:flex;gap:8px;align-items:center"><input type="checkbox" name="cc_enabled" {% if cfg.cc_enabled %}checked{% endif %}> Copy this address on every client email</label>
+<div><button class="btn btn-primary" type="submit">Save</button></div></form>
+{% endblock %}

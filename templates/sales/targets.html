@@ -1,0 +1,20 @@
+{% extends "base.html" %}{% load static %}
+{% block title %}Targets{% endblock %}
+{% block extra_css %}<link rel="stylesheet" href="{% static 'css/sales.css' %}">{% endblock %}
+{% block content %}
+<div class="page-header"><div><h1>Sales Targets</h1><p>{{ first|date:"F Y" }} · team goal {{ team_target|money_compact }}, achieved {{ team_revenue|money_compact }}</p></div>
+  <div class="actions"><a class="btn btn-secondary" href="?year={{ prev.year }}&month={{ prev.month }}">‹ {{ prev|date:"M Y" }}</a><a class="btn btn-secondary" href="?year={{ next.year }}&month={{ next.month }}">{{ next|date:"M Y" }} ›</a>
+    {% if can_manage %}<form method="post" action="{% url 'sales:targets_copy' %}">{% csrf_token %}<input type="hidden" name="year" value="{{ first.year }}"><input type="hidden" name="month" value="{{ first.month }}"><button class="btn btn-secondary" type="submit">Copy last month</button></form>{% endif %}</div></div>
+<div class="grid grid-main-side">
+  <div class="card card-flush"><div class="table-wrap">
+    <table class="table stack-phone"><thead><tr><th>Agent</th><th>Revenue</th><th>Bookings</th><th>Calls</th></tr></thead>
+      <tbody>{% for r in rows %}<tr>
+        <td class="cell-first"><a class="row-link cell-main" href="{% url 'sales:team_agent' r.agent.pk %}">{{ r.agent.full_name }}</a></td>
+        <td data-label="Revenue">{% if r.t and r.t.revenue_target %}<div class="bar {% if r.rev_pct >= 80 %}ok{% elif r.rev_pct >= 40 %}warn{% else %}bad{% endif %}"><span style="width:{% if r.rev_pct > 100 %}100{% else %}{{ r.rev_pct }}{% endif %}%"></span></div><span class="text-xs text-muted">{{ r.revenue|money_compact }} / {{ r.t.revenue_target|money_compact }} · {{ r.rev_pct }}%</span>{% else %}<span class="text-muted text-sm">Not set</span>{% endif %}</td>
+        <td data-label="Bookings">{% if r.t and r.t.bookings_target %}{{ r.won }} / {{ r.t.bookings_target }} <span class="text-xs text-muted">({{ r.bk_pct }}%)</span>{% else %}<span class="text-muted text-sm">—</span>{% endif %}</td>
+        <td data-label="Calls">{% if r.t and r.t.calls_target %}{{ r.calls }} / {{ r.t.calls_target }}{% else %}<span class="text-muted text-sm">—</span>{% endif %}</td>
+      </tr>{% endfor %}</tbody></table></div></div>
+  {% if can_manage %}<div class="card"><div class="card-head"><h2>Set a target</h2><span class="sub">Same agent + month updates it</span></div>
+    <form method="post" class="stack" style="gap:12px">{% csrf_token %}{% include "components/form_fields.html" %}<button class="btn btn-primary" type="submit">Save target</button></form></div>{% endif %}
+</div>
+{% endblock %}

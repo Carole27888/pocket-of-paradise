@@ -1,0 +1,9 @@
+{% load static %}
+<section class="card clock" data-clock data-status="{% url 'hr:clock_status' %}" data-act="{% url 'hr:clock' %}">
+  <div class="clock-main"><span class="clock-ico">{% include "components/icon.html" with name="clock" size="22" %}</span>
+    <div><b data-clock-status>Loading…</b><div class="text-sm text-muted" data-clock-meta hidden></div></div></div>
+  <div class="clock-side"><span class="clock-msg" data-clock-msg hidden></span><button type="button" class="btn btn-accent" data-clock-btn>Clock in</button><a class="text-sm" href="{% url 'hr:my_attendance' %}">My attendance →</a></div>
+</section>
+<style>.clock{display:flex;justify-content:space-between;align-items:center;gap:14px;flex-wrap:wrap;margin:0 0 16px;border-left:4px solid var(--border-strong)}.clock.is-in{border-left-color:#2EA043}.clock-main{display:flex;gap:12px;align-items:center}.clock-ico{width:44px;height:44px;border-radius:12px;background:var(--primary-soft);color:var(--primary);display:grid;place-items:center}
+.clock-side{display:flex;gap:12px;align-items:center;flex-wrap:wrap}.clock-msg{font-size:.88rem;max-width:340px}.clock-msg.good{color:#14663B}.clock-msg.bad{color:var(--danger,#B3261E)}.clock-msg[hidden],[data-clock-meta][hidden]{display:none}</style>
+<script src="{% static 'js/clock.js' %}" defer></script>

@@ -1,0 +1,43 @@
+{% extends "base.html" %}{% load l10n static %}
+{% block title %}Assignment{% endblock %}
+{% block extra_css %}<link rel="stylesheet" href="{% static 'css/sales.css' %}">{% endblock %}
+{% block content %}
+<div class="page-header"><div><h1>Lead Assignment</h1><p>Who gets the next enquiry: rules first, then round-robin among agents on duty with capacity left.</p></div>
+  {% if can_manage and waiting_count %}<div class="actions"><form method="post" action="{% url 'sales:assignment_auto' %}">{% csrf_token %}<button class="btn btn-accent" type="submit">{% include "components/icon.html" with name="shuffle" %} Auto-assign {{ waiting_count }} waiting</button></form></div>{% endif %}</div>
+
+<div class="grid grid-main-side mb-4">
+  <div class="stack">
+    <div class="card card-flush"><div class="card-head"><h2>Waiting for an agent</h2><span class="sub">{{ waiting_count }} unassigned · oldest first</span></div>
+      <div class="table-wrap mt-3"><table class="table stack-phone"><thead><tr><th>Lead</th><th>Source</th><th>Interest</th><th>Waiting</th>{% if can_manage %}<th>Assign</th>{% endif %}</tr></thead>
+        <tbody>{% for e in waiting %}<tr>
+          <td class="cell-first"><a class="row-link cell-main" href="{{ e.get_absolute_url }}">{{ e.client.full_name }}</a><div class="cell-sub">{{ e.reference }}</div></td>
+          <td data-label="Source">{% source_badge e True %}</td><td data-label="Interest">{{ e.interest_label }}</td>
+          <td data-label="Waiting">{{ e.created_at|timesince }}</td>
+          {% if can_manage %}<td data-label="Assign"><div class="flex gap-2 items-center">
+            <form method="post" action="{% url 'sales:assignment_one' e.pk %}">{% csrf_token %}<button class="btn btn-secondary btn-sm" type="submit" title="Pick by rules / round-robin">Auto</button></form>
+            <form hx-post="{% url 'leads:assign' e.pk %}" class="flex gap-2"><label class="visually-hidden" for="ag-{{ e.pk|unlocalize }}">Agent</label>
+              <select name="agent" id="ag-{{ e.pk|unlocalize }}" class="input select" style="min-width:130px">{% for a in assign_agents %}{% if a.is_available %}<option value="{{ a.pk|unlocalize }}">{{ a.short_name }}</option>{% endif %}{% endfor %}</select>
+              <button class="btn btn-primary btn-sm" type="submit">Assign</button></form></div></td>{% endif %}
+        </tr>{% empty %}<tr><td colspan="5">{% include "components/empty_state.html" with icon="check" title="Everyone has an agent" text="New enquiries that arrive unassigned will queue here." %}</td></tr>{% endfor %}</tbody></table></div></div>
+
+    <div class="card card-flush"><div class="card-head"><h2>Assignment rules</h2>{% if can_manage %}<a class="btn btn-secondary btn-sm" href="{% url 'sales:rule_new' %}">{% include "components/icon.html" with name="plus" size="16" %} Rule</a>{% endif %}</div>
+      <div class="table-wrap mt-3"><table class="table stack-phone"><thead><tr><th>#</th><th>Rule</th><th>When</th><th>Goes to</th><th></th></tr></thead>
+        <tbody>{% for r in rules %}<tr><td class="cell-first">{{ r.priority }}</td><td data-label="Rule"><b>{{ r.name }}</b>{% if not r.active %} {% status_pill "Off" "neutral" %}{% endif %}</td><td data-label="When">{{ r.criteria }}</td><td data-label="Agent">{{ r.agent.full_name }}{% if not r.agent.is_available %} <span class="text-late text-xs">unavailable</span>{% endif %}</td>
+          <td class="text-right">{% if can_manage %}<a class="btn btn-ghost btn-sm" href="{% url 'sales:rule_edit' r.pk %}">Edit</a>
+            <form method="post" action="{% url 'sales:rule_delete' r.pk %}" style="display:inline" onsubmit="return confirm('Delete this rule?')">{% csrf_token %}<button class="btn btn-ghost btn-sm text-danger" type="submit">Delete</button></form>{% endif %}</td></tr>
+          {% empty %}<tr><td colspan="5" class="text-muted">No rules: every lead is shared round-robin. Add a rule to route e.g. Maasai Mara enquiries to your Mara specialist.</td></tr>{% endfor %}</tbody></table></div></div>
+  </div>
+
+  <div class="stack">
+    <div class="card"><div class="card-head"><h2>Agent load today</h2></div>
+      {% for a in agents %}<div class="progress-row mb-3"><div class="top"><a href="{% url 'sales:team_agent' a.agent.pk %}">{{ a.agent.full_name }}</a><span class="{% if not a.available %}text-muted{% endif %}">{% if a.available %}{{ a.today }}/{{ a.limit }} today · {{ a.open }} open{% else %}{{ a.agent.get_on_duty_display }}{% endif %}</span></div>
+        <div class="bar {% if a.pct >= 100 %}bad{% elif a.pct >= 75 %}warn{% endif %}"><span style="width:{{ a.pct }}%"></span></div></div>{% endfor %}</div>
+    <div class="card"><div class="card-head"><h2>Settings</h2></div>
+      <form method="post" class="stack" style="gap:12px">{% csrf_token %}
+        {% with form=settings_form %}{% include "components/form_fields.html" %}{% endwith %}
+        {% if can_manage %}<button class="btn btn-primary" type="submit">Save settings</button>{% else %}<p class="text-sm text-muted">Only the Sales Manager can change these.</p>{% endif %}</form></div>
+    {% if breaches %}<div class="card"><div class="card-head"><h2 class="text-danger">Past response SLA</h2></div>
+      <div class="list">{% for e in breaches %}<a class="list-item row-link" href="{{ e.get_absolute_url }}"><div class="grow"><div class="title">{{ e.client.full_name }}</div><div class="meta">{{ e.assigned_agent.short_name|default:"Unassigned" }} · {{ e.created_at|timesince }}</div></div></a>{% endfor %}</div></div>{% endif %}
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,8 @@
+<!doctype html><html lang="en-GB"><head><meta charset="utf-8"><title>Manifest {{ dep.reference }}</title>
+<style>body{font-family:Arial,sans-serif;font-size:12px;color:#1f2a26;margin:24px}h1{color:#1F6F6B;font-size:20px;margin:0}table{width:100%;border-collapse:collapse;margin-top:12px}th,td{border:1px solid #d9cbb5;padding:6px 8px;text-align:left}th{background:#FBF5EA;font-size:11px;text-transform:uppercase}.muted{color:#5b6a63}@media print{.bar{display:none}}</style></head><body onload="window.print()">
+<div class="bar"><button onclick="window.print()">Print</button></div>
+<h1>{{ company.name }} · Passenger manifest</h1>
+<div class="muted">{{ dep.reference }} · {{ dep.package.title }} · {{ dep.start_date|ds_date }} – {{ dep.end_date|ds_date }} · Meeting point: {{ dep.meeting_point }}{% if dep.pickup_time %} at {{ dep.pickup_time }}{% endif %}</div>
+<div class="muted">Guide: {{ dep.guide|default:"—" }} · Driver: {{ dep.driver|default:"—" }} · Vehicle: {{ dep.vehicle|default:"—" }} · {{ entries|length }} guests</div>
+<table><thead><tr><th>#</th><th>Name</th><th>Age</th><th>Nationality</th><th>Passport</th><th>Dietary / medical</th><th>Emergency contact</th><th>✓</th></tr></thead>
+<tbody>{% for e in entries %}<tr><td>{{ forloop.counter }}</td><td>{{ e.full_name }}</td><td>{% if e.is_child %}Child {{ e.age|default:"" }}{% else %}Adult{% endif %}</td><td>{{ e.nationality }}</td><td>{% if pii %}{{ e.masked_passport }}{% endif %}</td><td>{{ e.dietary_notes }} {{ e.medical_notes }}</td><td>{{ e.emergency_contact }}</td><td>{% if e.checked_in_at %}✓{% endif %}</td></tr>{% endfor %}</tbody></table></body></html>

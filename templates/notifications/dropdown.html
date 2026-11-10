@@ -1,0 +1,12 @@
+<div class="flex items-center justify-between" style="padding:6px 8px 8px">
+  <strong>Notifications</strong>
+  {% if items %}<button class="link-btn" type="button" hx-post="{% url 'notifications:read_all' %}" hx-swap="none">Mark all read</button>{% endif %}
+</div>
+{% for n in items %}
+  <a href="{% url 'notifications:open' n.pk %}" style="align-items:flex-start{% if not n.read_at %};background:var(--sun-soft){% endif %}">
+    {% if n.level == "danger" or n.level == "warning" %}{% include "components/icon.html" with name="alert" %}{% else %}{% include "components/icon.html" with name="bell" %}{% endif %}
+    <span class="grow"><b style="display:block;font-size:13px">{{ n.title }}</b>{% if n.body %}<small class="text-muted">{{ n.body|truncatechars:90 }}</small><br>{% endif %}<small class="text-faint">{{ n.created_at|timesince }} ago</small></span>
+  </a>
+{% empty %}
+  <p class="text-muted text-sm" style="padding:8px 12px">You're all caught up.</p>
+{% endfor %}

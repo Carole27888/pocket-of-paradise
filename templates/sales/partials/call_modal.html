@@ -1,0 +1,6 @@
+<form method="post" action="{% url 'sales:call_new' %}" data-modal-form-body novalidate>
+  {% csrf_token %}
+  {% if preset %}<p class="text-sm text-muted mb-3">{{ preset.reference }} · {{ preset.client.full_name }}</p>{% endif %}
+  {% include "components/form_fields.html" %}
+  <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:14px"><button type="button" class="btn btn-secondary" data-modal-close>Cancel</button><button type="submit" class="btn btn-primary">{% include "components/icon.html" with name="check" %} Save call</button></div>
+</form>

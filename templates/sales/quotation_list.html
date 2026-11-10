@@ -1,0 +1,16 @@
+{% extends "base.html" %}{% load static %}
+{% block title %}Quotations{% endblock %}
+{% block extra_css %}<link rel="stylesheet" href="{% static 'css/sales.css' %}">{% endblock %}
+{% block content %}
+<div class="page-header"><div><h1>{{ title }}</h1><p>{{ subtitle }}</p></div></div>
+<div class="grid grid-4 mb-4">
+  {% include "components/kpi_card.html" with label="Drafts" value=kpis.draft note="Not yet sent" %}
+  {% include "components/kpi_card.html" with label="Out with clients" value=kpis.sent note=kpis.sent_value|money_compact accent=True %}
+  {% include "components/kpi_card.html" with label="Expiring in 3 days" value=kpis.expiring note="Chase these first" %}
+  {% include "components/kpi_card.html" with label="Accepted" value=kpis.accepted %}
+</div>
+<div class="card card-flush">
+  {% include "components/filter_bar.html" with placeholder="Search quotation, client, enquiry…" %}
+  <div id="list-region">{% include "sales/partials/quotation_table.html" %}</div>
+</div>
+{% endblock %}

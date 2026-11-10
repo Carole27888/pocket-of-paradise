@@ -1,0 +1,13 @@
+{% extends "base.html" %}{% load static %}
+{% block title %}Marketing Analytics{% endblock %}
+{% block extra_css %}<link rel="stylesheet" href="{% static 'css/sales.css' %}">{% endblock %}
+{% block extra_vendor %}<script src="{% static 'vendor/chartjs/chart.umd.min.js' %}" defer></script>{% endblock %}
+{% block extra_js %}<script src="{% static 'js/charts.js' %}" defer></script>{% endblock %}
+{% block content %}
+<div class="page-header"><div><h1>Analytics</h1><p>From impression to traveller · {{ start|ds_date }} – {{ end|ds_date }}</p></div><div class="actions">{% include "sales/partials/range_bar.html" %}</div></div>
+<div class="grid grid-2 mb-4"><div class="card"><div class="card-head"><h2>Funnel</h2></div>{% for f in funnel %}<div class="funnel-row"><span>{{ f.label }}</span><div class="bar"><span style="width:{{ f.pct }}%"></span></div><span class="text-right fw-700">{{ f.count }}</span></div>{% endfor %}</div>
+  <div class="card"><div class="card-head"><h2>What guests ask for</h2><span class="sub">Destination interest</span></div>{% for n, c in interest %}<div class="progress-row mb-2"><div class="top"><span>{{ n }}</span><span>{{ c }}</span></div><div class="progress accent"><span style="width:{% widthratio c interest.0.1 100 %}%"></span></div></div>{% empty %}<p class="text-muted text-sm">No destination data.</p>{% endfor %}</div></div>
+{{ charts|json_script:"an-charts" }}
+<div class="card mb-4"><div class="card-head"><h2>Enquiries per month</h2><span class="sub">Seasonality, last 12 months</span></div><div class="chart-box"><canvas data-chart="bar" data-chart-source="an-charts" data-chart-key="monthly" aria-label="Enquiries per month" role="img"></canvas></div></div>
+<div class="card card-flush"><div class="card-head"><h2>Channel comparison</h2></div><div class="table-wrap mt-3"><table class="table stack-phone"><thead><tr><th>Channel</th><th class="num">Spend</th><th class="num">Enquiries</th><th class="num">Cost / enquiry</th><th class="num">Bookings</th><th class="num">Revenue</th><th class="num">Return on spend</th></tr></thead><tbody>{% for r in comp %}<tr><td class="cell-first">{% source_badge r.channel.key True %}</td><td data-label="Spend" class="num">{{ r.spend|money_compact }}</td><td data-label="Enquiries" class="num">{{ r.enquiries }}</td><td data-label="CPL" class="num">{% if r.cpl %}KES {{ r.cpl }}{% else %}—{% endif %}</td><td data-label="Bookings" class="num">{{ r.bookings }}</td><td data-label="Revenue" class="num fw-700">{{ r.revenue|money_compact }}</td><td data-label="ROAS" class="num">{% if r.roas %}{{ r.roas }}×{% else %}—{% endif %}</td></tr>{% empty %}<tr><td colspan="7" class="text-muted">No data in this period.</td></tr>{% endfor %}</tbody></table></div></div>
+{% endblock %}

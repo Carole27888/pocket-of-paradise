@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+{% block title %}{% if obj %}Edit {{ obj.name }}{% else %}New WhatsApp template{% endif %}{% endblock %}
+{% block content %}
+<div class="page-header"><div><h1>{% if obj %}Edit “{{ obj.name }}”{% else %}New WhatsApp template{% endif %}</h1><p>A template is the fixed wording Meta approves; the parts in {{"{{"}}1}}, {{"{{"}}2}}… change for each message. Changing an approved template sends it back for approval.</p></div></div>
+<div class="grid grid-main-side" style="align-items:start">
+  <div class="card"><form method="post" novalidate>{% csrf_token %}
+    {% include "components/form_fields.html" %}
+    <div class="btn-row mt-3"><button class="btn btn-primary" type="submit">Save as draft</button><a class="btn btn-ghost" href="{% url 'ict:whatsapp' %}">Cancel</a></div></form></div>
+  <div class="card"><div class="card-head"><h2>Variable names</h2></div>
+    <p class="text-sm text-muted">In “Variables”, list what fills each number, in order, e.g. <code>name,title,link</code>.</p>
+    <dl class="dl">{% for code, label in variable_help %}<dt><code>{{ code }}</code></dt><dd class="text-sm">{{ label }}</dd>{% endfor %}</dl>
+    <p class="text-xs text-muted mb-0">Meta's rules: start and end with words, not a variable; keep variables apart; utility templates must not advertise.</p></div>
+</div>
+{% endblock %}

@@ -1,0 +1,8 @@
+from django.apps import AppConfig
+
+
+class PwaConfig(AppConfig):
+    default_auto_field = "django.db.models.BigAutoField"
+    name = "apps.pwa"
+    label = "pwa"
+    verbose_name = "Installable app"

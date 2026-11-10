@@ -1,0 +1,9 @@
+<div class="formset-row">
+  {% for h in form.hidden_fields %}{{ h }}{% endfor %}
+  <div class="form-grid">
+    {% for f in form.visible_fields %}{% if f.name != "DELETE" %}
+      <div class="field{% if f.errors %} invalid{% endif %}"><label for="{{ f.id_for_label }}">{{ f.label }}</label>{{ f }}{% for e in f.errors %}<span class="error">{{ e }}</span>{% endfor %}</div>
+    {% endif %}{% endfor %}
+  </div>
+  {% if form.DELETE %}<label class="flex items-center gap-2 mt-3 text-sm text-danger">{{ form.DELETE }} Remove</label>{% endif %}
+</div>

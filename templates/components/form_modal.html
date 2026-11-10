@@ -1,0 +1,6 @@
+<form method="post" action="{{ action }}" data-modal-form-body novalidate>
+  {% csrf_token %}
+  {% if modal_sub %}<p class="text-sm text-muted mb-3">{{ modal_sub }}</p>{% endif %}
+  {% include "components/form_fields.html" %}
+  <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:14px"><button type="button" class="btn btn-secondary" data-modal-close>Cancel</button><button type="submit" class="btn btn-primary">{% include "components/icon.html" with name="check" %} {{ save_label|default:"Save" }}</button></div>
+</form>

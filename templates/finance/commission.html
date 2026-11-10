@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% block title %}Agent Commission{% endblock %}
+{% block content %}
+<div class="page-header"><div><h1>Agent Commission</h1><p>What each sales agent earned on their bookings in {{ first|date:"F Y" }}, at {{ rate }}% of booking revenue. The next payroll run adds the same figure to payslips.</p></div>
+  <div class="actions"><a class="btn btn-secondary" href="?month={{ prev }}">← Previous</a><a class="btn btn-secondary" href="?month={{ next }}">Next →</a><a class="btn btn-secondary" href="?month={{ first|date:'Y-m' }}&export=csv">{% include "components/icon.html" with name="download" %} CSV</a></div></div>
+<div class="stat-grid mb-4">
+  <div class="stat"><span class="stat-ico">{% include "components/icon.html" with name="trending-up" %}</span><div><small>Revenue booked</small><b>{{ revenue_total|money }}</b></div></div>
+  <div class="stat"><span class="stat-ico">{% include "components/icon.html" with name="wallet" %}</span><div><small>Commission earned</small><b>{{ total|money }}</b></div></div>
+  <div class="stat"><span class="stat-ico">{% include "components/icon.html" with name="users" %}</span><div><small>Agents paid on</small><b>{{ agent_count }}</b></div></div>
+  <div class="stat"><span class="stat-ico">{% include "components/icon.html" with name="check" %}</span><div><small>Commission rate</small><b>{{ rate }}%</b></div></div>
+</div>
+<div class="card card-flush"><div class="table-wrap"><table class="table stack-phone"><thead><tr><th>Agent</th><th class="text-right">Bookings</th><th class="text-right">Revenue</th><th class="text-right">Commission</th><th>Payroll</th></tr></thead><tbody>
+{% for r in rows %}<tr><td class="cell-first">{{ r.agent.full_name }}</td><td data-label="Bookings" class="text-right">{{ r.bookings }}</td><td data-label="Revenue" class="text-right">{{ r.revenue|money }}</td><td data-label="Commission" class="text-right fw-700">{{ r.commission|money }}</td>
+  <td data-label="Payroll">{% if r.in_payroll is not None %}{% status_pill "In payroll" "success" %}{% else %}<span class="text-muted text-sm">Not in a run yet</span>{% endif %}</td></tr>
+{% empty %}<tr><td colspan="5" class="text-muted">No sales agents yet.</td></tr>{% endfor %}</tbody></table></div></div>
+<p class="text-xs text-muted mt-3">Change the rate under Expenses &amp; KRA → tax settings (sales_commission_rate).</p>
+{% endblock %}

@@ -1,0 +1,6 @@
+<!doctype html><html lang="en-GB"><head><meta charset="utf-8"><title>{{ t.name }} · {{ b.reference }}</title>
+<style>@page{size:A4;margin:18mm}body{font-family:Arial,Helvetica,sans-serif;color:#2B2014;font-size:12pt;line-height:1.6;max-width:760px;margin:0 auto;padding:24px}
+header{display:flex;justify-content:space-between;border-bottom:3px solid #195D5A;padding-bottom:10px;margin-bottom:22px}h1{margin:0;font-size:20px;color:#195D5A}.m{color:#5b6a63;font-size:11pt}.bar{text-align:right;margin-bottom:12px}.bar button{padding:8px 14px;border:0;background:#195D5A;color:#fff;border-radius:6px;cursor:pointer}@media print{.bar{display:none}body{padding:0}}</style></head>
+<body><div class="bar"><button onclick="window.print()">Print / Save as PDF</button></div>
+<header><div><h1>{{ company.name }}</h1><div class="m">{{ company.tagline }}</div></div><div class="m" style="text-align:right">{{ company.phone }}<br>{{ company.email }}<br>{{ today|date:"j F Y" }}</div></header>
+{% if subject %}<p><b>{{ subject }}</b></p>{% endif %}<div style="white-space:pre-wrap">{{ body }}</div></body></html>

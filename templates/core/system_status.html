@@ -1,0 +1,69 @@
+{% extends "base.html" %}{% load l10n %}
+{% block title %}System Status{% endblock %}
+{% block content %}
+<div class="page-header">
+  <div><h1>System Status</h1><p>Background jobs, schedules and environment.</p></div>
+  <div class="actions">
+    <form method="post" action="{% url 'core:run_jobs_now' %}">{% csrf_token %}<button class="btn btn-primary" type="submit">{% include "components/icon.html" with name="refresh" %} Run due jobs now</button></form>
+  </div>
+</div>
+{% if stale %}
+<div class="alert alert-danger mb-4">{% include "components/icon.html" with name="alert" %}
+  <span class="grow"><strong>Cron has not run in the last 15 minutes.</strong> Scheduled reminders and alerts are paused. Check the crontab entry <code>*/5 * * * * …/venv/bin/python manage.py run_jobs</code>.</span></div>
+{% endif %}
+<div class="grid grid-4 mb-4">
+  {% include "components/kpi_card.html" with label="Jobs backend" value=backend note="sync runs inline · cron uses run_jobs" %}
+  <div class="card kpi"><span class="kpi-label">Last runner heartbeat</span><span class="kpi-value" style="font-size:20px">{% if heartbeat %}{{ heartbeat|ds_time }}{% else %}Never{% endif %}</span><span class="kpi-delta {% if stale %}down{% endif %}">{% if heartbeat %}{{ heartbeat|timesince }} ago{% else %}run_jobs has not run yet{% endif %}</span></div>
+  {% include "components/kpi_card.html" with label="Queued jobs" value=queued %}
+  {% include "components/kpi_card.html" with label="Failed jobs" value=failed|length %}
+</div>
+<div class="grid grid-main-side mb-4">
+  <div class="card card-flush">
+    <div class="card-head"><h2>Failed jobs</h2><span class="sub">After 3 attempts with backoff</span></div>
+    <div class="table-wrap mt-3"><table class="table stack-phone">
+      <thead><tr><th>#</th><th>Task</th><th>Attempts</th><th>Last error</th><th></th></tr></thead>
+      <tbody>
+      {% for j in failed %}
+        <tr><td class="cell-first">#{{ j.pk|unlocalize }}</td><td data-label="Task" class="cell-main">{{ j.task_name }}</td><td data-label="Attempts">{{ j.attempts }}</td>
+          <td data-label="Error"><span class="text-danger text-sm">{{ j.last_error|truncatechars:120 }}</span></td>
+          <td><form method="post" action="{% url 'core:retry_job' j.pk %}">{% csrf_token %}<button class="btn btn-sm btn-secondary" type="submit">Retry</button></form></td></tr>
+      {% empty %}<tr><td colspan="5"><p class="p-4 text-muted mb-0">No failed jobs. 🎉</p></td></tr>{% endfor %}
+      </tbody></table></div>
+  </div>
+  <div class="card">
+    <div class="card-head"><h2>Environment</h2></div>
+    <dl class="dl">
+      <dt>Database</dt><dd>{{ db_engine }} · {{ db_name }}</dd>
+      <dt>App version</dt><dd>{{ pwa_version }}</dd>
+      <dt>Integrations</dt><dd>{{ integrations_mode }}</dd>
+      <dt>Server time</dt><dd>{% now "j M Y, g:i A" %} (Africa/Nairobi)</dd>
+    </dl>
+  </div>
+</div>
+<div class="grid grid-2">
+  <div class="card card-flush">
+    <div class="card-head"><h2>Schedules</h2></div>
+    <div class="table-wrap mt-3"><table class="table stack-phone">
+      <thead><tr><th>Task</th><th>Runs</th><th>Last run</th><th>Next run</th></tr></thead>
+      <tbody>
+      {% for row in schedules %}
+        <tr><td class="cell-first cell-main">{{ row.s.name }}</td>
+          <td data-label="Runs">{% if row.s.kind == "interval" %}every {{ row.s.minutes }} min{% elif row.s.kind == "daily" %}daily {{ row.s.hour|stringformat:"02d" }}:{{ row.s.minute|stringformat:"02d" }}{% else %}monthly on day {{ row.s.day }}{% endif %}</td>
+          <td data-label="Last run">{{ row.state.last_run_at|ds_datetime }}</td><td data-label="Next run">{{ row.state.next_run_at|ds_datetime }}</td></tr>
+      {% endfor %}
+      </tbody></table></div>
+  </div>
+  <div class="card card-flush">
+    <div class="card-head"><h2>Recent jobs</h2></div>
+    <div class="table-wrap mt-3"><table class="table stack-phone">
+      <thead><tr><th>#</th><th>Task</th><th>Status</th><th>Finished</th></tr></thead>
+      <tbody>
+      {% for j in recent %}
+        <tr><td class="cell-first">#{{ j.pk|unlocalize }}</td><td data-label="Task">{{ j.task_name }}</td>
+          <td data-label="Status">{% if j.status == "done" %}{% status_pill "Done" "success" %}{% elif j.status == "failed" %}{% status_pill "Failed" "danger" %}{% elif j.status == "running" %}{% status_pill "Running" "info" %}{% else %}{% status_pill j.get_status_display "neutral" %}{% endif %}</td>
+          <td data-label="Finished">{{ j.finished_at|ds_datetime }}</td></tr>
+      {% empty %}<tr><td colspan="4"><p class="p-4 text-muted mb-0">No jobs have run yet.</p></td></tr>{% endfor %}
+      </tbody></table></div>
+  </div>
+</div>
+{% endblock %}

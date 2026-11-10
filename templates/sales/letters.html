@@ -1,0 +1,17 @@
+{% extends "base.html" %}{% load l10n %}
+{% block title %}Letters{% endblock %}
+{% block content %}
+<div class="page-header"><div><h1>Letters</h1><p>Standard wording for confirmations, reminders and thank-yous. Open a booking and press a letter to fill it in for that client.</p></div></div>
+<div class="grid grid-main-side">
+  <div class="stack">{% for t in items %}<div class="card"><div class="card-head"><h2>{{ t.name }}</h2>{% if can_edit %}<a class="btn btn-ghost btn-sm" href="?edit={{ t.pk|unlocalize }}#form">Edit</a>{% endif %}</div>
+    {% if t.subject %}<p class="text-sm"><b>Subject:</b> {{ t.subject }}</p>{% endif %}<p class="text-sm mb-0" style="white-space:pre-line">{{ t.body|truncatechars:420 }}</p></div>{% endfor %}</div>
+  <div class="stack">{% if can_edit %}<div class="card" id="form"><div class="card-head"><h2>{% if edit %}Edit letter{% else %}New letter{% endif %}</h2></div>
+    <form method="post" class="stack" style="gap:12px">{% csrf_token %}{% if edit %}<input type="hidden" name="id" value="{{ edit.pk|unlocalize }}">{% endif %}
+      <div class="field"><label for="l-n">Name</label><input class="input" id="l-n" name="name" maxlength="120" required value="{{ edit.name }}"></div>
+      <div class="field"><label for="l-s">Subject (for e-mail)</label><input class="input" id="l-s" name="subject" maxlength="160" value="{{ edit.subject }}"></div>
+      <div class="field"><label for="l-b">Letter</label><textarea class="input textarea" id="l-b" name="body" rows="10" required>{{ edit.body }}</textarea></div>
+      <div class="flex gap-2 wrap"><button class="btn btn-primary" type="submit">{% if edit %}Save changes{% else %}Add letter{% endif %}</button>{% if edit %}<button class="btn btn-secondary" type="submit" name="action" value="delete" onclick="return confirm('Remove this letter?')">Delete</button><a class="btn btn-secondary" href="{% url 'sales:letters' %}">Cancel</a>{% endif %}</div></form></div>{% endif %}
+    <div class="card"><div class="card-head"><h2>What you can put in</h2></div><p class="text-sm text-muted">Type these in curly brackets and they are replaced from the booking:</p>
+      <dl class="dl">{% for k, v in tokens.items %}<dt><code>{% templatetag openbrace %}{{ k }}{% templatetag closebrace %}</code></dt><dd>{{ v }}</dd>{% endfor %}</dl></div></div>
+</div>
+{% endblock %}

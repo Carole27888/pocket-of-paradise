@@ -1,0 +1,17 @@
+<div class="table-wrap"><table class="table stack-phone">
+  <thead><tr>{% for c in columns %}<th class="{% if c.kind == 'money' or c.kind == 'num' or c.kind == 'compact' %}num{% elif c.kind == 'action' %}text-right{% endif %}">{% if c.sort %}{% sort_link c.sort c.label %}{% else %}{{ c.label }}{% endif %}</th>{% endfor %}</tr></thead>
+  <tbody>
+  {% for row in rows %}
+    <tr>{% for cell in row.cells %}
+      <td {% if forloop.first %}class="cell-first"{% else %}data-label="{{ cell.label }}"{% endif %} {% if cell.kind == 'money' or cell.kind == 'num' or cell.kind == 'compact' %}class="num"{% endif %}>
+        {% if cell.kind == "action" %}{% if cell.action %}<form method="post" action="{{ cell.action.url }}" {% if cell.action.confirm %}onsubmit="return confirm('{{ cell.action.confirm|escapejs }}')"{% endif %}>{% csrf_token %}<button class="btn btn-ghost btn-sm text-danger" type="submit">{{ cell.action.label }}</button></form>{% endif %}
+        {% elif cell.kind == "pill" %}{% status_pill cell.text cell.tone %}
+        {% elif cell.url %}<a class="row-link cell-main" href="{{ cell.url }}">{{ cell.text }}</a>
+        {% else %}<span{% if forloop.first %} class="cell-main"{% endif %}>{{ cell.text }}</span>{% endif %}
+        {% if cell.sub %}<div class="cell-sub">{{ cell.sub }}</div>{% endif %}
+      </td>{% endfor %}
+    </tr>
+  {% empty %}<tr><td colspan="{{ columns|length }}">{% include "components/empty_state.html" with icon=empty_icon title=empty_title text=empty_text %}</td></tr>{% endfor %}
+  </tbody>
+</table></div>
+{% include "components/pagination.html" %}

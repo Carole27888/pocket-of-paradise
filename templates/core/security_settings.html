@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% block title %}Security Settings{% endblock %}
+{% block content %}
+<div class="page-header"><div><h1>Security Settings</h1><p>Two-factor sign-in asks people in the roles below for a code from their phone as well as their password.</p></div></div>
+<div class="grid grid-main-side" style="align-items:start">
+  <div class="card">
+    <div class="card-head"><h2>Two-factor sign-in</h2>{% if on %}{% status_pill "ON" "success" %}{% else %}{% status_pill "OFF" "neutral" %}{% endif %}</div>
+    {% if forced %}<div class="alert alert-info mb-4">Two-factor is forced on by the server settings, so it cannot be switched off from here.</div>{% endif %}
+    <p class="text-sm" style="margin-top:0">{% if on %}It is <b>on</b>. People in the required roles must set up an authenticator app, and are asked for a code each time they sign in.{% else %}It is <b>off</b>. Everyone signs in with a password only.{% endif %}</p>
+    {% if not forced %}
+    <form method="post">{% csrf_token %}
+      {% if on %}<button class="btn btn-secondary" name="action" value="off" type="submit" onclick="return confirm('Turn two-factor sign-in off for everyone?')">Turn two-factor OFF</button>
+      {% else %}<button class="btn btn-primary" name="action" value="on" type="submit" onclick="return confirm('Turn two-factor sign-in on? Everyone in the required roles, including you, will be asked to set it up straight away.')">Turn two-factor ON</button>{% endif %}
+    </form>{% endif %}
+    <p class="text-xs text-muted mt-3">Required roles: {{ roles|join:", " }}. To change this list, edit <code>TWO_FACTOR_REQUIRED_ROLES</code> in the server settings.</p>
+  </div>
+  <div class="card">
+    <div class="card-head"><h2>Who is set up</h2></div>
+    <p class="text-sm text-muted" style="margin-top:0">{{ enrolled|length }} of {{ total }} required people have two-factor ready.</p>
+    {% for u in pending %}<div class="list-item"><div class="grow"><div class="fw-700">{{ u.full_name }}</div><div class="text-xs text-muted">{{ u.primary_role }}</div></div>{% status_pill "Not set up" "warning" %}</div>{% endfor %}
+    {% for u in enrolled %}<div class="list-item"><div class="grow"><div class="fw-700">{{ u.full_name }}</div><div class="text-xs text-muted">{{ u.primary_role }}</div></div>{% status_pill "Ready" "success" %}</div>{% endfor %}
+    {% if not enrolled and not pending %}<p class="text-muted text-sm">Nobody holds a required role yet.</p>{% endif %}
+  </div>
+</div>
+{% endblock %}

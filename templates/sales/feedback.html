@@ -1,0 +1,16 @@
+{% extends "base.html" %}{% load l10n %}
+{% block title %}Client Feedback{% endblock %}
+{% block content %}
+<div class="page-header"><div><h1>Client Feedback</h1><p>What clients say after their trips, from the page we send them. Low scores alert the managers and ask the consultant to call.</p></div>
+  <div class="actions"><a class="btn btn-secondary" href="?{% if not low %}low=1{% endif %}">{% if low %}Show everything{% else %}Only unhappy clients{% endif %}</a></div></div>
+<div class="grid grid-4 mb-4">
+  <div class="card kpi kpi-accent"><span class="kpi-label">Recommend score</span><span class="kpi-value">{% if nps is None %}-{% else %}{{ nps }}{% endif %}</span><span class="kpi-delta">{{ promoters }} promoters · {{ passives }} passive · {{ detractors }} detractors</span></div>
+  {% include "components/kpi_card.html" with label="Overall rating" value=avg.a|default_if_none:"-"|floatformat:1 note="Out of 5" %}
+  {% include "components/kpi_card.html" with label="Guides" value=avg.g|default_if_none:"-"|floatformat:1 note="Average out of 5" %}
+  {% include "components/kpi_card.html" with label="Lodges" value=avg.l|default_if_none:"-"|floatformat:1 note="Average out of 5" %}
+</div>
+<div class="card card-flush"><div class="table-wrap"><table class="table stack-phone"><thead><tr><th>Client</th><th>Trip</th><th>Overall</th><th>Recommend</th><th>Guide</th><th>Lodges</th><th>What they said</th></tr></thead><tbody>
+{% for f in rows %}<tr><td class="cell-first"><a href="{{ f.booking.get_absolute_url }}">{{ f.booking.client.full_name }}</a><div class="text-xs text-muted">{{ f.booking.agent|default:"-" }} · {{ f.created_at|ds_date }}</div></td><td data-label="Trip">{{ f.booking.trip_name|truncatechars:34 }}</td>
+<td data-label="Overall">{% if f.rating <= 3 %}{% status_pill f.rating "danger" %}{% elif f.rating >= 4 %}{% status_pill f.rating "success" %}{% endif %}</td><td data-label="Recommend">{{ f.nps }}/10</td><td data-label="Guide">{{ f.guide_rating|default:"-" }}</td><td data-label="Lodges">{{ f.lodge_rating|default:"-" }}</td><td data-label="Said" style="max-width:340px">{{ f.comment|default:"-" }}{% if f.may_quote %} <span class="text-xs text-muted">(may be quoted)</span>{% endif %}</td></tr>
+{% empty %}<tr><td colspan="7">{% include "components/empty_state.html" with icon="star" title="No feedback yet" text="Send clients their trip page from the booking. After they travel, it asks them to rate the trip." %}</td></tr>{% endfor %}</tbody></table></div></div>
+{% endblock %}

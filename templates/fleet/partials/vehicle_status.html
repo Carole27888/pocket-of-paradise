@@ -1,0 +1,1 @@
+{% if v.status == "available" %}{% status_pill "Available" "success" %}{% elif v.status == "out" %}{% status_pill "Out on trip" "warning" %}{% elif v.status == "maintenance" %}{% status_pill "In maintenance" "info" %}{% else %}{% status_pill "Out of service" "danger" %}{% endif %}

@@ -1,0 +1,23 @@
+{% extends "base.html" %}{% load static %}
+{% block title %}Follow-ups{% endblock %}
+{% block extra_css %}<link rel="stylesheet" href="{% static 'css/sales.css' %}">{% endblock %}
+{% block content %}
+<div class="page-header"><div><h1>Follow-ups</h1><p>{% if scoped %}Your tasks{% else %}Every agent's tasks{% endif %}: call back, send the quote, chase the deposit.</p></div>
+  {% if request.user.can_work_sales %}<div class="actions"><a class="btn btn-accent" href="{% url 'sales:followup_new' %}">{% include "components/icon.html" with name="plus" %} New follow-up</a></div>{% endif %}</div>
+{% if not scoped %}
+<form class="filter-bar mb-4" method="get">{% for f in filter.form %}<label class="visually-hidden" for="{{ f.id_for_label }}">{{ f.label }}</label>{{ f }}{% endfor %}<button class="btn btn-secondary btn-sm" type="submit">Filter</button></form>{% endif %}
+<div class="grid grid-2">
+  <div class="stack">
+    <div class="card"><div class="card-head"><h2 class="text-danger">Overdue</h2><span class="sub">{{ overdue|length }}</span></div>
+      {% for t in overdue %}{% include "sales/partials/task_row.html" with when_cls="late" %}{% empty %}<p class="text-muted text-sm">Nothing overdue.</p>{% endfor %}</div>
+    <div class="card"><div class="card-head"><h2>Due today</h2><span class="sub">{{ today|length }}</span></div>
+      {% for t in today %}{% include "sales/partials/task_row.html" with when_cls="today" %}{% empty %}<p class="text-muted text-sm">Nothing else due today.</p>{% endfor %}</div>
+  </div>
+  <div class="stack">
+    <div class="card"><div class="card-head"><h2>Upcoming</h2></div>
+      {% for t in upcoming %}{% include "sales/partials/task_row.html" with when_cls="" %}{% empty %}<p class="text-muted text-sm">No upcoming tasks.</p>{% endfor %}</div>
+    <div class="card"><div class="card-head"><h2>Recently done</h2></div>
+      {% for t in done %}<div class="task-row"><div class="grow"><a href="{{ t.enquiry.get_absolute_url }}">{{ t.enquiry.client.full_name }}</a><div class="text-sm text-muted">{{ t.title }}</div></div><span class="text-xs text-muted">{{ t.done_at|ds_datetime }}</span></div>{% empty %}<p class="text-muted text-sm">Completed tasks show up here.</p>{% endfor %}</div>
+  </div>
+</div>
+{% endblock %}

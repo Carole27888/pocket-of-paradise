@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+{% block title %}Customer Care{% endblock %}
+{% block content %}
+<div class="page-header"><div><h1>Customer Care</h1><p>Clients at risk of poor service, with the reason. {% if scoped %}These are your own leads.{% else %}Every open lead you can see.{% endif %}</p></div></div>
+<div class="grid grid-4 mb-4">{% include "components/kpi_card.html" with label="Flagged leads" value=flags|length accent=True %}{% include "components/kpi_card.html" with label="Urgent" value=danger %}{% include "components/kpi_card.html" with label="Needs a look" value=watch %}{% include "components/kpi_card.html" with label="Leads checked" value=checked %}</div>
+<div class="card card-flush"><div class="table-wrap"><table class="table stack-phone"><thead><tr><th>Lead</th><th>Agent</th><th>Stage</th><th>Why it is flagged</th></tr></thead><tbody>
+{% for f in flags %}<tr><td class="cell-first"><a class="row-link cell-main" href="{{ f.e.get_absolute_url }}">{{ f.e.client.full_name }}</a><div class="cell-sub">{{ f.e.reference }} · {{ f.e.interest_label|truncatechars:34 }}</div></td><td data-label="Agent">{{ f.e.assigned_agent.short_name|default:"Unassigned" }}</td><td data-label="Stage">{% status_pill f.e.get_stage_display "info" %}</td>
+<td data-label="Why">{% for lvl, text in f.flags %}<div><span class="pill pill-{{ lvl }}" style="margin-right:6px">{% if lvl == "danger" %}Urgent{% elif lvl == "warning" %}Watch{% else %}Note{% endif %}</span>{{ text }}</div>{% endfor %}</td></tr>
+{% empty %}<tr><td colspan="4" class="text-muted">Nothing is flagged. Everyone has been looked after.</td></tr>{% endfor %}</tbody></table></div></div>
+{% endblock %}

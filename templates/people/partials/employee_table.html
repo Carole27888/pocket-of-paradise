@@ -1,0 +1,16 @@
+<div class="table-wrap"><table class="table stack-phone">
+  <thead><tr><th>{% sort_link "full_name" "Name" %}</th><th>{% sort_link "title" "Role" %}</th><th>Specialties</th><th>Phone</th><th class="num">Open enquiries</th><th>{% sort_link "on_duty" "Status" %}</th></tr></thead>
+  <tbody>
+  {% for e in object_list %}
+    <tr>
+      <td class="cell-first"><div class="flex items-center gap-2"><span class="avatar avatar-sm">{{ e.initials }}</span><div><a class="row-link cell-main" href="{{ e.get_absolute_url }}">{{ e.full_name }}</a><div class="cell-sub">{{ e.roles_label }}</div></div></div></td>
+      <td data-label="Role">{{ e.title|default:"—" }}<div class="cell-sub">{{ e.department|default:"" }}</div></td>
+      <td data-label="Specialties">{% for s in e.specialties.all|slice:":3" %}<span class="pill pill-accent" style="margin:1px">{{ s.name }}</span>{% empty %}—{% endfor %}</td>
+      <td data-label="Phone" class="nowrap">{% if e.phone %}<a href="tel:{{ e.phone }}">{{ e.phone|phone }}</a>{% else %}—{% endif %}</td>
+      <td data-label="Open enquiries" class="num">{% if e.is_sales_agent %}{{ e.open_enquiries }}{% else %}—{% endif %}</td>
+      <td data-label="Status">{% include "people/partials/duty_pill.html" %}</td>
+    </tr>
+  {% empty %}<tr><td colspan="6">{% include "components/empty_state.html" with icon="id-card" title="No staff match" %}</td></tr>{% endfor %}
+  </tbody>
+</table></div>
+{% include "components/pagination.html" %}

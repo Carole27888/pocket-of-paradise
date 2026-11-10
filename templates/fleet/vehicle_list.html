@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+{% block title %}Fleet{% endblock %}
+{% block content %}
+<div class="page-header">
+  <div><h1>{{ title }}</h1><p>{{ subtitle }}</p></div>
+  {% if request.user.can_edit_operations %}<div class="actions"><a class="btn btn-primary" href="{% url 'fleet:create' %}">{% include "components/icon.html" with name="plus" %} Add vehicle</a></div>{% endif %}
+</div>
+<div class="grid grid-4 mb-4">
+  {% include "components/kpi_card.html" with label="Available now" value=kpis.available note=kpis.seats|default:0|stringformat:"d"|add:" seats ready" accent=True %}
+  {% include "components/kpi_card.html" with label="Out on trip" value=kpis.out %}
+  {% include "components/kpi_card.html" with label="In maintenance" value=kpis.maint note=kpis.total|stringformat:"d"|add:" vehicles in fleet" %}
+  {% if kpis.expiring %}{% include "components/kpi_card.html" with label="Documents due (30 days)" value=kpis.expiring note="Insurance, inspection or service" delta_dir="down" %}{% else %}{% include "components/kpi_card.html" with label="Documents due (30 days)" value=0 note="All up to date" %}{% endif %}
+</div>
+<div class="card card-flush">
+  {% include "components/filter_bar.html" with placeholder="Search registration, nickname or driver…" %}
+  <div id="list-region">{% include "fleet/partials/vehicle_table.html" %}</div>
+</div>
+{% endblock %}

@@ -1,0 +1,25 @@
+{% load static %}<!doctype html>
+<html lang="en-GB"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex">
+<title>{% block title %}{{ emp.full_name }} · {{ company.name }}{% endblock %}</title><meta name="theme-color" content="#1F6F6B">
+<meta property="og:title" content="{{ emp.full_name }} · {{ company.name }}"><meta property="og:description" content="{{ card.headline|default:'Travel consultant' }}">
+<link rel="stylesheet" href="{% static 'css/tokens.css' %}">
+<style>
+*{box-sizing:border-box}body{margin:0;background:#FBF5EA;color:#2B2014;font:16px/1.55 Manrope,system-ui,-apple-system,"Segoe UI",sans-serif;-webkit-font-smoothing:antialiased;min-height:100vh}
+a{color:inherit}h1,h2{line-height:1.2;margin:0}.wrap{width:min(560px,100%);margin:0 auto;padding:22px 16px 60px}
+.top{background:linear-gradient(135deg,#1F6F6B,#2A8580);color:#fff;padding:26px 16px 70px;text-align:center}.top img{height:46px;border-radius:10px}.top small{display:block;color:#F6DDA6;letter-spacing:.12em;text-transform:uppercase;font-weight:700;font-size:.74rem;margin-top:10px}
+.card{background:#fff;border:1px solid #EDE3D3;border-radius:22px;padding:22px;box-shadow:0 12px 34px rgba(31,111,107,.10)}.lift{margin-top:-60px}
+.av{width:96px;height:96px;border-radius:50%;margin:-70px auto 12px;display:grid;place-items:center;background:#1F6F6B;color:#F6DDA6;font-weight:800;font-size:2rem;border:5px solid #fff;overflow:hidden;box-shadow:0 6px 18px rgba(0,0,0,.18)}.av img{width:100%;height:100%;object-fit:cover}
+.center{text-align:center}.muted{color:#6E6250}.name{font-size:1.6rem;font-weight:800}.head{color:#9A5A0C;font-weight:700;margin-top:4px}
+.row{display:flex;gap:12px;align-items:center;padding:12px 0;border-top:1px solid #F1E8DC;text-decoration:none}.row i{flex:none;width:40px;height:40px;border-radius:12px;display:grid;place-items:center;background:#FDEFD6;color:#9A5A0C;font-style:normal;font-weight:800}
+.btn{display:flex;justify-content:center;align-items:center;gap:8px;width:100%;border:0;border-radius:14px;padding:15px 18px;font:inherit;font-weight:800;cursor:pointer;text-decoration:none;font-size:1.02rem}
+.btn-p{background:#1F6F6B;color:#fff}.btn-w{background:#128C4A;color:#fff}.btn-o{background:#fff;color:#1F6F6B;border:1.5px solid #1F6F6B}.btn-a{background:#D98A22;color:#fff}
+.stack{display:grid;gap:10px}label{display:block;font-weight:700;font-size:.92rem;margin-bottom:5px}
+input,textarea,select{width:100%;font:inherit;border:1.5px solid #E5D8C6;border-radius:12px;padding:12px 13px;background:#fff;color:inherit}input:focus,textarea:focus{outline:2px solid #D98A22;border-color:#D98A22}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:10px}.err{color:#B42318;font-size:.86rem;margin-top:4px;display:block}.alert{background:#FDECEC;color:#8A1C1C;border-radius:12px;padding:12px 14px}
+footer{text-align:center;color:#6E6250;font-size:.82rem;padding:24px 0}
+@media(max-width:420px){.two{grid-template-columns:1fr}}
+</style></head><body>
+<header class="top"><img src="{% static 'brand/logo-full.png' %}" alt="{{ company.name }}"><small>{{ company.name }}</small></header>
+<main class="wrap">{% block body %}{% endblock %}</main>
+<footer>{{ company.name }}{% if company.phone %} · {{ company.phone }}{% endif %}{% if company.website %} · <a href="{{ company.website }}">{{ company.website|cut:"https://"|cut:"http://" }}</a>{% endif %}</footer>
+</body></html>

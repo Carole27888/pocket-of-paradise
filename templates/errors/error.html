@@ -1,0 +1,18 @@
+{% load static %}<!doctype html>
+<html lang="en-GB"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>{{ code }} · {{ title }} · Pocket of Paradise Travel Company</title>
+<link rel="icon" href="{% static 'pwa/favicon-32.png' %}">
+<link rel="stylesheet" href="{% static 'css/tokens.css' %}"><link rel="stylesheet" href="{% static 'css/base.css' %}">
+<link rel="stylesheet" href="{% static 'css/components.css' %}"><link rel="stylesheet" href="{% static 'css/utilities.css' %}">
+</head><body>
+<div class="error-page"><div>
+  <img src="{% static 'pwa/mark-96.png' %}" alt="" width="84" height="84" style="margin:0 auto 12px">
+  <div class="code">{{ code }}</div>
+  <h1 class="mt-2">{{ title }}</h1>
+  <p class="text-muted mt-2">{{ text }}</p>
+  <div class="flex gap-2 mt-5" style="justify-content:center">
+    <a class="btn btn-primary" href="/">Go to main menu</a>
+    <button class="btn btn-secondary" type="button" onclick="history.back()">Go back</button>
+  </div>
+</div></div>
+</body></html>

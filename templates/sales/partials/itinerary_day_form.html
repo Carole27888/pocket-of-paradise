@@ -1,0 +1,31 @@
+<div class="formset-row day-row">
+  {% for h in form.hidden_fields %}{% if h.name != "photos" %}{{ h }}{% endif %}{% endfor %}
+  {% if form.non_field_errors %}<div class="alert alert-danger mb-3">{{ form.non_field_errors|join:" " }}</div>{% endif %}
+  <div class="flex justify-between items-center mb-2"><span class="flex items-center gap-2"><span class="day-grip" draggable="true" title="Drag to move this day" aria-label="Drag to move this day">{% include "components/icon.html" with name="grip" size="18" %}</span><b class="day-label">Day</b></span>{% if form.DELETE %}<label class="rm-x" title="Remove this day">{{ form.DELETE }}<span aria-hidden="true">✕</span><span class="visually-hidden">Remove day</span></label>{% endif %}</div>
+  <div class="form-grid">
+    <div class="field wide"><label for="{{ form.title.id_for_label }}">Day title</label>{{ form.title }}{% for e in form.title.errors %}<span class="error">{{ e }}</span>{% endfor %}</div>
+    <div class="field"><label for="{{ form.destination.id_for_label }}">Destination</label>{{ form.destination }}</div>
+    <div class="field"><label for="{{ form.accommodation.id_for_label }}">Lodge / camp</label>{{ form.accommodation }}</div>
+    <div class="field"><label for="{{ form.room_type.id_for_label }}">Room type</label>{{ form.room_type }}</div>
+    <div class="field"><label>Meals</label><div class="flex gap-3 items-center" style="min-height:44px"><label class="flex items-center gap-1">{{ form.breakfast }} B</label><label class="flex items-center gap-1">{{ form.lunch }} L</label><label class="flex items-center gap-1">{{ form.dinner }} D</label></div></div>
+    <div class="field wide"><label for="{{ form.activities.id_for_label }}">Activities (comma separated)</label>{{ form.activities }}</div>
+    <div class="field wide"><label for="{{ form.description.id_for_label }}">What happens today {% if write_url %}<button type="button" class="link-btn" data-write="day">{% include "components/icon.html" with name="sparkles" size="14" %} Write for me</button>{% endif %}</label>{{ form.description }}<span class="help" data-write-note></span></div>
+    <div class="field wide"><label for="{{ form.image.id_for_label }}">Picture for this day</label>
+      {{ form.image }}
+
+      <span class="help">Optional. If you leave it empty, a photo of the destination is used when one exists.</span>{% for e in form.image.errors %}<span class="error">{{ e }}</span>{% endfor %}</div>
+    {% if form.photos %}<div class="field wide"><label>Photos from the library</label>
+      <div class="pk-bar"><button type="button" class="btn btn-secondary" data-pk-open>{% include "components/icon.html" with name="image" size="16" %} Choose photos</button>
+        <div class="pk-thumbs" data-pk-thumbs>{% for p in form.selected_photos %}<img src="{{ p.thumb_url }}" alt="">{% endfor %}</div>
+        <span data-pk-hidden="{{ form.prefix }}" hidden>{% for p in form.selected_photos %}<input type="hidden" name="{{ form.prefix }}-photos" value="{{ p.pk }}">{% endfor %}</span></div>
+      <span class="help">Pick one or two photos for this day. They appear on the client's itinerary and PDF.</span></div>{% endif %}
+    <div class="field"><label for="{{ form.drive_km.id_for_label }}">Drive km</label>{{ form.drive_km }}</div>
+    <div class="field"><label for="{{ form.drive_hours.id_for_label }}">Drive hours</label>{{ form.drive_hours }}</div>
+  </div>
+  <div class="price-strip">
+    <div class="field"><label for="{{ form.lodging_pp.id_for_label }}">Lodging / person <button type="button" class="link-btn" data-suggest>Suggest rate</button></label>{{ form.lodging_pp }}<span class="help" data-rate-note></span></div>
+    <div class="field"><label for="{{ form.activities_pp.id_for_label }}">Activities & fees / person</label>{{ form.activities_pp }}</div>
+    <div class="field"><label for="{{ form.transport.id_for_label }}">Vehicle & guide (group)</label>{{ form.transport }}</div>
+    <div class="day-cost"><span>Day cost</span><b data-day-cost>—</b></div>
+  </div>
+</div>

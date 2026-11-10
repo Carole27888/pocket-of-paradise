@@ -1,0 +1,26 @@
+{% extends "base.html" %}{% load l10n %}
+{% block title %}Sales Insights{% endblock %}
+{% block content %}
+<div class="page-header"><div><h1>Sales Insights</h1><p>Where the team stands this month, who needs support and why, and which deals have stopped moving. Each judgement shows its evidence. A low number is a reason to help, not to blame.</p></div></div>
+<div class="grid grid-4 mb-4">{% include "components/kpi_card.html" with label="Month gone" value=m.pace|stringformat:"d"|add:"%" accent=True %}{% include "components/kpi_card.html" with label="Open leads" value=m.totals.open %}{% include "components/kpi_card.html" with label="Overdue follow-ups" value=m.totals.overdue %}{% include "components/kpi_card.html" with label="Going cold" value=m.totals.cold %}</div>
+<div class="card card-flush mb-4"><div class="card-head"><h2>Agents</h2></div><div class="table-wrap"><table class="table stack-phone"><thead><tr><th>Agent</th><th>Revenue this month</th><th>Of target</th><th>On pace for</th><th>Outlook</th><th>Needs support with</th></tr></thead><tbody>
+{% for r in m.rows %}<tr><td class="cell-first">{{ r.agent.full_name }}</td><td data-label="Revenue">KES {{ r.month_revenue|floatformat:0 }}</td><td data-label="Of target">{% if r.pct is not None %}{{ r.pct }}%{% else %}<span class="text-muted">No target</span>{% endif %}</td>
+<td data-label="Pace">{% if r.projected is not None %}{{ r.projected }}% <span class="text-muted text-sm">({{ r.confidence }})</span>{% else %}—{% endif %}</td>
+<td data-label="Outlook">{% if r.risk == "high" %}{% status_pill "Likely to miss" "danger" %}{% elif r.risk == "watch" %}{% status_pill "Watch" "warning" %}{% elif r.risk == "ok" %}{% status_pill "On track" "success" %}{% else %}{% status_pill "No target" "neutral" %}{% endif %}</td>
+<td data-label="Support" class="cell-block">{% for n, ev in r.needs %}<div><strong>{{ n }}</strong> <span class="text-muted text-sm">{{ ev }}</span></div>{% empty %}<span class="text-muted">Nothing flagged</span>{% endfor %}</td></tr>
+{% empty %}<tr><td colspan="6" class="text-muted">No sales agents yet.</td></tr>{% endfor %}</tbody></table></div></div>
+<div class="grid grid-2" style="align-items:start">
+<div class="stack">
+<div class="card"><div class="card-head"><h2>Last 30 days: enquiry to confirmed</h2></div>{% for f in funnel %}<div style="margin:8px 0"><div class="flex" style="justify-content:space-between"><span>{{ f.label }}</span><strong>{{ f.count }}</strong></div><div style="background:var(--surface-2,#eee);height:8px;border-radius:4px"><div style="width:{{ f.pct|unlocalize }}%;height:8px;border-radius:4px;background:var(--primary,#1F6F6B)"></div></div></div>{% endfor %}</div>
+<div class="card"><div class="card-head"><h2>Stalled deals at a glance</h2><span class="sub">No movement for 10+ days</span></div>
+  <div class="flex gap-4 wrap" style="margin-bottom:14px"><div><div class="text-sm text-muted">Deals stuck</div><div class="kpi-value">{{ stalled_sum.count }}</div></div><div><div class="text-sm text-muted">Money tied up</div><div class="kpi-value">KES {{ stalled_sum.value|floatformat:0 }}</div></div></div>
+  <div class="text-sm fw-700 mb-2">Where they are stuck</div>
+  {% for r in stalled_sum.by_stage %}<div class="progress-row mb-3"><div class="top"><span>{{ r.label }}</span><span>{{ r.n }}</span></div><div class="progress accent"><span style="width:{% widthratio r.n stalled_sum.top_stage 100 %}%"></span></div></div>{% empty %}<p class="text-muted text-sm">Nothing is stuck.</p>{% endfor %}
+  <div class="text-sm fw-700 mb-2 mt-4">Whose deals are stuck</div>
+  {% for r in stalled_sum.by_agent %}<div class="progress-row mb-3"><div class="top"><span>{{ r.label }}</span><span>{{ r.n }}</span></div><div class="progress"><span style="width:{% widthratio r.n stalled_sum.top_agent 100 %}%"></span></div></div>{% endfor %}
+</div>
+</div>
+<div class="card card-flush"><div class="card-head"><h2>Stalled deals</h2></div><div class="table-wrap"><table class="table stack-phone"><thead><tr><th>Lead</th><th>Stage</th><th>Stuck for</th><th>Agent</th></tr></thead><tbody>
+{% for s in stalled %}<tr><td class="cell-first"><a class="row-link" href="{{ s.e.get_absolute_url }}">{{ s.e.client.full_name }}</a><div class="cell-sub">{{ s.e.reference }}{% if s.e.deal_value %} · KES {{ s.e.deal_value|floatformat:0 }}{% endif %}</div></td><td data-label="Stage">{{ s.e.get_stage_display }}</td><td data-label="Stuck for">{{ s.days }} days</td><td data-label="Agent">{{ s.e.assigned_agent.short_name|default:"Unassigned" }}</td></tr>
+{% empty %}<tr><td colspan="4" class="text-muted">No deal has been stuck for 10 days.</td></tr>{% endfor %}</tbody></table></div></div></div>
+{% endblock %}

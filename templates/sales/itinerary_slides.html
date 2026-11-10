@@ -1,0 +1,342 @@
+{% load humanize %}<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>{{ it.title }}</title>
+<style>
+  :root { --accent: {{ accent }}; --sun: {{ accent2 }}; --peach: #fdeccd; --cream: #FBF5EA; --ink: #2a1f1c; --muted: #7a6c66; --line: #eadfce; }
+  @page slide { size: A4 landscape; margin: 0; }
+  @page flow { size: A4 landscape; margin: 11mm 16mm 14mm;
+    @bottom-left { content: "{{ company.name }}  ·  {{ company.email }}"; font: 7.5pt Helvetica, Arial, sans-serif; color: #a39690; }
+    @bottom-right { content: "Page " counter(page); font: 7.5pt Helvetica, Arial, sans-serif; color: #a39690; } }
+  * { box-sizing: border-box; }
+  body { font: 9.5pt/1.5 Helvetica, Arial, sans-serif; color: var(--ink); margin: 0; }
+  h1, h2, h3, .serif { font-family: Georgia, "DejaVu Serif", "Liberation Serif", serif; font-weight: bold; margin: 0; }
+  .slide { page: slide; width: 297mm; height: 210mm; position: relative; overflow: hidden; page-break-after: always; background: var(--cream); }
+  .flow { page: flow; }
+  .kicker { font-size: 8pt; letter-spacing: .24em; text-transform: uppercase; color: #9A5A0C; font-weight: bold; }
+  .rule { width: 18mm; height: 1.2mm; background: var(--sun); border-radius: 1mm; margin: 4mm 0; }
+  .ph { position: absolute; background-size: cover; background-position: center; }
+
+  /* ---------- Cover ---------- */
+  .cover .left { position: absolute; left: 0; top: 0; bottom: 0; width: 150mm; padding: 16mm 14mm 16mm 18mm; }
+  .cover .logo { height: 34mm; display: block; margin-bottom: 14mm; }
+  .cover h1 { font-size: 36pt; line-height: 1.05; color: var(--accent); margin: 3mm 0 0; }
+  .cover .for { font-size: 11pt; color: var(--muted); margin-top: 2mm; }
+  .cover .for b { color: var(--accent); }
+  .chips { margin-top: 9mm; }
+  .chip { display: inline-block; background: #fff; border: 1px solid var(--line); border-left: 3mm solid var(--sun); border-radius: 2mm; padding: 2.2mm 4mm; margin: 0 2.5mm 2.5mm 0; }
+  .chip small { display: block; font-size: 6.5pt; letter-spacing: .16em; text-transform: uppercase; color: var(--muted); }
+  .chip b { font-size: 11.5pt; color: var(--accent); }
+  .cover .foot { position: absolute; left: 18mm; bottom: 14mm; max-width: 62mm; font-size: 8pt; line-height: 1.4; color: var(--muted); z-index: 2; }
+  .cover .sun { position: absolute; left: 96mm; bottom: -20mm; width: 50mm; height: 50mm; border-radius: 50%; background: var(--sun); opacity: .95; }
+  .cover .sun2 { position: absolute; left: 84mm; bottom: -34mm; width: 72mm; height: 72mm; border-radius: 50%; background: var(--peach); opacity: .7; }
+  .cover .bar { position: absolute; left: 0; right: 0; bottom: 0; height: 5mm; background: var(--accent); }
+
+  /* ---------- Trip at a glance ---------- */
+  .glance .main { position: absolute; left: 0; top: 0; bottom: 0; width: 196mm; padding: 15mm 12mm 14mm 18mm; }
+  .glance .side { position: absolute; left: 196mm; right: 0; top: 0; bottom: 0; background: var(--accent); color: #fff; padding: 15mm 14mm 14mm 14mm; }
+  .glance h2 { font-size: 24pt; color: var(--accent); margin: 1mm 0 5mm; }
+  .facts { width: 100%; table-layout: fixed; border-collapse: separate; border-spacing: 3mm 0; margin: 0 -3mm 6mm; }
+  .facts td { background: #fff; border: 1px solid var(--line); border-top: 1.2mm solid var(--sun); border-radius: 2mm; padding: 3mm 3.4mm; vertical-align: top; }
+  .facts small { display: block; font-size: 6.5pt; letter-spacing: .16em; text-transform: uppercase; color: var(--muted); }
+  .facts b { font-size: 11pt; color: var(--accent); }
+  .route { columns: 2; column-gap: 8mm; margin: 2mm 0 0; padding: 0; list-style: none; }
+  .route li { break-inside: avoid; position: relative; padding: 0 0 3.2mm 9mm; font-size: 9.4pt; color: #4b3e39; }
+  .route li b { position: absolute; left: 0; top: -.4mm; width: 6.4mm; height: 6.4mm; border-radius: 50%; background: var(--sun); color: var(--accent); font-size: 7.5pt; text-align: center; line-height: 6.4mm; }
+  .rnd { border-radius: 2.5mm; }
+  .glance .side h3 { color: var(--sun); font-size: 13pt; margin-bottom: 2mm; }
+  .glance .side p { margin: 0 0 4mm; font-size: 9.2pt; color: #f1e6da; }
+  .glance .side .big { font-family: Georgia, "DejaVu Serif", serif; font-size: 22pt; font-weight: bold; color: var(--sun); line-height: 1.1; margin-bottom: 1mm; }
+  .glance .side .sm { font-size: 8pt; letter-spacing: .16em; text-transform: uppercase; color: #d9c6b4; margin-bottom: 1mm; }
+  .glance .side hr { border: 0; border-top: 1px solid rgba(255,255,255,.2); margin: 5mm 0; }
+
+  /* ---------- Itinerary (flow) ---------- */
+  .head2 { margin-bottom: 2mm; }
+  .head2 h2 { font-size: 18pt; color: var(--accent); }
+  .intro { font-size: 9.5pt; color: #4b3e39; font-style: italic; margin: 1mm 0 4mm; max-width: 230mm; }
+  table.row3 { width: 100%; table-layout: fixed; border-collapse: collapse; margin-bottom: 4mm; page-break-inside: avoid; }
+  table.row3 td { vertical-align: top; padding: 0 2mm; }
+  table.row3 td:first-child { padding-left: 0; }
+  table.row3 td:last-child { padding-right: 0; }
+  .c { border: 1px solid var(--line); border-radius: 2.5mm; overflow: hidden; background: #fff; }
+  .imgs { font-size: 0; white-space: nowrap; background: var(--peach); }
+  .imgs div { display: inline-block; width: 100%; background-size: cover; background-position: center; }
+  .imgs div + div { margin-left: 1mm; }
+  .imgs:has(div + div) div { width: 49.4%; }
+  .cb { padding: 3mm 3.4mm 3.2mm; }
+  .cb .num { display: inline-block; background: var(--accent); color: var(--sun); font-size: 7pt; font-weight: bold; letter-spacing: .12em; padding: .6mm 2.6mm; border-radius: 10mm; text-transform: uppercase; }
+  .cb .dt { font-size: 7.5pt; color: var(--muted); margin-left: 2mm; }
+  .cb h3 { color: var(--accent); margin: 1.4mm 0 1mm; }
+  .cb p { margin: 0; white-space: pre-line; color: #4b3e39; }
+  .imgs div { height: var(--ih); }
+  .cb p { font-size: var(--fs); line-height: 1.42; }
+  .cb h3 { font-size: var(--h3); }
+
+  /* ---------- Hotel slide ---------- */
+  .hotel .photos { position: absolute; left: 0; top: 0; bottom: 0; width: 148mm; background: var(--peach); }
+  .hotel .panel { position: absolute; left: 148mm; right: 0; top: 0; bottom: 0; padding: 15mm 16mm 12mm 16mm; }
+  .hotel h2 { font-size: 28pt; line-height: 1.08; color: var(--accent); margin: 2mm 0 3mm; }
+  .pills span { display: inline-block; border: 1px solid #d9c9b3; background: #fff; border-radius: 10mm; padding: 1.2mm 3.4mm; margin: 0 1.5mm 1.5mm 0; font-size: 8.2pt; color: var(--accent); font-weight: bold; }
+  .pills span.sun { background: var(--sun); border-color: var(--sun); }
+  .price { background: var(--accent); color: #fff; border-radius: 3mm; padding: 5mm 6mm; margin: 5mm 0 5mm; border-left: 3mm solid var(--sun); }
+  .price .amt { font-family: Georgia, "DejaVu Serif", serif; font-size: 27pt; font-weight: bold; line-height: 1.1; color: var(--sun); }
+  .price .amt small { font-size: 10pt; color: #fff; font-weight: normal; font-family: Helvetica, Arial, sans-serif; }
+  .price .tot { font-size: 9pt; opacity: .9; margin-top: 1mm; }
+  .lists { width: 100%; table-layout: fixed; border-collapse: collapse; }
+  .lists td { vertical-align: top; width: 50%; padding-right: 4mm; }
+  .lists h4 { margin: 0 0 1.8mm; font-size: 7.5pt; letter-spacing: .18em; text-transform: uppercase; color: var(--muted); }
+  ul.tick, ul.cross { list-style: none; padding: 0; margin: 0; font-size: 9.2pt; line-height: 1.4; }
+  ul.tick li, ul.cross li { position: relative; padding-left: 4.4mm; margin-bottom: 1.8mm; }
+  ul.tick li:before { content: "✓"; position: absolute; left: 0; color: #9A5A0C; font-weight: bold; }
+  ul.cross li:before { content: "✕"; position: absolute; left: 0; color: #1F6F6B; font-weight: bold; }
+  .reserve { position: absolute; left: 16mm; right: 16mm; bottom: 12mm; border-top: 1px solid var(--line); padding-top: 4mm; font-size: 8.5pt; color: var(--muted); }
+  .reserve b { color: var(--accent); }
+  .hotel .opt { position: absolute; right: 16mm; top: 11mm; font-size: 7.5pt; letter-spacing: .2em; color: var(--muted); text-transform: uppercase; }
+
+  /* ---------- Investment fallback & extras (flow) ---------- */
+  table.ptable { width: 100%; border-collapse: collapse; margin: 3mm 0 6mm; }
+  table.ptable th { text-align: left; font-size: 7.5pt; text-transform: uppercase; letter-spacing: .12em; color: var(--muted); border-bottom: 2px solid var(--accent); padding: 2mm 3mm; }
+  table.ptable td { padding: 2.6mm 3mm; border-bottom: 1px solid var(--line); }
+  table.ptable .r { text-align: right; white-space: nowrap; }
+  table.ptable tr.total td { border: 0; background: var(--peach); font-weight: bold; font-size: 12pt; color: var(--accent); }
+  .twocol { width: 100%; table-layout: fixed; border-collapse: collapse; }
+  .twocol td { vertical-align: top; width: 50%; padding-right: 8mm; }
+  .twocol h3 { font-size: 13pt; color: var(--accent); margin-bottom: 2mm; }
+
+  /* ---------- Payment & contact ---------- */
+  .final { position: relative; }
+  .final .wm { position: absolute; right: -6mm; top: 8mm; width: 105mm; opacity: .09; }
+  .card { background: #fff; border: 1px solid var(--line); border-top: 1.4mm solid var(--sun); border-radius: 2.5mm; padding: 5mm 6mm; margin-bottom: 5mm; position: relative; }
+  .card h3 { font-size: 13pt; color: var(--accent); margin-bottom: 2.5mm; }
+  table.kv { border-collapse: collapse; width: 100%; }
+  table.kv td { padding: 1.3mm 0; vertical-align: top; }
+  table.kv td:first-child { width: 33mm; color: var(--muted); font-size: 8.5pt; }
+  table.kv td:last-child { font-weight: bold; }
+  .note { color: #1F6F6B; font-weight: bold; font-size: 9pt; margin-top: 2mm; }
+  .terms { font-size: 8.3pt; color: var(--muted); white-space: pre-line; }
+  .ready { background: var(--accent); color: #fff; border-radius: 2.5mm; padding: 5mm 6mm; border-left: 3mm solid var(--sun); position: relative; }
+  .steps { display: table; width: 100%; table-layout: fixed; border-spacing: 4mm 0; margin: 2mm -4mm 0; }
+  .steps div { position: relative; display: table-cell; background: #fff; border: 1px solid var(--line); border-radius: 2.5mm; padding: 4mm 5mm; font-size: 8.8pt; color: var(--muted); }
+  .steps i { display: block; font-style: normal; font-family: Georgia, serif; font-weight: bold; font-size: 15pt; color: var(--sun); }
+  .steps b { display: block; color: var(--accent); font-size: 10pt; margin-bottom: 1mm; }
+  .ready b { font-family: Georgia, "DejaVu Serif", serif; font-size: 14pt; color: var(--sun); display: block; margin-bottom: 1mm; }
+
+  /* ---------- On screen (the client view in the browser): each page shown as a sheet ---------- */
+  @media screen {
+    body { background: #d9d2c8; padding: 20px 0 40px; }
+    .toolbar { position: sticky; top: 0; z-index: 10; display: flex; gap: 8px; justify-content: flex-end; max-width: 297mm; margin: 0 auto 14px; padding: 6px 0; }
+    .toolbar a, .toolbar button { padding: 9px 16px; border: 0; border-radius: 8px; background: var(--accent); color: #fff; font: inherit; font-weight: 700; font-size: 13px; cursor: pointer; text-decoration: none; }
+    .toolbar a.alt { background: #fff; color: var(--accent); border: 1px solid var(--line); }
+    .slide { margin: 0 auto 18px; box-shadow: 0 8px 28px rgba(42, 31, 28, .22); flex: none; }
+    .flow { width: 297mm; min-height: 210mm; margin: 0 auto 18px; padding: 11mm 16mm 14mm; background: #fff; box-shadow: 0 8px 28px rgba(42, 31, 28, .22); position: relative; }
+    .stage { overflow-x: auto; padding: 0 12px; }
+    .stage > * { margin-left: auto; margin-right: auto; }
+  }
+  @media print { .toolbar { display: none; } }
+</style>
+</head>
+<body{% if print %} onload="window.print()"{% endif %}>
+{% if web %}<div class="toolbar"><a href="{{ pdf_url }}">Download designed PDF</a></div>{% endif %}
+<div class="stage">
+
+<!-- ================= COVER ================= -->
+<section class="slide cover">
+  {% if cover_photos %}
+    <div class="ph" style="left:154mm;top:0;width:68mm;height:210mm;background-image:url('{{ cover_photos.0 }}')"></div>
+    <div class="ph" style="left:225mm;top:0;width:72mm;height:103.5mm;background-image:url('{{ cover_photos.1 }}')"></div>
+    <div class="ph" style="left:225mm;top:106.5mm;width:72mm;height:103.5mm;background-image:url('{{ cover_photos.2 }}')"></div>
+  {% else %}
+    <div class="ph" style="left:154mm;top:0;right:0;bottom:0;background:var(--accent)"></div>
+  {% endif %}
+  <div class="sun2"></div><div class="sun"></div>
+  <div class="left">
+    <img class="logo" src="{{ logo }}" alt="{{ company.name }}">
+    <div class="kicker">Travel proposal{% if it.start_date %} · {{ it.start_date|date:"F Y" }}{% endif %}</div>
+    <h1>{{ it.title }}</h1>
+    <div class="rule"></div>
+    {% if it.enquiry.client.full_name %}<div class="for">Prepared for <b>{{ it.enquiry.client.full_name }}</b></div>{% endif %}
+    <div class="chips">
+      <span class="chip"><small>Duration</small><b>{{ n_days }} Day{{ n_days|pluralize }}{% if n_nights %} · {{ n_nights }} Night{{ n_nights|pluralize }}{% endif %}</b></span>
+      <span class="chip"><small>Travellers</small><b>{{ it.enquiry.party_label }}</b></span>
+      {% if it.start_date %}<span class="chip"><small>Departure</small><b>{{ it.start_date|date:"j M Y" }}</b></span>{% endif %}
+    </div>
+    <div class="foot">{{ company.tagline }}{% if company.phone %} · {{ company.phone }}{% endif %}</div>
+  </div>
+  <div class="bar"></div>
+</section>
+
+<!-- ================= TRIP AT A GLANCE ================= -->
+<section class="slide glance">
+  <div class="main">
+    <div class="kicker">Overview</div>
+    <h2>Your trip at a glance</h2>
+    <table class="facts"><tr>
+      <td><small>Duration</small><b>{{ n_days }} day{{ n_days|pluralize }}{% if n_nights %} · {{ n_nights }} night{{ n_nights|pluralize }}{% endif %}</b></td>
+      <td><small>Dates</small><b>{% if it.start_date %}{{ it.start_date|date:"j M" }}{% if glance.end_date %} – {{ glance.end_date|date:"j M Y" }}{% else %} {{ it.start_date|date:"Y" }}{% endif %}{% else %}To be agreed{% endif %}</b></td>
+      <td><small>Travellers</small><b>{{ it.enquiry.party_label }}</b></td>
+      <td><small>Stay options</small><b>{% if glance.options %}{{ glance.options }} lodge{{ glance.options|pluralize }} to choose{% else %}As itinerary{% endif %}</b></td>
+    </tr></table>
+    <div class="kicker">The route</div>
+    <ol class="route">{% for t in glance.route %}<li><b>{{ forloop.counter }}</b>{{ t }}</li>{% endfor %}</ol>
+    {% if cover_photos %}
+    <div class="ph rnd" style="left:18mm;bottom:14mm;width:55mm;height:52mm;background-image:url('{{ cover_photos.0 }}')"></div>
+    <div class="ph rnd" style="left:75.5mm;bottom:14mm;width:55mm;height:52mm;background-image:url('{{ cover_photos.1 }}')"></div>
+    <div class="ph rnd" style="left:133mm;bottom:14mm;width:55mm;height:52mm;background-image:url('{{ cover_photos.2 }}')"></div>{% endif %}
+  </div>
+  <div class="side">
+    {% if glance.from_pp %}<div class="sm">Prices from</div>
+      <div class="big">{{ it.currency }} {{ glance.from_pp|floatformat:0|intcomma }}</div><p>per person, everything included. Compare every lodge option on the pricing page.</p><hr>{% endif %}
+    {% if glance.consultant %}<h3>Your travel consultant</h3><p><b style="color:#fff">{{ glance.consultant }}</b><br>{{ glance.consultant_phone }}<br>{{ company.email }}</p><hr>{% endif %}
+    <h3>Why {{ company.name }}</h3><p>Tailor-made safaris, planned by people who know every lodge and park personally, with support from the moment you book until you are home.</p>
+  </div>
+</section>
+
+<!-- ================= ITINERARY ================= -->
+{% if days %}<section class="flow">
+  <div class="head2"><div class="kicker">Your journey</div><h2>Day by day</h2></div>
+  {% if it.intro %}<p class="intro">{{ it.intro }}</p>{% endif %}
+  <div class="grid3" style="--ih: {{ photo_mm }}mm; --fs: {{ font_pt }}pt; --h3: {% if font_pt > 9.5 %}12{% elif font_pt > 8.5 %}11{% else %}10{% endif %}pt;">
+  {% for row in rows %}
+    <table class="row3"><tr>
+    {% for e in row %}<td>{% if e %}
+      <div class="c">
+        {% if e.photos %}<div class="imgs">{% for u in e.photos %}<div style="background-image:url('{{ u }}')"></div>{% endfor %}</div>{% endif %}
+        <div class="cb">
+          <span class="num">Day {{ e.day.day_number }}</span>{% if e.date %}<span class="dt">{{ e.date|date:"D, j M" }}</span>{% endif %}
+          <h3>{{ e.day.title }}</h3>
+          {% if e.day.story %}<p>{{ e.day.story }}</p>{% endif %}
+        </div>
+      </div>
+    {% endif %}</td>{% endfor %}
+    </tr></table>
+  {% endfor %}
+  </div>
+</section>{% endif %}
+
+<!-- ================= HOTELS ================= -->
+{% for x in hotels %}
+<section class="slide hotel">
+  <div class="photos">
+    {% with p=x.photos %}
+      {% if p|length >= 5 %}
+        <div class="ph" style="left:0;top:0;width:148mm;height:96mm;background-image:url('{{ p.0 }}')"></div>
+        <div class="ph" style="left:0;top:99mm;width:73mm;height:53.5mm;background-image:url('{{ p.1 }}')"></div>
+        <div class="ph" style="left:75mm;top:99mm;width:73mm;height:53.5mm;background-image:url('{{ p.2 }}')"></div>
+        <div class="ph" style="left:0;top:155.5mm;width:73mm;height:54.5mm;background-image:url('{{ p.3 }}')"></div>
+        <div class="ph" style="left:75mm;top:155.5mm;width:73mm;height:54.5mm;background-image:url('{{ p.4 }}')"></div>
+      {% elif p|length == 4 %}
+        <div class="ph" style="left:0;top:0;width:148mm;height:118mm;background-image:url('{{ p.0 }}')"></div>
+        <div class="ph" style="left:0;top:121mm;width:48mm;height:89mm;background-image:url('{{ p.1 }}')"></div>
+        <div class="ph" style="left:50mm;top:121mm;width:48mm;height:89mm;background-image:url('{{ p.2 }}')"></div>
+        <div class="ph" style="left:100mm;top:121mm;width:48mm;height:89mm;background-image:url('{{ p.3 }}')"></div>
+      {% elif p|length == 3 %}
+        <div class="ph" style="left:0;top:0;width:148mm;height:122mm;background-image:url('{{ p.0 }}')"></div>
+        <div class="ph" style="left:0;top:125mm;width:73mm;height:85mm;background-image:url('{{ p.1 }}')"></div>
+        <div class="ph" style="left:75mm;top:125mm;width:73mm;height:85mm;background-image:url('{{ p.2 }}')"></div>
+      {% elif p|length == 2 %}
+        <div class="ph" style="left:0;top:0;width:148mm;height:104mm;background-image:url('{{ p.0 }}')"></div>
+        <div class="ph" style="left:0;top:107mm;width:148mm;height:103mm;background-image:url('{{ p.1 }}')"></div>
+      {% elif p|length == 1 %}
+        <div class="ph" style="left:0;top:0;width:148mm;height:210mm;background-image:url('{{ p.0 }}')"></div>
+      {% endif %}
+    {% endwith %}
+  </div>
+  <div class="panel">
+    {% if hotels|length > 1 %}<div class="opt">Option {{ forloop.counter }} of {{ hotels|length }}</div>{% endif %}
+    <div class="kicker">Accommodation</div>
+    <h2>{{ x.h.name }}</h2>
+    <div class="pills">
+      <span class="sun">{{ x.h.meal_plan }}</span>
+      <span>{{ n_nights }} night{{ n_nights|pluralize }}</span>
+      {% if x.h.room_type %}<span>{{ x.h.room_type }}</span>{% endif %}
+    </div>
+    {% if x.h.price_per_person and not hide_prices %}<div class="price">
+      <div class="amt">{{ it.currency }} {{ x.h.price_per_person|floatformat:0|intcomma }} <small>per person</small></div>
+      <div class="tot">Total for {{ it.pax }} traveller{{ it.pax|pluralize }}: <b>{{ it.currency }} {{ x.total|floatformat:0|intcomma }}</b></div>
+    </div>{% else %}<div class="price"><div class="amt" style="font-size:17pt">Included in your package</div><div class="tot">See the pricing page for the total.</div></div>{% endif %}
+    {% if x.h.price_per_person and not hide_prices %}<table class="lists"><tr>
+      <td>{% if it.inclusion_list %}<h4>Included</h4><ul class="tick">{% for i in it.inclusion_list %}<li>{{ i }}</li>{% endfor %}</ul>{% endif %}</td>
+      <td>{% if it.exclusion_list %}<h4>Not included</h4><ul class="cross">{% for i in it.exclusion_list %}<li>{{ i }}</li>{% endfor %}</ul>{% endif %}</td>
+    </tr></table>{% endif %}
+    <div class="reserve"><b>Reserve this option</b> &nbsp;·&nbsp; {{ company.phone }} &nbsp;·&nbsp; {{ company.email }}</div>
+  </div>
+</section>
+{% endfor %}
+
+<!-- ================= HOW YOU TRAVEL ================= -->
+{% if travel %}<section class="flow" style="page-break-before: always; page-break-after: avoid">
+  <div class="head2"><div class="kicker">Getting there</div><h2>How you travel</h2></div>
+  <p class="intro">Choose the way your group travels. The cheapest option is included in the starting price; the others show what they add.</p>
+  <table class="ptable">
+    <thead><tr><th>Option</th><th>Type</th><th>Details</th><th class="r">For {{ it.pax }}</th><th class="r">Per person</th><th class="r">Compared with cheapest</th></tr></thead>
+    <tbody>{% for x in travel %}<tr><td><b>{{ x.t.name }}</b></td><td>{{ x.t.get_mode_display }}</td><td>{{ x.t.notes|default:"–" }}</td>
+      <td class="r"><b>{{ it.currency }} {{ x.total|floatformat:0|intcomma }}</b></td><td class="r">{{ it.currency }} {{ x.per_person|floatformat:0|intcomma }}</td>
+      <td class="r">{% if x.cheapest %}Included{% else %}+ {{ it.currency }} {{ x.extra|floatformat:0|intcomma }}{% endif %}</td></tr>{% endfor %}</tbody>
+  </table>
+</section>{% endif %}
+
+<!-- ================= INVESTMENT (no hotel options, or extras) ================= -->
+{% if prices %}
+<section class="flow" style="page-break-before: always; page-break-after: avoid">
+  {% if options %}
+  <div class="head2"><div class="kicker">Pricing</div><h2>Compare your lodge options</h2></div>
+  <table class="ptable">
+    <thead><tr><th>Lodge</th><th>Meal plan</th><th class="r">Lodging p.p.</th><th class="r">Lodging total</th><th class="r">All-in total</th><th class="r">All-in p.p.</th></tr></thead>
+    <tbody>{% for o in options %}<tr><td><b>{{ o.name }}</b></td><td>{{ o.meal }}</td><td class="r">{{ it.currency }} {{ o.per_person|floatformat:0|intcomma }}</td><td class="r">{{ it.currency }} {{ o.lodging|floatformat:0|intcomma }}</td><td class="r"><b>{{ it.currency }} {{ o.all_in|floatformat:0|intcomma }}</b></td><td class="r">{% if o.all_in_pp %}{{ it.currency }} {{ o.all_in_pp|floatformat:0|intcomma }}{% else %}-{% endif %}</td></tr>{% endfor %}</tbody>
+  </table>
+  <p style="font-size:8.4pt;color:#7a6c66;margin:-3mm 0 6mm">All-in total = safari package + additional costs below + the chosen lodge, for {{ it.pax }} traveller{{ it.pax|pluralize }}.</p>
+  {% endif %}
+  <div class="head2"><div class="kicker">{% if options %}Included in every option{% else %}Pricing{% endif %}</div><h2>{% if has_hotel_prices %}Additional costs{% else %}Investment{% endif %}</h2></div>
+  <table class="ptable">
+    <thead><tr><th>Description</th><th class="r">Qty</th><th class="r">Unit price</th><th class="r">Amount</th></tr></thead>
+    <tbody>
+    {% for p in prices %}
+      <tr><td>{{ p.description }}</td><td class="r">{{ p.quantity }}</td>
+          <td class="r">{{ it.currency }} {{ p.unit_price|floatformat:2|intcomma }}</td>
+          <td class="r">{{ it.currency }} {{ p.line_total|floatformat:2|intcomma }}</td></tr>
+    {% endfor %}
+    {% if not has_hotel_prices %}
+      <tr class="total"><td colspan="3">Total</td><td class="r">{{ it.currency }} {{ total|floatformat:2|intcomma }}</td></tr>
+      {% if per_person and it.pax > 1 %}<tr><td colspan="3" style="color:#7a6c66">Approx. per person ({{ it.pax }} travellers)</td><td class="r" style="color:#7a6c66">{{ it.currency }} {{ per_person|floatformat:2|intcomma }}</td></tr>{% endif %}
+    {% endif %}
+    </tbody>
+  </table>
+  {% if not has_hotel_prices and it.inclusion_list or not has_hotel_prices and it.exclusion_list %}
+  <table class="twocol"><tr>
+    <td>{% if it.inclusion_list %}<h3>Included</h3><ul class="tick">{% for i in it.inclusion_list %}<li>{{ i }}</li>{% endfor %}</ul>{% endif %}</td>
+    <td>{% if it.exclusion_list %}<h3>Not included</h3><ul class="cross">{% for i in it.exclusion_list %}<li>{{ i }}</li>{% endfor %}</ul>{% endif %}</td>
+  </tr></table>
+  {% endif %}
+</section>
+{% endif %}
+
+<!-- ================= PAYMENT & CONTACT ================= -->
+<section class="flow final" style="page-break-before: always;">
+  <div class="head2"><div class="kicker">Next steps</div><h2>Payment &amp; booking</h2></div>
+  <table class="twocol"><tr>
+    <td>
+      <div class="card">
+        <h3>Bank details</h3>
+        <table class="kv">{% for k, v in company.bank_rows %}<tr><td>{{ k }}</td><td>{{ v }}</td></tr>{% empty %}<tr><td colspan="2" style="font-weight:normal;color:#7a6c66">Bank details are given with your quotation.</td></tr>{% endfor %}</table>
+      </div>
+      <div class="card">
+        <h3>M-PESA Paybill</h3>
+        <table class="kv">
+          <tr><td>Paybill</td><td>{{ company.paybill|default:"-" }}</td></tr>
+          <tr><td>Account no.</td><td>{{ it.enquiry.reference }}</td></tr>
+        </table>
+        {% if company.payment_note %}<div class="note">{{ company.payment_note }}</div>{% endif %}
+      </div>
+    </td>
+    <td>
+      <div class="ready"><b>Ready to book?</b>
+        {{ company.phone }}<br>{{ company.email }}{% if company.website %}<br>{{ company.website }}{% endif %}
+      </div>
+      {% if it.effective_terms %}<div class="card" style="margin-top:5mm"><h3>Terms</h3><div class="terms">{{ it.effective_terms }}</div></div>{% endif %}
+    </td>
+  </tr></table>
+</section>
+</div>
+</body>
+</html>

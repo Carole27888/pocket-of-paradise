@@ -1,0 +1,14 @@
+{% extends "base.html" %}{% load static %}
+{% block title %}Photo library{% endblock %}
+{% block extra_css %}<link rel="stylesheet" href="{% static 'css/itinerary.css' %}">{% endblock %}
+{% block content %}
+<div class="page-header"><div><h1>Photo library</h1><p>A pack of tagged photos for each destination and lodge. Pick them per day when you build an itinerary.</p></div></div>
+<div class="mchips"><a class="chip {% if kind == 'destination' %}active{% endif %}" href="?kind=destination">Destinations <b>{{ counts.destination }}</b></a><a class="chip {% if kind == 'accommodation' %}active{% endif %}" href="?kind=accommodation">Lodges &amp; hotels <b>{{ counts.accommodation }}</b></a></div>
+{% if can_edit %}<form method="post" class="card lib-new">{% csrf_token %}<input type="hidden" name="kind" value="{{ kind }}">
+  <input class="input" name="name" required maxlength="100" placeholder="{% if kind == 'destination' %}New destination pack, e.g. Maasai Mara{% else %}New lodge pack, e.g. Mara Serena Lodge{% endif %}">
+  <button class="btn btn-primary" type="submit">{% include "components/icon.html" with name="plus" %} Create pack</button></form>{% endif %}
+<div class="lib-grid">{% for c in categories %}
+  <a class="lib-card" href="{% url 'catalog:photo_pack' c.slug %}"><div class="lib-cover">{% with cv=c.cover %}{% if cv %}<img src="{{ cv.thumb_url }}" alt="" loading="lazy">{% else %}<span>No photos yet</span>{% endif %}{% endwith %}</div>
+    <div class="lib-meta"><b>{{ c.name }}</b><span class="text-muted text-sm">{{ c.n }} photo{{ c.n|pluralize }}</span></div></a>
+{% empty %}<div class="card empty">No packs here yet. Create one above, then add photos.</div>{% endfor %}</div>
+{% endblock %}

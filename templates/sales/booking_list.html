@@ -1,0 +1,16 @@
+{% extends "base.html" %}{% load static %}
+{% block title %}Bookings{% endblock %}
+{% block extra_css %}<link rel="stylesheet" href="{% static 'css/sales.css' %}">{% endblock %}
+{% block content %}
+<div class="page-header"><div><h1>{{ title }}</h1><p>{{ subtitle }}</p></div></div>
+<div class="grid grid-4 mb-4">
+  {% include "components/kpi_card.html" with label="Live bookings" value=kpis.count note=kpis.value|money_compact|add:" booked" accent=True %}
+  {% include "components/kpi_card.html" with label="Awaiting deposit" value=kpis.pending note="Chase these" %}
+  {% include "components/kpi_card.html" with label="Outstanding balance" value=kpis.outstanding|money_compact note="Across live bookings" %}
+  {% include "components/kpi_card.html" with label="Departing in 14 days" value=kpis.departing %}
+</div>
+<div class="card card-flush">
+  {% include "components/filter_bar.html" with placeholder="Search booking, client, trip…" %}
+  <div id="list-region">{% include "sales/partials/booking_table.html" %}</div>
+</div>
+{% endblock %}

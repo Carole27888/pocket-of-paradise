@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+{% block title %}Enquiries{% endblock %}
+{% block content %}
+<div class="page-header">
+  <div><h1>{{ title }}</h1><p>{{ subtitle }}</p></div>
+  {% if request.user.can_capture_enquiries %}<div class="actions"><a class="btn btn-accent" href="{% url 'leads:create' %}">{% include "components/icon.html" with name="plus" %} New Enquiry</a></div>{% endif %}
+</div>
+{% if unassigned %}
+<div class="alert alert-warning mb-4">{% include "components/icon.html" with name="alert" %}
+  <span class="grow"><strong>{{ unassigned }}</strong> open enquir{{ unassigned|pluralize:"y is,ies are" }} not assigned to an agent.</span>
+  <a class="btn btn-sm btn-primary" href="?unassigned=yes">Show</a></div>
+{% endif %}
+<div class="card card-flush" x-data="bulkSelect()">
+  <nav class="tabs" aria-label="Pipeline stages">
+    {% for t in stage_tabs %}
+      <a href="{% if t.key %}?stage={{ t.key }}{% else %}?{% endif %}" class="{% if t.key == current_stage %}active{% endif %}">
+        {% if t.key %}<span class="dot-stage dot-{{ t.key }}"></span>{% endif %}{{ t.label }} <span class="n">{{ t.count }}</span></a>
+    {% endfor %}
+  </nav>
+  {% include "components/filter_bar.html" with placeholder="Search ref, client, phone, destination…" hide_stage=True %}
+  <div id="list-region">{% include "leads/partials/enquiry_table.html" %}</div>
+
+  {% if not request.user.is_read_only %}
+  <form class="bulk-bar" x-show="selected.length" x-cloak x-transition hx-post="{% url 'leads:bulk_stage' %}" hx-disabled-elt="find button[type=submit]"
+        @htmx:after-request.window="if ($event.detail.successful) selected = []">
+    <template x-for="id in selected" :key="id"><input type="hidden" name="ids" :value="id"></template>
+    <strong><span x-text="selected.length"></span> selected</strong>
+    <label class="visually-hidden" for="bulk-stage">Move to stage</label>
+    <select name="stage" id="bulk-stage" class="input select" x-model="stage" required>
+      <option value="" disabled>Move to stage…</option>
+      {% for val, label in stage_choices %}<option value="{{ val }}">{{ label }}</option>{% endfor %}
+    </select>
+    <input name="lost_reason" class="input" maxlength="160" placeholder="Why was it lost?" x-show="stage === 'lost'" x-cloak :required="stage === 'lost'">
+    <button class="btn btn-accent" type="submit" :disabled="!stage">{% include "components/icon.html" with name="check" %} Update stage</button>
+    <button class="btn btn-ghost" type="button" @click="selected = []">Clear</button>
+  </form>
+  {% endif %}
+</div>
+<script>
+function bulkSelect() {
+  return {
+    selected: [], stage: "",
+    boxes() { return Array.from(this.$root.querySelectorAll(".row-check")); },
+    get allChecked() { const b = this.boxes(); return b.length > 0 && b.every((x) => this.selected.includes(+x.value)); },
+    toggle(id, on) { this.selected = on ? [...new Set([...this.selected, id])] : this.selected.filter((x) => x !== id); },
+    toggleAll(on) { const ids = this.boxes().map((x) => +x.value); this.selected = on ? [...new Set([...this.selected, ...ids])] : this.selected.filter((x) => !ids.includes(x)); },
+  };
+}
+</script>
+{% endblock %}

@@ -1,0 +1,80 @@
+{% extends "base.html" %}{% load static %}
+{% block title %}{{ q.reference }}{% endblock %}
+{% block extra_css %}<link rel="stylesheet" href="{% static 'css/sales.css' %}">{% endblock %}
+{% block content %}
+{% with e=q.enquiry %}
+<div class="page-header">
+  <div><div class="crumbs"><a href="{% url 'sales:quotations' %}">Quotations</a><span>/</span><span>{{ q.reference }}</span></div>
+    <h1>{{ q.reference }} <small class="text-muted">v{{ q.version }}</small></h1>
+    <p>{{ e.client.full_name }} · <a href="{{ e.get_absolute_url }}">{{ e.reference }}</a> · {% if q.status == "accepted" %}{% status_pill "Accepted" "success" %}{% elif q.status == "sent" %}{% if q.is_expired %}{% status_pill "Expired" "danger" %}{% else %}{% status_pill "Sent" "info" %}{% endif %}{% elif q.status == "draft" %}{% status_pill "Draft" "warning" %}{% elif q.status == "rejected" %}{% status_pill "Declined" "danger" %}{% else %}{% status_pill q.get_status_display "neutral" %}{% endif %}</p></div>
+  <div class="actions">
+    <a class="btn btn-secondary" href="{% url 'sales:quotation_print' q.pk %}" target="_blank" rel="noopener">{% include "components/icon.html" with name="printer" %} Print view</a>
+    <a class="btn btn-secondary" href="{% url 'sales:quotation_pdf' q.pk %}">{% include "components/icon.html" with name="download-file" %} PDF</a>
+    {% if can_act %}<form method="post" action="{% url 'deals:signature_request' 'quotation' q.pk %}" class="inline">{% csrf_token %}<button class="btn btn-secondary" type="submit">{% include "components/icon.html" with name="edit" %} Send for e-signature</button></form>{% endif %}
+    {% if can_act and q.is_editable %}<a class="btn btn-primary" href="{% url 'sales:quotation_edit' q.pk %}">{% include "components/icon.html" with name="edit" %} Edit</a>{% endif %}
+  </div>
+</div>
+
+<div class="grid grid-main-side">
+  <div class="stack">
+    <div class="card">
+      <div class="card-head"><h2>{{ q.title }}</h2><span class="sub">{{ q.currency }}</span></div>
+      {% if q.intro %}<p class="text-sm mb-4">{{ q.intro|linebreaksbr }}</p>{% endif %}
+      <div class="table-wrap"><table class="table">
+        <thead><tr><th>Item</th><th class="num">Qty</th><th class="num">Unit</th><th class="num">Amount</th></tr></thead>
+        <tbody>{% for i in items %}<tr><td>{{ i.description }}<div class="cell-sub">{{ i.get_kind_display }}</div></td><td class="num">{{ i.quantity|floatformat:"-2" }}</td><td class="num">{{ i.unit_price|money:q.currency }}</td><td class="num fw-700">{{ i.line_total|money:q.currency }}</td></tr>
+          {% empty %}<tr><td colspan="4" class="text-muted">No lines yet. {% if can_act and q.is_editable %}<a href="{% url 'sales:quotation_edit' q.pk %}">Add price lines</a>{% endif %}</td></tr>{% endfor %}</tbody></table></div>
+      <div class="totals mt-4">
+        <div><span>Subtotal</span><span>{{ q.subtotal|money:q.currency }}</span></div>
+        {% if q.discount %}<div><span>Discount</span><span>−{{ q.discount|money:q.currency }}</span></div>{% endif %}
+        {% if q.vat_rate %}<div><span>VAT {{ q.vat_rate|floatformat:"-2" }}%</span><span>{{ q.vat_amount|money:q.currency }}</span></div>{% endif %}
+        <div class="grand"><span>Total</span><span>{{ q.total|money:q.currency }}</span></div>
+        {% if q.currency != "KES" %}<div class="text-sm text-muted"><span>≈ KES at {{ q.fx_rate|floatformat:2 }}</span><span>{{ q.total_kes|money }}</span></div>{% endif %}
+      </div>
+      {% if q.terms %}<p class="section-title mt-5">Terms</p><p class="text-sm">{{ q.terms|linebreaksbr }}</p>{% endif %}
+    </div>
+  </div>
+
+  <div class="stack">
+    <div class="card"><div class="card-head"><h2>Itinerary</h2></div>
+      {% if itinerary %}<a class="list-item row-link" href="{{ itinerary.get_absolute_url }}"><div class="grow"><div class="title">{{ itinerary.title|truncatechars:40 }}</div><div class="meta">{{ itinerary.day_count }} days · {{ itinerary.get_status_display }}{% if itinerary.share_token %} · {{ itinerary.share_views }} client view{{ itinerary.share_views|pluralize }}{% endif %}</div></div></a>
+      {% elif can_act %}<p class="text-sm text-muted">This quotation has no itinerary behind it yet. Clients decide faster when they can see the days.</p><a class="btn btn-secondary btn-sm" href="{% url 'sales:itinerary_new' %}?enquiry={{ e.pk }}">{% include "components/icon.html" with name="route" size="16" %} Build itinerary</a>{% else %}<p class="text-sm text-muted mb-0">No itinerary linked.</p>{% endif %}</div>
+    <div class="card"><div class="card-head"><h2>Status</h2></div>
+      <dl class="dl"><dt>Valid until</dt><dd class="{% if q.is_expired %}text-late{% endif %}">{{ q.valid_until|ds_date }}</dd>
+        <dt>Sent</dt><dd>{% if q.sent_at %}{{ q.sent_at|ds_datetime }} · {{ q.sent_via }}{% else %}Not sent{% endif %}</dd>
+        <dt>Agent</dt><dd>{{ q.agent.full_name|default:"—" }}</dd>
+        {% if q.decided_at %}<dt>Decision</dt><dd>{{ q.decided_at|ds_datetime }}{% if q.decision_note %} · {{ q.decision_note }}{% endif %}</dd>{% endif %}</dl>
+    </div>
+
+    {% if can_act %}
+    {% if q.status == "draft" %}
+    <div class="card"><div class="card-head"><h2>Send to client</h2></div>
+      <form method="post" action="{% url 'sales:quotation_send' q.pk %}" class="stack" style="gap:10px">{% csrf_token %}
+        <label class="visually-hidden" for="id_via">Channel</label>{{ send_form.via }}
+        <button class="btn btn-accent" type="submit">{% include "components/icon.html" with name="share" %} Mark as sent</button></form>
+      {% if e.client.phone %}<p class="text-sm text-muted mt-3">Open WhatsApp first: <a href="{{ e.client.phone|wa_link }}?text={{ wa_text }}" target="_blank" rel="noopener">message {{ e.client.full_name }}</a>, attach the PDF, then mark as sent.</p>{% endif %}
+    </div>
+    {% elif q.status == "sent" %}
+    <div class="card"><div class="card-head"><h2>Client responded?</h2></div>
+      <details class="fold" open><summary class="text-success">Client accepted → create booking</summary>
+        <form method="post" action="{% url 'sales:quotation_accept' q.pk %}" class="stack" style="gap:10px">{% csrf_token %}
+          <div class="field"><label for="{{ accept_form.travel_start.id_for_label }}">Travel from</label>{{ accept_form.travel_start }}</div>
+          <div class="field"><label for="{{ accept_form.travel_end.id_for_label }}">Travel to</label>{{ accept_form.travel_end }}</div>
+          <div class="field"><label for="{{ accept_form.deposit_percent.id_for_label }}">Deposit %</label>{{ accept_form.deposit_percent }}</div>
+          <button class="btn btn-primary" type="submit">{% include "components/icon.html" with name="check" %} Accept & create booking</button></form></details>
+      <details class="fold mt-3"><summary class="text-danger">Client declined</summary>
+        <form method="post" action="{% url 'sales:quotation_reject' q.pk %}" class="stack" style="gap:10px">{% csrf_token %}{{ decision_form.note }}
+          <button class="btn btn-secondary" type="submit">Mark as declined</button></form></details>
+    </div>
+    {% endif %}
+    {% if q.status != "draft" and q.status != "accepted" %}
+    <form method="post" action="{% url 'sales:quotation_revise' q.pk %}">{% csrf_token %}<button class="btn btn-secondary btn-block" type="submit">{% include "components/icon.html" with name="refresh" %} Revise (new version)</button></form>{% endif %}
+    {% endif %}
+    {% if q.bookings.exists %}{% with b=q.bookings.first %}<div class="card"><div class="card-head"><h2>Booking</h2></div><a class="list-item row-link" href="{{ b.get_absolute_url }}"><div class="grow"><div class="title">{{ b.reference }}</div><div class="meta">{{ b.get_status_display }}</div></div></a></div>{% endwith %}{% endif %}
+
+    <div class="card"><div class="card-head"><h2>Versions</h2></div>
+      <div class="list">{% for v in versions %}<a class="list-item row-link" href="{{ v.get_absolute_url }}"><div class="grow"><div class="title">v{{ v.version }} · {{ v.total|money:v.currency }}</div><div class="meta">{{ v.get_status_display }} · {{ v.created_at|ds_date }}</div></div>{% if v.pk == q.pk %}<span class="pill pill-brand">Viewing</span>{% endif %}</a>{% endfor %}</div></div>
+  </div>
+</div>
+{% endwith %}
+{% endblock %}

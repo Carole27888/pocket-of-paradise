@@ -1,0 +1,7 @@
+{% load l10n %}<div class="task-row" id="task-{{ t.pk|unlocalize }}">
+  <div class="grow"><a class="fw-700" href="{{ t.enquiry.get_absolute_url }}">{{ t.enquiry.client.full_name }}</a>
+    <div class="text-sm text-muted">{{ t.get_kind_display }} · {{ t.title }}{% if t.is_auto %} <span class="pill pill-info" title="Created automatically">Auto</span>{% endif %}{% if t.agent and not scoped %} · {{ t.agent.short_name }}{% endif %}</div></div>
+  <span class="when {{ when_cls }}">{{ t.due_at|ds_datetime }}</span>
+  {% if request.user.can_work_sales %}<form hx-post="{% url 'sales:followup_done' t.pk %}" hx-target="#task-{{ t.pk|unlocalize }}" hx-swap="outerHTML">
+    <button class="btn btn-secondary btn-sm" type="submit" aria-label="Mark done">{% include "components/icon.html" with name="check" size="16" %} Done</button></form>{% endif %}
+</div>

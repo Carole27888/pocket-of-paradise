@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+{% block title %}Clients{% endblock %}
+{% block content %}
+<div class="page-header">
+  <div><h1>{{ title }}</h1><p>{{ subtitle }}</p></div>
+  {% if request.user.can_manage_clients %}<div class="actions"><a class="btn btn-primary" href="{% url 'contacts:create' %}" data-modal-form="{% url 'contacts:create' %}" data-modal-title="New client">{% include "components/icon.html" with name="plus" %} New client</a></div>{% endif %}
+</div>
+<div class="card card-flush">
+  {% include "components/filter_bar.html" with placeholder="Search name, phone, email or nationality…" %}
+  <div id="list-region">{% include "contacts/partials/client_table.html" %}</div>
+</div>
+{% endblock %}

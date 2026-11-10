@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% block title %}Sales Automation{% endblock %}
+{% block content %}
+<div class="page-header"><div><h1>Sales Automation</h1><p>The system creates the follow-ups people would otherwise forget, so no quote, deposit or client goes quiet. Each one is marked <b>Auto</b> in the agent's Follow-ups.</p></div>
+  <div class="actions"><form method="post">{% csrf_token %}<button class="btn btn-accent" name="action" value="run" type="submit">{% include "components/icon.html" with name="sparkles" %} Run now</button></form></div></div>
+<div class="grid grid-4 mb-4">
+  {% include "components/kpi_card.html" with label="Created this week" value=made_week note="Follow-ups made by the system" accent=True %}
+  {% include "components/kpi_card.html" with label="Open now" value=open_auto note="Waiting for an agent" %}
+  {% include "components/kpi_card.html" with label="Overdue" value=overdue_auto note="Automatic tasks past due" %}
+  {% include "components/kpi_card.html" with label="Done this week" value=done_auto note="Completed by agents" %}
+</div>
+<form method="post" class="card">{% csrf_token %}
+  <div class="card-head"><h2>Rules</h2><label class="check-label">{{ form.automation_on }} <b>Automation is on</b></label></div>
+  <div class="auto-rules">
+  {% for r in rules %}
+    <div class="auto-rule"><div class="grow"><b>{{ r.title }}</b><p>{{ r.text }}</p><span class="text-xs text-muted">{{ r.made }} created in the last 7 days</span></div>
+      <div class="auto-input">{{ r.field }}<span class="text-xs text-muted">{{ r.unit }}</span></div></div>
+  {% endfor %}
+    <div class="auto-rule"><div class="grow"><b>Next step after a call</b><p>Interested: a task to send the quotation tomorrow. Left a voicemail: a task to call back tomorrow. Only when the agent did not schedule one.</p><span class="text-xs text-muted">{{ call_next }} created in the last 7 days</span></div><div class="auto-input">{{ form.auto_callback_after_call }}</div></div>
+    <div class="auto-rule"><div class="grow"><b>Weekly plan reminders</b><p>Monday: anyone who has not planned their week is reminded. Weekdays 4:30pm: anyone with unmarked items is asked to mark how the day went.</p></div><div class="auto-input">{{ form.auto_plan_reminders }}</div></div>
+  </div>
+  <p class="text-xs text-muted">Put 0 to switch a rule off. The rules run every morning at 7:30. Each task is created only once, however many times the rules run. A lead with no assigned agent is skipped, since nobody could work it: assign it first.</p>
+  <button class="btn btn-primary" type="submit">Save</button>
+</form>
+{% endblock %}

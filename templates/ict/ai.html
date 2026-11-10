@@ -1,0 +1,84 @@
+{% extends "base.html" %}
+{% block title %}AI{% endblock %}
+{% block content %}
+<div class="page-header"><div><h1>AI</h1><p>Choose Claude or ChatGPT, paste the key and pick the model. It powers the WhatsApp lead bot, the director's business assistant, the in-app assistant, itinerary writing and coaching. Switch provider at any time; the next question uses it.</p></div>
+  <div class="actions"><a class="btn btn-secondary" href="{% url 'ict:whatsapp' %}">{% include "components/icon.html" with name="whatsapp" %} WhatsApp settings</a></div></div>
+
+<div class="alert {% if active %}alert-success{% else %}alert-warn{% endif %} mb-4"><span class="grow">{% if active %}<b>AI is on.</b> In use: {% if active == "openai" %}OpenAI ({{ openai_model }}){% else %}Claude ({{ claude_model }}){% endif %}{% if fallback and has_claude and has_openai %}, with the other as backup{% endif %}.{% else %}<b>No AI key yet.</b> Paste a Claude or OpenAI key below and it starts working at once.{% endif %}</span></div>
+
+<div class="grid grid-4 mb-4">
+  {% include "components/kpi_card.html" with label="AI requests (30 days)" value=total.n|default:0 accent=True %}
+  {% include "components/kpi_card.html" with label="Tokens in / out (30 days)" value=tokens_label %}
+  {% include "components/kpi_card.html" with label="Estimated cost, 30 days (USD)" value=cost_label %}
+  {% include "components/kpi_card.html" with label="Estimated cost this month (USD)" value=month_label %}</div>
+
+<div class="grid grid-main-side" style="align-items:start">
+<div class="stack" style="gap:16px">
+  <div class="card"><div class="card-head"><h2>Provider</h2></div>
+    <form method="post" class="stack" style="gap:12px">{% csrf_token %}<input type="hidden" name="action" value="prefer">
+      <div class="flex gap-3" style="flex-wrap:wrap"><label class="check-label"><input type="radio" name="prefer" value="claude" {% if prefer == "claude" %}checked{% endif %}> Claude (Anthropic){% if not has_claude %} <span class="text-xs text-muted">no key yet</span>{% endif %}</label>
+        <label class="check-label"><input type="radio" name="prefer" value="openai" {% if prefer == "openai" %}checked{% endif %}> OpenAI (ChatGPT){% if not has_openai %} <span class="text-xs text-muted">no key yet</span>{% endif %}</label></div>
+      <label class="check-label"><input type="checkbox" name="ai_fallback" {% if fallback %}checked{% endif %}> If the chosen AI fails or runs out of credit, use the other one (needs both keys)</label>
+      <div><button class="btn btn-primary" type="submit">Save</button></div></form></div>
+
+  <div class="grid grid-2">
+    <div class="card"><div class="card-head"><h2>Claude (Anthropic)</h2>{% if rows.ai.last_test_ok %}<span class="pill pill-success">Tested OK</span>{% elif rows.ai.last_test_ok is False %}<span class="pill pill-danger">Test failed</span>{% elif has_claude %}<span class="pill pill-success">Saved</span>{% else %}<span class="pill pill-neutral">Not set</span>{% endif %}</div>
+      <p class="text-xs text-muted">Key from console.anthropic.com → API keys (starts with <code>sk-ant-</code>).</p>
+      <form method="post" class="stack" style="gap:10px">{% csrf_token %}<input type="hidden" name="action" value="claude">
+        <div class="field"><label for="c-key">API key</label><input class="input" id="c-key" name="api_key" type="password" autocomplete="new-password" placeholder="{% if has_claude %}Saved ({{ claude.0.display }}), leave blank to keep{% else %}Paste the key{% endif %}"></div>
+        <div class="field"><label for="c-model">Model</label><input class="input" id="c-model" name="model" list="claude-models" value="{{ claude_model }}"><datalist id="claude-models">{% for m in claude_models %}<option value="{{ m }}">{% endfor %}</datalist><span class="text-xs text-muted">Sonnet is the best balance; Haiku is cheapest; Opus is the most capable.</span></div>
+        <label class="check-label"><input type="checkbox" name="make_default" {% if not has_openai %}checked{% endif %}> Use Claude from now on</label>
+        <div><button class="btn btn-primary btn-sm" type="submit">Save</button></div></form>
+      {% if has_claude %}<div class="btn-row mt-3"><form method="post">{% csrf_token %}<input type="hidden" name="action" value="test"><input type="hidden" name="provider" value="claude"><button class="btn btn-secondary btn-sm" type="submit">Test connection</button></form>
+        <form method="post" onsubmit="return confirm('Remove the Claude key?')">{% csrf_token %}<input type="hidden" name="action" value="remove"><input type="hidden" name="provider" value="claude"><button class="btn btn-ghost btn-sm text-danger" type="submit">Remove</button></form></div>{% endif %}
+      {% if rows.ai.last_test_at %}<p class="text-xs {% if rows.ai.last_test_ok %}text-success{% else %}text-danger{% endif %} mt-2 mb-0">{{ rows.ai.last_test_at|ds_datetime }} · {{ rows.ai.last_test_message }}</p>{% endif %}</div>
+
+    <div class="card"><div class="card-head"><h2>OpenAI (ChatGPT)</h2>{% if rows.openai.last_test_ok %}<span class="pill pill-success">Tested OK</span>{% elif rows.openai.last_test_ok is False %}<span class="pill pill-danger">Test failed</span>{% elif has_openai %}<span class="pill pill-success">Saved</span>{% else %}<span class="pill pill-neutral">Not set</span>{% endif %}</div>
+      <p class="text-xs text-muted">Key from platform.openai.com → API keys (starts with <code>sk-</code>). The account needs billing set up.</p>
+      <form method="post" class="stack" style="gap:10px">{% csrf_token %}<input type="hidden" name="action" value="openai">
+        <div class="field"><label for="o-key">API key</label><input class="input" id="o-key" name="api_key" type="password" autocomplete="new-password" placeholder="{% if has_openai %}Saved ({{ openai.0.display }}), leave blank to keep{% else %}Paste the key{% endif %}"></div>
+        <div class="field"><label for="o-model">Model</label><input class="input" id="o-model" name="model" list="openai-models" value="{{ openai_model }}"><datalist id="openai-models">{% for m in openai_models %}<option value="{{ m }}">{% endfor %}</datalist><span class="text-xs text-muted">Any chat model your account can use; gpt-4o-mini is the cheapest.</span></div>
+        <label class="check-label"><input type="checkbox" name="make_default" {% if not has_claude %}checked{% endif %}> Use OpenAI from now on</label>
+        <div><button class="btn btn-primary btn-sm" type="submit">Save</button></div></form>
+      {% if has_openai %}<div class="btn-row mt-3"><form method="post">{% csrf_token %}<input type="hidden" name="action" value="test"><input type="hidden" name="provider" value="openai"><button class="btn btn-secondary btn-sm" type="submit">Test connection</button></form>
+        <form method="post" onsubmit="return confirm('Remove the OpenAI key?')">{% csrf_token %}<input type="hidden" name="action" value="remove"><input type="hidden" name="provider" value="openai"><button class="btn btn-ghost btn-sm text-danger" type="submit">Remove</button></form></div>{% endif %}
+      {% if rows.openai.last_test_at %}<p class="text-xs {% if rows.openai.last_test_ok %}text-success{% else %}text-danger{% endif %} mt-2 mb-0">{{ rows.openai.last_test_at|ds_datetime }} · {{ rows.openai.last_test_message }}</p>{% endif %}</div>
+  </div>
+
+  <div class="card"><div class="card-head"><h2>Business assistant on WhatsApp</h2><span class="pill {% if cfg.exec_assistant_enabled %}pill-success{% else %}pill-neutral{% endif %}">{% if cfg.exec_assistant_enabled %}On{% else %}Off{% endif %}</span></div>
+    <p class="text-sm text-muted">The people below text the company WhatsApp number and ask, for example, “how many leads this week?”, “best agent this month?”, “departures next 7 days”, “who still owes us?”. The AI answers from live data. A message from any other number never reaches business data: it goes to the customer bot as usual.</p>
+    <form method="post" class="stack" style="gap:10px">{% csrf_token %}<input type="hidden" name="action" value="assistant">
+      <label class="check-label"><input type="checkbox" name="exec_assistant_enabled" {% if cfg.exec_assistant_enabled %}checked{% endif %}> Answer business questions from these roles</label>
+      <div class="flex gap-3" style="flex-wrap:wrap">{% for r in all_roles %}{% if r == "Director" or r == "COO" or r == "Admin" or r == "Sales Manager" or r == "Finance Officer" %}<label class="check-label"><input type="checkbox" name="exec_roles" value="{{ r }}" {% if r in exec_roles %}checked{% endif %}> {{ r }}{% if r == "Director" %} (CEO){% endif %}</label>{% endif %}{% endfor %}</div>
+      <div><button class="btn btn-primary btn-sm" type="submit">Save</button></div></form>
+    <div class="table-wrap mt-3"><table class="table"><thead><tr><th>Who</th><th>Role</th><th>WhatsApp number</th></tr></thead><tbody>
+      {% for u in execs %}<tr><td><b>{{ u.full_name }}</b></td><td>{{ u.primary_role }}</td><td>{% if u.whatsapp_target %}{{ u.whatsapp_target }}{% else %}<a class="text-danger" href="{% url 'accounts:user_edit' u.pk %}">No number: add one</a>{% endif %}</td></tr>
+      {% empty %}<tr><td colspan="3" class="text-muted">No active user holds these roles yet.</td></tr>{% endfor %}</tbody></table></div>
+    <form method="post" class="inline-form mt-3">{% csrf_token %}<input type="hidden" name="action" value="ask"><div class="field grow"><label for="ask-q">Try it here (same answers as on WhatsApp)</label><input class="input" id="ask-q" name="question" placeholder="How many leads came in this week?"></div><button class="btn btn-secondary" type="submit">Ask</button></form>
+    {% if tried %}<div class="alert alert-info mt-3" style="display:block"><b>{{ tried.q }}</b><div style="white-space:pre-wrap;margin-top:6px">{{ tried.a }}</div></div>{% endif %}</div>
+
+  <div class="card card-flush"><div class="card-head"><h2>Business assistant conversations</h2><span class="sub">Latest 40</span></div>
+    <div class="table-wrap"><table class="table stack-phone"><thead><tr><th>When</th><th>Who</th><th>Question</th><th>Answer</th></tr></thead><tbody>
+    {% for c in chats %}<tr><td class="cell-first">{{ c.created_at|ds_datetime }}</td><td data-label="Who">{{ c.user.full_name|default:c.phone }}<div class="text-xs text-muted">{{ c.provider|default:"-" }}</div></td>
+      <td data-label="Question" class="text-sm">{{ c.question|truncatechars:140 }}</td><td data-label="Answer" class="text-sm{% if not c.ok %} text-danger{% endif %}" style="white-space:pre-wrap;max-width:420px">{{ c.answer|truncatechars:300 }}</td></tr>
+    {% empty %}<tr><td colspan="4" class="text-muted">No questions yet.</td></tr>{% endfor %}</tbody></table></div></div>
+</div>
+
+<div class="stack" style="gap:16px">
+  <div class="card card-flush"><div class="card-head"><h2>Usage, last {{ days }} days</h2></div>
+    <div class="table-wrap"><table class="table"><thead><tr><th>Feature</th><th>Requests</th><th>Tokens</th><th>Est. USD</th></tr></thead><tbody>
+    {% for r in by_feature %}<tr><td><b>{{ r.feature|title }}</b><div class="text-xs text-muted">{{ r.provider }}{% if r.failed %} · {{ r.failed }} failed{% endif %}</div></td><td>{{ r.n }}</td><td class="text-xs">{{ r.tin|default:0 }} in<br>{{ r.tout|default:0 }} out</td><td>{{ r.cost|default:0|floatformat:3 }}</td></tr>
+    {% empty %}<tr><td colspan="4" class="text-muted">No AI requests yet.</td></tr>{% endfor %}</tbody></table></div>
+    {% if recent_errors %}<div class="p-4"><p class="text-xs fw-700 mb-1">Latest errors</p>{% for e in recent_errors %}<p class="text-xs text-danger mb-1">{{ e.created_at|ds_datetime }} · {{ e.provider }}: {{ e.error }}</p>{% endfor %}</div>{% endif %}</div>
+
+  <div class="card"><div class="card-head"><h2>Prices for the estimate</h2></div>
+    <p class="text-xs text-muted">USD per million tokens. Set them to your plan's current prices; the figures above are estimates, the provider's invoice is the real bill.</p>
+    <form method="post" class="stack" style="gap:10px">{% csrf_token %}<input type="hidden" name="action" value="prices">
+      <div class="form-grid"><div class="field"><label for="p1">Claude input</label><input class="input" id="p1" name="claude_input_price" value="{{ cfg.claude_input_price }}" inputmode="decimal"></div>
+        <div class="field"><label for="p2">Claude output</label><input class="input" id="p2" name="claude_output_price" value="{{ cfg.claude_output_price }}" inputmode="decimal"></div>
+        <div class="field"><label for="p3">OpenAI input</label><input class="input" id="p3" name="openai_input_price" value="{{ cfg.openai_input_price }}" inputmode="decimal"></div>
+        <div class="field"><label for="p4">OpenAI output</label><input class="input" id="p4" name="openai_output_price" value="{{ cfg.openai_output_price }}" inputmode="decimal"></div></div>
+      <div><button class="btn btn-secondary btn-sm" type="submit">Save prices</button></div></form></div>
+</div>
+</div>
+{% endblock %}

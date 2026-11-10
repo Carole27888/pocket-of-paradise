@@ -1,0 +1,72 @@
+{% extends "base.html" %}{% load l10n static %}
+{% block title %}{{ b.reference }}{% endblock %}
+{% block extra_css %}<link rel="stylesheet" href="{% static 'css/sales.css' %}">{% endblock %}
+{% block content %}
+<div class="page-header">
+  <div><div class="crumbs"><a href="{% url 'sales:bookings' %}">Bookings</a><span>/</span><span>{{ b.reference }}</span></div>
+    <h1>{{ b.client.full_name }}</h1><p>{{ b.reference }} · {{ b.title }} ·
+      {% if b.status == "cancelled" %}{% status_pill "Cancelled" "danger" %}{% elif b.status == "completed" %}{% status_pill "Completed" "neutral" %}{% elif b.status == "confirmed" %}{% status_pill "Confirmed" "success" %}{% elif b.status == "deposit" %}{% status_pill "Deposit paid" "info" %}{% else %}{% status_pill "Awaiting deposit" "warning" %}{% endif %}</p></div>
+  <div class="actions">
+    {% if b.client.phone %}<a class="btn btn-secondary" href="{{ b.client.phone|wa_link }}" target="_blank" rel="noopener">{% include "components/icon.html" with name="whatsapp" %} WhatsApp</a>{% endif %}
+    {% if b.quotation %}<a class="btn btn-secondary" href="{{ b.quotation.get_absolute_url }}">{% include "components/icon.html" with name="file-text" %} Quotation</a>{% endif %}
+    <a class="btn btn-primary" href="{% url 'sales:booking_travel_day' b.pk %}">{% include "components/icon.html" with name="route" %} Travel day</a>
+    <a class="btn btn-secondary" href="{% url 'deals:plan' b.pk %}">{% include "components/icon.html" with name="calendar" %} Payment plan</a>
+    {% if can_act %}<form method="post" action="{% url 'deals:signature_request' 'booking' b.pk %}" class="inline">{% csrf_token %}<button class="btn btn-secondary" type="submit">{% include "components/icon.html" with name="edit" %} Send for e-signature</button></form>{% endif %}
+    {% if can_act %}<a class="btn btn-primary" href="{% url 'sales:booking_edit' b.pk %}">{% include "components/icon.html" with name="edit" %} Edit</a>{% endif %}
+  </div>
+</div>
+<div class="grid grid-4 mb-4">
+  <div class="card kpi kpi-accent"><span class="kpi-label">Trip value</span><span class="kpi-value" style="font-size:22px">{{ b.total_amount|money:b.currency }}</span>{% if b.currency != "KES" %}<span class="kpi-delta">≈ {{ b.total_kes|money_compact }}</span>{% endif %}</div>
+  <div class="card kpi"><span class="kpi-label">Paid</span><span class="kpi-value" style="font-size:22px">{{ b.amount_paid|money:b.currency }}</span>
+    <div class="pay-bar"><div class="bar {% if b.paid_percent >= 100 %}ok{% elif b.paid_percent >= b.deposit_percent %}warn{% else %}bad{% endif %}"><span style="width:{{ b.paid_percent }}%"></span></div></div><span class="kpi-delta">{{ b.paid_percent }}% paid</span></div>
+  <div class="card kpi"><span class="kpi-label">Balance</span><span class="kpi-value" style="font-size:22px">{{ b.balance|money:b.currency }}</span></div>
+  <div class="card kpi"><span class="kpi-label">Deposit due ({{ b.deposit_percent }}%)</span><span class="kpi-value" style="font-size:22px">{{ b.deposit_amount|money:b.currency }}</span>
+    <span class="kpi-delta">{% if b.amount_paid >= b.deposit_amount %}Deposit received{% else %}Awaiting deposit{% endif %}</span></div>
+</div>
+<div class="grid grid-main-side">
+  <div class="stack">
+    {% if letter_templates %}<div class="card"><div class="card-head"><h2>Letters</h2><span class="sub">Filled in from this booking</span></div><div class="btn-row">{% for t in letter_templates %}<a class="btn btn-secondary btn-sm" href="{% url 'sales:letter' b.pk|unlocalize t.pk|unlocalize %}">{{ t.name }}</a>{% endfor %}</div></div>{% endif %}
+    {% if can_act %}<div class="card"><div class="card-head"><h2>Client trip page</h2>{% if b.portal_token %}<span class="sub">{{ b.portal_views }} view{{ b.portal_views|pluralize }}</span>{% endif %}</div>
+      {% if b.portal_token %}<p class="text-sm text-muted">The client sees what they have paid, what is due, how to pay, the itinerary and what to pack, and rates the trip after they travel.</p>
+        <div class="flex gap-2"><input class="input" id="portal-url" value="{{ portal_url }}" readonly aria-label="Trip page link"><button type="button" class="btn btn-secondary" onclick="var i=document.getElementById('portal-url');i.select();navigator.clipboard&&navigator.clipboard.writeText(i.value);this.textContent='Copied'">Copy</button></div>
+        <div class="btn-row mt-3"><a class="btn btn-secondary btn-sm" href="{{ portal_url }}" target="_blank" rel="noopener">Preview</a>{% if b.client.phone %}<a class="btn btn-primary btn-sm" href="{{ b.client.phone|wa_link }}?text={{ portal_wa }}" target="_blank" rel="noopener">{% include "components/icon.html" with name="whatsapp" %} Send on WhatsApp</a>{% endif %}</div>
+        <form method="post" action="{% url 'sales:booking_portal' b.pk %}" class="mt-3" onsubmit="return confirm('Switch the page off? The client will no longer be able to open it.')">{% csrf_token %}<input type="hidden" name="action" value="revoke"><button class="btn btn-ghost btn-sm text-danger" type="submit">Switch page off</button></form>
+      {% else %}<p class="text-sm text-muted">Give the client one page for their trip: payments, the itinerary, what to bring, and a rating form for after they travel.</p>
+        <form method="post" action="{% url 'sales:booking_portal' b.pk %}">{% csrf_token %}<button class="btn btn-accent btn-block" type="submit">{% include "components/icon.html" with name="share" %} Create client trip page</button></form>{% endif %}</div>{% endif %}
+    <div class="card"><div class="card-head"><h2>Trip</h2></div>
+      <dl class="dl"><dt>Travel</dt><dd>{{ b.travel_start|ds_date }}{% if b.travel_end %} – {{ b.travel_end|ds_date }}{% endif %}</dd>
+        <dt>Party</dt><dd>{{ b.party_label }}</dd>
+        {% if b.package %}<dt>Package</dt><dd><a href="{{ b.package.get_absolute_url }}">{{ b.package.title }}</a></dd>{% endif %}
+        <dt>Lead</dt><dd><a href="{{ b.enquiry.get_absolute_url }}">{{ b.enquiry.reference }}</a></dd>
+        <dt>Agent</dt><dd>{{ b.agent.full_name|default:"—" }}</dd><dt>Booked</dt><dd>{{ b.booked_at|ds_datetime }}</dd>
+        {% if b.status == "cancelled" %}<dt>Cancelled</dt><dd class="text-danger">{{ b.cancelled_reason }}</dd>{% endif %}</dl>
+      {% if b.notes %}<p class="section-title mt-4">Notes</p><p class="text-sm">{{ b.notes|linebreaksbr }}</p>{% endif %}</div>
+    <div class="card card-flush"><div class="card-head"><h2>Payments</h2><span class="sub">{{ payments|length }} received</span></div>
+      <div class="table-wrap mt-3"><table class="table"><thead><tr><th>Received</th><th>Method</th><th>Reference</th><th class="num">Amount</th></tr></thead>
+        <tbody>{% for p in payments %}<tr><td>{{ p.received_at|ds_datetime }}</td><td>{{ p.get_method_display }}</td><td>{{ p.reference|default:"—" }}{% if p.note %}<div class="cell-sub">{{ p.note }}</div>{% endif %}</td><td class="num fw-700">{{ p.amount|money:b.currency }}</td></tr>
+          {% empty %}<tr><td colspan="4" class="text-muted">No payments yet.</td></tr>{% endfor %}</tbody></table></div></div>
+    <div class="card"><div class="card-head"><h2>Activity</h2></div>{% include "leads/partials/timeline.html" with activities=activities %}</div>
+  </div>
+  <div class="stack">
+    {% if can_act and b.status != "cancelled" and b.status != "completed" and b.balance > 0 %}
+    <div class="card"><div class="card-head"><h2>Record payment</h2></div>
+      <form method="post" action="{% url 'sales:booking_payment' b.pk %}" class="stack" style="gap:10px">{% csrf_token %}
+        <div class="field"><label for="{{ pay_form.amount.id_for_label }}">Amount ({{ b.currency }})</label>{{ pay_form.amount }}</div>
+        <div class="field"><label for="{{ pay_form.method.id_for_label }}">Method</label>{{ pay_form.method }}</div>
+        <div class="field"><label for="{{ pay_form.reference.id_for_label }}">M-PESA / bank reference</label>{{ pay_form.reference }}</div>
+        <div class="field"><label for="{{ pay_form.received_at.id_for_label }}">Received (optional)</label>{{ pay_form.received_at }}</div>
+        <button class="btn btn-accent" type="submit">{% include "components/icon.html" with name="check" %} Save payment</button></form></div>{% endif %}
+    <div class="card"><div class="card-head"><h2>Departure</h2></div>
+      {% if b.departure %}<a class="list-item row-link" href="{{ b.departure.get_absolute_url }}"><div class="grow"><div class="title">{{ b.departure.reference }} · {{ b.departure.start_date|ds_date }}</div><div class="meta">{{ b.departure.get_stage_display }} · {{ b.departure.seats_sold }}/{{ b.departure.capacity }} seats</div></div></a>{% else %}<p class="text-muted text-sm">Not on a departure yet.</p>{% endif %}
+      {% if can_act and departures %}<form method="post" action="{% url 'sales:booking_departure' b.pk %}" class="stack mt-3" style="gap:10px">{% csrf_token %}
+        <select name="departure" class="input select">{% for d in departures %}<option value="{{ d.pk|unlocalize }}" {% if b.departure_id == d.pk %}selected{% endif %}>{{ d.start_date|ds_date }} · {{ d.package.title|truncatechars:30 }} · {{ d.seats_left }} left</option>{% endfor %}</select>
+        <button class="btn btn-secondary" type="submit">{% if b.departure %}Move to this departure{% else %}Add to departure{% endif %}</button></form>{% endif %}</div>
+    {% if can_act and next_statuses %}
+    <div class="card"><div class="card-head"><h2>Move booking</h2></div>
+      <form method="post" action="{% url 'sales:booking_status' b.pk %}" class="stack" style="gap:10px" x-data="{ s: '{{ next_statuses.0.0 }}' }">{% csrf_token %}
+        <select name="status" class="input select" x-model="s">{% for v, l in next_statuses %}<option value="{{ v }}">{{ l }}</option>{% endfor %}</select>
+        <input name="reason" class="input" maxlength="200" placeholder="Reason for cancelling" x-show="s === 'cancelled'" x-cloak>
+        <button class="btn btn-secondary" type="submit">Update</button></form></div>{% endif %}
+  </div>
+</div>
+{% endblock %}

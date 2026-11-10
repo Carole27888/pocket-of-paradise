@@ -1,0 +1,73 @@
+{% extends "base.html" %}{% load l10n static %}
+{% block title %}{% if mine %}My Performance{% else %}{{ agent.full_name }}{% endif %}{% endblock %}
+{% block extra_css %}<link rel="stylesheet" href="{% static 'css/sales.css' %}">{% endblock %}
+{% block extra_vendor %}<script src="{% static 'vendor/chartjs/chart.umd.min.js' %}" defer></script>{% endblock %}
+{% block extra_js %}<script src="{% static 'js/charts.js' %}" defer></script>{% endblock %}
+{% block content %}
+<div class="page-header">
+  <div>{% if not mine %}<div class="crumbs"><a href="{% url 'sales:team' %}">Team</a><span>/</span><span>{{ agent.full_name }}</span></div>{% endif %}
+    <h1>{% if mine %}My Performance{% else %}{{ agent.full_name }}{% endif %}</h1>
+    <p>{{ agent.title|default:"Sales agent" }} · {{ agent.get_on_duty_display }}{% if agent.languages %} · {{ agent.languages }}{% endif %} · {{ start|ds_date }} – {{ end|ds_date }}</p></div>
+  <div class="actions">{% include "sales/partials/range_bar.html" %}
+    {% if agent.phone and not mine %}<a class="btn btn-secondary" href="tel:{{ agent.phone }}">{% include "components/icon.html" with name="phone" %} Call</a>{% endif %}</div>
+</div>
+
+{% if row.breaches or row.overdue %}
+<div class="alert alert-warning mb-4">{% include "components/icon.html" with name="alert" %}<span class="grow">
+  {% if row.breaches %}<strong>{{ row.breaches }}</strong> lead{{ row.breaches|pluralize }} past the response SLA. {% endif %}{% if row.overdue %}<strong>{{ row.overdue }}</strong> overdue follow-up{{ row.overdue|pluralize }}.{% endif %}</span></div>{% endif %}
+
+<div class="grid grid-4 mb-4">
+  <div class="card kpi kpi-accent"><span class="kpi-label">Revenue won</span><span class="kpi-value">{{ row.revenue|money_compact }}</span><span class="kpi-delta">{{ row.won }} booking{{ row.won|pluralize }}</span></div>
+  <div class="card kpi"><span class="kpi-label">Open pipeline</span><span class="kpi-value">{{ row.pipeline|money_compact }}</span><span class="kpi-delta">{{ row.open }} leads · forecast {{ row.forecast|money_compact }}</span></div>
+  <div class="card kpi"><span class="kpi-label">Conversion</span><span class="kpi-value">{{ row.conversion }}%</span><span class="kpi-delta">{{ row.won }} of {{ row.assigned }} assigned</span></div>
+  <div class="card kpi"><span class="kpi-label">First response</span><span class="kpi-value">{% if row.response_min is None %}—{% elif row.response_min >= 120 %}{{ row.response_min|floatformat:0 }}m{% else %}{{ row.response_min }}m{% endif %}</span><span class="kpi-delta">{{ row.calls }} calls · {{ row.connected }} connected</span></div>
+</div>
+
+<div class="grid grid-main-side mb-4">
+  <div class="card">
+    <div class="card-head"><h2>This month's targets</h2><span class="sub">{{ end|date:"F Y" }}</span></div>
+    {% if row.target %}
+      <div class="stack" style="gap:14px">
+        {% if row.target.revenue_target %}<div class="progress-row"><div class="top"><span>Revenue</span><span>{{ row.month_revenue|money_compact }} / {{ row.target.revenue_target|money_compact }}</span></div>
+          <div class="bar {% if row.revenue_pct >= 80 %}ok{% elif row.revenue_pct >= 40 %}warn{% else %}bad{% endif %}"><span style="width:{{ row.revenue_pct }}%"></span></div></div>{% endif %}
+        {% if row.target.bookings_target %}<div class="progress-row"><div class="top"><span>Bookings</span><span>{{ row.month_bookings }} / {{ row.target.bookings_target }}</span></div>
+          <div class="bar {% if row.bookings_pct >= 80 %}ok{% elif row.bookings_pct >= 40 %}warn{% else %}bad{% endif %}"><span style="width:{{ row.bookings_pct }}%"></span></div></div>{% endif %}
+      </div>
+    {% else %}<p class="text-muted text-sm">No target set for this month.{% if request.user.can_manage_sales %} <a href="{% url 'sales:targets' %}">Set one</a>.{% endif %}</p>{% endif %}
+    <div class="strip mt-4">
+      <div class="cell"><b>{{ row.quotes }}</b><span>Quotes sent</span></div><div class="cell"><b>{{ row.lost }}</b><span>Lost</span></div>
+      <div class="cell"><b>{{ row.cold }}</b><span>Going cold</span></div><div class="cell"><b>{{ row.overdue }}</b><span>Overdue tasks</span></div></div>
+  </div>
+  {{ charts|json_script:"sales-charts" }}
+  {% include "components/chart_card.html" with title="Revenue vs target" sub="Last 6 months, KES" kind="revenue" source="sales-charts" key="revenue" %}
+</div>
+
+<div class="grid grid-main-side mb-4">
+  <div class="card card-flush"><div class="card-head"><h2>Biggest open leads</h2><a href="{% url 'leads:list' %}{% if not mine %}?assigned_agent={{ agent.pk|unlocalize }}{% endif %}">All leads →</a></div>
+    <div class="table-wrap mt-3"><table class="table stack-phone"><thead><tr><th>Lead</th><th>Stage</th><th class="num">Value</th><th>Last contact</th></tr></thead>
+      <tbody>{% for e in open_leads %}<tr><td class="cell-first"><a class="row-link cell-main" href="{{ e.get_absolute_url }}">{{ e.client.full_name }}</a><div class="cell-sub">{{ e.interest_label }} · {{ e.party_label }}</div></td>
+        <td data-label="Stage">{% stage_pill e %}</td><td data-label="Value" class="num fw-700">{{ e.deal_value|money_compact }}</td><td data-label="Last contact">{{ e.last_contact_at|ds_date }}</td></tr>
+        {% empty %}<tr><td colspan="4" class="text-muted">No open leads.</td></tr>{% endfor %}</tbody></table></div></div>
+  <div class="stack">
+    <div class="card"><div class="card-head"><h2>Pipeline by stage</h2></div>
+      {% for s in stages %}<div class="progress-row mb-3"><div class="top"><span><span class="pill stage-{{ s.code }}">{{ s.label }}</span></span><span>{{ s.count }} · {{ s.value|money_compact }}</span></div></div>{% endfor %}</div>
+    {% if reassign_form and open_leads %}
+    <div class="card"><div class="card-head"><h2>Cover / hand over</h2></div>
+      <p class="text-sm text-muted">Move all {{ row.open }} open lead{{ row.open|pluralize }} to another agent (leave, sickness, resignation).</p>
+      <form class="flex gap-2 mt-3" method="post" action="{% url 'sales:team_reassign' agent.pk %}" onsubmit="return confirm('Move all open leads from {{ agent.full_name|escapejs }}?')">{% csrf_token %}{{ reassign_form.agent }}<button class="btn btn-primary" type="submit">Move</button></form></div>{% endif %}
+  </div>
+</div>
+
+<div class="grid grid-2">
+  <div class="card"><div class="card-head"><h2>Follow-ups</h2><a href="{% url 'sales:followups' %}">All →</a></div>
+    {% for t in tasks %}<div class="task-row"><div class="grow"><a class="fw-700" href="{{ t.enquiry.get_absolute_url }}">{{ t.enquiry.client.full_name }}</a><div class="text-sm text-muted">{{ t.title }}</div></div><span class="when {% if t.is_overdue %}late{% endif %}">{{ t.due_at|ds_datetime }}</span></div>{% empty %}<p class="text-muted text-sm">No open follow-ups.</p>{% endfor %}</div>
+  <div class="card"><div class="card-head"><h2>Recent calls</h2><a href="{% url 'sales:calls' %}">All →</a></div>
+    {% for c in calls %}<div class="task-row"><div class="grow"><a class="fw-700" href="{{ c.enquiry.get_absolute_url }}">{{ c.enquiry.client.full_name }}</a><div class="text-sm text-muted">{{ c.get_outcome_display }}{% if c.notes %} · {{ c.notes|truncatechars:60 }}{% endif %}</div></div><span class="text-xs text-muted nowrap">{{ c.called_at|ds_datetime }}</span></div>{% empty %}<p class="text-muted text-sm">No calls logged.</p>{% endfor %}</div>
+  <div class="card"><div class="card-head"><h2>Bookings</h2><a href="{% url 'sales:bookings' %}">All →</a></div>
+    <div class="list">{% for b in bookings %}<a class="list-item row-link" href="{{ b.get_absolute_url }}"><div class="grow"><div class="title">{{ b.client.full_name }}</div><div class="meta">{{ b.reference }} · {{ b.get_status_display }} · {{ b.paid_percent }}% paid</div></div><span class="fw-700">{{ b.total_amount|money:b.currency }}</span></a>{% empty %}<p class="text-muted text-sm">No bookings yet.</p>{% endfor %}</div></div>
+  <div class="card"><div class="card-head"><h2>Going cold & slow response</h2></div>
+    <div class="list">{% for e in breaches %}<a class="list-item row-link" href="{{ e.get_absolute_url }}"><div class="grow"><div class="title">{{ e.client.full_name }}</div><div class="meta">No first response · {{ e.created_at|timesince }} old</div></div><span class="pill pill-danger">SLA</span></a>{% endfor %}
+      {% for e in cold %}<a class="list-item row-link" href="{{ e.get_absolute_url }}"><div class="grow"><div class="title">{{ e.client.full_name }}</div><div class="meta">{{ e.interest_label }} · last contact {{ e.last_contact_at|ds_date }}</div></div>{% stage_pill e %}</a>{% endfor %}
+      {% if not breaches and not cold %}<p class="text-muted text-sm">Nothing slipping.</p>{% endif %}</div></div>
+</div>
+{% endblock %}

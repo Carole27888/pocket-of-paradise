@@ -1,0 +1,10 @@
+<div class="hotel-row formset-row" data-travel>
+  {% for h in form.hidden_fields %}{{ h }}{% endfor %}
+  {% if form.non_field_errors %}<div class="alert alert-danger" style="grid-column:1/-1">{{ form.non_field_errors|join:" " }}</div>{% endif %}
+  <div class="field"><label>Type</label>{{ form.mode }}</div>
+  <div class="field"><label>Name</label>{{ form.name }}{% for e in form.name.errors %}<span class="error">{{ e }}</span>{% endfor %}</div>
+  <div class="field"><label>Priced</label>{{ form.basis }}</div>
+  <div class="field"><label>Price</label>{{ form.price }}</div>
+  <div class="field"><label>Notes</label>{{ form.notes }}</div>
+  {% if form.DELETE %}<label class="rm-x" title="Remove">{{ form.DELETE }}<span aria-hidden="true">✕</span><span class="visually-hidden">Remove</span></label>{% endif %}
+</div>

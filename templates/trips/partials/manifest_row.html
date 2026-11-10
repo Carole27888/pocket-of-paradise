@@ -1,0 +1,9 @@
+{% load l10n %}<tr id="m-{{ e.pk|unlocalize }}" class="{% if e.checked_in_at %}row-selected{% endif %}">
+  <td class="cell-first"><span class="cell-main">{{ e.full_name }}</span>{% if e.is_lead %} <span class="pill pill-brand" style="padding:0 7px">Lead</span>{% endif %}<div class="cell-sub">{% if e.is_child %}Child{% if e.age %} ({{ e.age }}){% endif %}{% else %}Adult{% endif %}{% if e.booking %} · {{ e.booking.reference }}{% endif %}</div></td>
+  <td data-label="Nationality">{{ e.nationality|default:"—" }}</td>
+  <td data-label="Passport">{% if pii %}{{ e.masked_passport|default:"—" }}{% else %}—{% endif %}</td>
+  <td data-label="Needs">{{ e.dietary_notes|default:"" }}{% if e.medical_notes and pii %} <span class="text-late">{{ e.medical_notes }}</span>{% endif %}{% if not e.dietary_notes and not e.medical_notes %}—{% endif %}</td>
+  <td data-label="Pickup">{{ e.pickup_point|default:"—" }}</td>
+  <td data-label="Check-in">{% if can_checkin %}<form hx-post="{% url 'trips:manifest_check' dep.pk e.pk %}" hx-target="#m-{{ e.pk|unlocalize }}" hx-swap="outerHTML">{% if e.checked_in_at %}<input type="hidden" name="undo" value="1"><button class="btn btn-secondary btn-sm" type="submit">✓ {{ e.checked_in_at|ds_time }} · undo</button>{% else %}<button class="btn btn-primary btn-sm" type="submit">Check in</button>{% endif %}</form>{% else %}{% if e.checked_in_at %}{% status_pill "Checked in" "success" %}{% else %}{% status_pill "Not checked in" "neutral" %}{% endif %}{% endif %}</td>
+  <td class="text-right">{% if can_manage %}<a class="btn btn-ghost btn-sm" href="{% url 'trips:manifest_edit' dep.pk e.pk %}">Edit</a>{% endif %}</td>
+</tr>

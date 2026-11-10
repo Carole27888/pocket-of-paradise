@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+{% block title %}My Email{% endblock %}
+{% block content %}
+<div class="page-header"><div><h1>My Email</h1><p>Your own mailbox, inside the system.</p></div><div class="flex gap-2"><a class="btn btn-secondary" href="{% url 'mailbox:sent' %}">Sent from here</a><a class="btn btn-secondary" href="{% url 'mailbox:setup' %}">{% if box %}Mailbox settings{% else %}Connect my email{% endif %}</a>{% if box.is_ready %}<a class="btn btn-primary" href="{% url 'mailbox:compose' %}">New email</a>{% endif %}</div></div>
+{% if not box %}<div class="card">{% include "components/empty_state.html" with icon="mail" title="No mailbox connected" text="Connect your email once, then write to clients from their enquiry page." %}</div>
+{% else %}
+<div class="flex gap-2 mb-3"><a class="btn btn-sm {% if folder == 'inbox' %}btn-primary{% else %}btn-secondary{% endif %}" href="?folder=inbox">Inbox</a><a class="btn btn-sm {% if folder == 'drafts' %}btn-primary{% else %}btn-secondary{% endif %}" href="?folder=drafts">Drafts</a></div>
+{% if not box.is_imap_ready %}<div class="card"><p>Add your incoming mail server on the <a href="{% url 'mailbox:setup' %}">settings page</a> to read your inbox here.</p></div>
+{% elif error %}<div class="card"><p style="color:var(--danger)">{{ error }}</p></div>
+{% else %}<div class="card card-flush"><div class="table-wrap"><table class="table stack-phone"><thead><tr><th>From</th><th>Subject</th><th>Date</th></tr></thead><tbody>
+{% for m in mails %}<tr><td data-label="From">{{ m.from|truncatechars:40 }}</td><td class="cell-first"><details><summary class="cell-main">{{ m.subject }}</summary><pre style="white-space:pre-wrap;font:inherit;margin:8px 0">{{ m.body|truncatechars:3000 }}</pre></details><div class="cell-sub">{{ m.snippet }}</div></td><td data-label="Date">{{ m.date|date:"d M H:i" }}</td></tr>
+{% empty %}<tr><td colspan="3" class="text-muted">Nothing here.</td></tr>{% endfor %}</tbody></table></div></div>{% endif %}{% endif %}
+{% endblock %}

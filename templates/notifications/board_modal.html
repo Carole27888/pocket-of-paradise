@@ -1,0 +1,12 @@
+<form method="post" action="{% if a %}{% url 'notifications:board_edit' a.pk %}{% else %}{% url 'notifications:board_new' %}{% endif %}" data-modal-form-body novalidate>
+  {% csrf_token %}
+  {% if error %}<div class="alert alert-danger mb-3">{{ error }}</div>{% endif %}
+  <div class="stack" style="gap:12px">
+    <div class="field"><label for="n-t">Title</label><input class="input" id="n-t" name="title" maxlength="140" value="{% if posted %}{{ posted.title }}{% else %}{{ a.title }}{% endif %}" placeholder="e.g. Office closed on Monday" required></div>
+    <div class="field"><label for="n-b">Message</label><textarea class="input textarea" id="n-b" name="body" rows="5" maxlength="2000" required>{% if posted %}{{ posted.body }}{% else %}{{ a.body }}{% endif %}</textarea></div>
+    <div class="field"><label for="n-a">Who should see it?</label><select class="input" id="n-a" name="audience" multiple size="5">{% for r in roles %}<option value="{{ r }}" {% if r in selected %}selected{% endif %}>{{ r }}</option>{% endfor %}</select><span class="help">Leave nothing selected to show it to everyone.</span></div>
+    <div class="flex gap-3 wrap"><label class="check-label"><input type="checkbox" name="pinned" {% if a.pinned or posted.pinned %}checked{% endif %}> Pin to the top</label><label class="check-label"><input type="checkbox" name="level" value="important" {% if a.level == "important" or posted.level %}checked{% endif %}> Important (also push to phones)</label></div>
+    <div class="field" style="max-width:220px"><label for="n-e">Show until (optional)</label><input class="input" id="n-e" type="date" name="expires_on" value="{% if posted %}{{ posted.expires_on }}{% else %}{{ a.expires_on|date:'Y-m-d' }}{% endif %}"></div>
+  </div>
+  <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:14px"><button type="button" class="btn btn-secondary" data-modal-close>Cancel</button><button type="submit" class="btn btn-primary">{% include "components/icon.html" with name="megaphone" %} {% if a %}Save changes{% else %}Post notice{% endif %}</button></div>
+</form>

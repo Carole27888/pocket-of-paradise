@@ -1,0 +1,9 @@
+{% load static %}
+<div class="manual-kicker">Section {{ sec.number }} of {{ sections|length }}</div>
+<h2 class="manual-h">{{ sec.title }}</h2>
+{% if sec.menu %}<div class="manual-facts"><div><span>Menu</span><b>{{ sec.menu }}</b></div><div><span>Who</span><b>{{ sec.who }}</b></div></div>{% endif %}
+{% if sec.intro %}<p>{{ sec.intro }}</p>{% endif %}
+{% if sec.bullets %}<ul class="manual-list">{% for b in sec.bullets %}<li>{{ b }}</li>{% endfor %}</ul>{% endif %}
+{% if sec.steps %}<ol class="manual-steps">{% for st in sec.steps %}<li>{{ st }}</li>{% endfor %}</ol>{% endif %}
+{% if sec.tip %}<div class="manual-tip"><span>Tip</span><p>{{ sec.tip }}</p></div>{% endif %}
+{% if sec.has_shot %}<img class="manual-figure" src="{% static 'img/manual/' %}{{ m.slug }}/{{ sec.shot }}.png" alt="{{ sec.title }} screenshot"><p class="manual-caption">Figure {{ sec.number }}: {{ sec.title }}, as seen in the system.</p>{% endif %}

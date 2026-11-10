@@ -1,0 +1,129 @@
+{% extends "base.html" %}{% load l10n %}
+{% block title %}{{ enquiry.reference }}{% endblock %}
+{% block content %}
+{% with c=enquiry.client %}
+<div class="page-header">
+  <div><div class="crumbs"><a href="{% url 'leads:list' %}">Enquiries</a><span>/</span><span>{{ enquiry.reference }}</span></div>
+    <h1>{{ c.full_name }}</h1>
+    <p>{{ enquiry.reference }} · {% source_badge enquiry True %} · received {{ enquiry.created_at|ds_datetime }}{% if enquiry.captured_by %} by {{ enquiry.captured_by.full_name }}{% endif %}</p></div>
+  <div class="actions">
+    {% if c.phone %}<a class="btn btn-secondary" href="tel:{{ c.phone }}">{% include "components/icon.html" with name="phone" %} Call</a>
+    <a class="btn btn-secondary" href="{{ c.phone|wa_link }}" target="_blank" rel="noopener">{% include "components/icon.html" with name="whatsapp" %} WhatsApp</a>{% endif %}
+    {% if c.email %}<a class="btn btn-secondary" href="mailto:{{ c.email }}?subject={{ enquiry.reference|urlencode }}">{% include "components/icon.html" with name="mail" %} Email</a>{% endif %}
+    {% if can_edit %}<a class="btn btn-primary" href="{% url 'leads:edit' enquiry.pk %}">{% include "components/icon.html" with name="edit" %} Edit</a>{% endif %}
+  </div>
+</div>
+
+{% if enquiry.is_returning_client %}
+<div class="alert alert-warning mb-4">{% include "components/icon.html" with name="star" %}<span class="grow"><strong>Returning client.</strong> {{ other_enquiries|length }} other enquir{{ other_enquiries|length|pluralize:"y,ies" }} on record.</span><a class="btn btn-sm btn-secondary" href="{{ c.get_absolute_url }}">Client history</a></div>
+{% endif %}
+{% if enquiry.is_unassigned and enquiry.stage != "lost" and enquiry.stage != "completed" %}
+<div class="alert alert-danger mb-4">{% include "components/icon.html" with name="alert" %}<span class="grow"><strong>Not assigned.</strong> Waiting {{ enquiry.created_at|timesince }} for a consultant.</span></div>
+{% endif %}
+
+{% if journey %}<ol class="journey mb-4" aria-label="Where this lead is on the way to a booking">{% for j in journey %}<li class="j-{{ j.state }}">{% if j.url %}<a href="{{ j.url }}">{% endif %}<span class="j-dot">{% if j.state == "done" %}✓{% else %}{{ forloop.counter }}{% endif %}</span><span class="j-txt"><b>{{ j.label }}</b><small>{{ j.sub }}</small></span>{% if j.url %}</a>{% endif %}</li>{% endfor %}</ol>{% endif %}
+<div class="grid grid-4 mb-4">
+  <div class="card kpi"><span class="kpi-label">Stage</span><span class="mt-1">{% stage_pill enquiry %}</span><span class="kpi-delta {% if enquiry.days_in_stage > 7 %}down{% endif %}">{{ enquiry.days_in_stage }} day{{ enquiry.days_in_stage|pluralize }} in stage</span></div>
+  <div class="card kpi"><span class="kpi-label">Quotation</span><span class="mt-1">{% if enquiry.quotation_status == "not_quoted" %}{% status_pill "Not yet quoted" "warning" %}{% else %}{% status_pill enquiry.get_quotation_status_display "info" %}{% endif %}</span></div>
+  <div class="card kpi"><span class="kpi-label">Agent</span><span class="kpi-value" style="font-size:18px">{{ enquiry.assigned_agent.full_name|default:"Unassigned" }}</span></div>
+  <div class="card kpi"><span class="kpi-label">Last contact</span><span class="kpi-value" style="font-size:18px">{{ enquiry.last_contact_at|ds_date }}</span>{% if enquiry.next_action %}<span class="kpi-delta">Next: {{ enquiry.next_action }}</span>{% endif %}</div>
+</div>
+
+<div class="grid grid-main-side">
+  <div class="stack">
+    <div class="card">
+      <div class="card-head"><h2>Trip request</h2><span class="pill pill-brand">{{ enquiry.get_purpose_display }}</span></div>
+      <dl class="dl">
+        <dt>Interest</dt><dd>{% if enquiry.package %}<a href="{{ enquiry.package.get_absolute_url }}">{{ enquiry.package }}</a>{% elif enquiry.destination %}<a href="{{ enquiry.destination.get_absolute_url }}">{{ enquiry.destination.name }}</a>{% else %}{{ enquiry.destination_text|default:"—" }}{% endif %}</dd>
+        {% if enquiry.package and enquiry.destination %}<dt>Destination</dt><dd>{{ enquiry.destination.name }}</dd>{% endif %}
+        <dt>Party</dt><dd>{{ enquiry.party_label }}</dd>
+        <dt>Travel dates</dt><dd>{% if enquiry.travel_date_from %}{{ enquiry.travel_date_from|ds_date }}{% if enquiry.travel_date_to %} – {{ enquiry.travel_date_to|ds_date }}{% endif %}{% else %}Not set{% endif %} · {% if enquiry.dates_flexible %}flexible{% else %}fixed{% endif %}</dd>
+        <dt>Budget</dt><dd>{% if enquiry.budget_min_pp or enquiry.budget_max_pp %}{{ enquiry.budget_min_pp|money:enquiry.budget_currency }} – {{ enquiry.budget_max_pp|money:enquiry.budget_currency }} pp{% else %}{{ enquiry.budget_text|default:"—" }}{% endif %}</dd>
+        {% if enquiry.stage == "lost" %}<dt>Lost reason</dt><dd class="text-danger">{{ enquiry.lost_reason }}</dd>{% endif %}
+      </dl>
+      {% if enquiry.notes %}<p class="section-title mt-4">Notes</p><p class="text-sm">{{ enquiry.notes|linebreaksbr }}</p>{% endif %}
+    </div>
+
+    {% if can_sell or quotations or calls or booking or itineraries %}
+    <div class="card">
+      <div class="card-head"><h2>Sales</h2>
+        {% if can_sell %}<div class="flex gap-2 wrap">
+          <a class="btn btn-secondary btn-sm" href="{% url 'sales:itinerary_new' %}?enquiry={{ enquiry.pk|unlocalize }}">{% include "components/icon.html" with name="route" size="16" %} Build itinerary</a>
+          <a class="btn btn-secondary btn-sm" href="{% url 'sales:call_new' %}?enquiry={{ enquiry.pk|unlocalize }}" data-modal-form="{% url 'sales:call_new' %}?enquiry={{ enquiry.pk|unlocalize }}" data-modal-title="Log a call">{% include "components/icon.html" with name="phone" size="16" %} Log call</a>
+          <a class="btn btn-secondary btn-sm" href="{% url 'mailbox:compose' %}?enquiry={{ enquiry.pk|unlocalize }}" data-modal-form="{% url 'mailbox:compose' %}?enquiry={{ enquiry.pk|unlocalize }}" data-modal-title="Email {{ enquiry.client.full_name }}">{% include "components/icon.html" with name="mail" size="16" %} Email</a>
+          <a class="btn btn-secondary btn-sm" href="{% url 'tasks:new' %}?kind=complaint&enquiry={{ enquiry.pk|unlocalize }}" data-modal-form="{% url 'tasks:new' %}?kind=complaint&enquiry={{ enquiry.pk|unlocalize }}" data-modal-title="Log a complaint">{% include "components/icon.html" with name="alert" size="16" %} Complaint</a>
+          <a class="btn btn-secondary btn-sm" href="{% url 'sales:followup_new' %}?enquiry={{ enquiry.pk|unlocalize }}">{% include "components/icon.html" with name="check-square" size="16" %} Follow-up</a>
+          {% if not booking %}<a class="btn btn-accent btn-sm" href="{% url 'sales:quotation_new' %}?enquiry={{ enquiry.pk|unlocalize }}">{% include "components/icon.html" with name="file-text" size="16" %} New quotation</a>{% endif %}</div>{% endif %}</div>
+      {% if booking %}<a class="list-item row-link mb-3" href="{{ booking.get_absolute_url }}"><span class="avatar avatar-sm">{% include "components/icon.html" with name="briefcase" size="14" %}</span><div class="grow"><div class="title">Booking {{ booking.reference }}</div><div class="meta">{{ booking.get_status_display }} · {{ booking.paid_percent }}% paid</div></div><span class="fw-700">{{ booking.total_amount|money:booking.currency }}</span></a>{% endif %}
+      {% if itineraries %}<p class="section-title">Itineraries</p><div class="list mb-3">{% for i in itineraries %}<a class="list-item row-link" href="{{ i.get_absolute_url }}"><div class="grow"><div class="title">{{ i.title|truncatechars:40 }}</div><div class="meta">{{ i.day_count }} days · {{ i.get_status_display }}</div></div><span class="fw-700">{{ i.sell_total|money:i.currency }}</span></a>{% endfor %}</div>{% endif %}
+      {% if quotations %}<p class="section-title">Quotations</p><div class="list mb-3">{% for q in quotations %}<a class="list-item row-link" href="{{ q.get_absolute_url }}"><div class="grow"><div class="title">{{ q.reference }} · v{{ q.version }}</div><div class="meta">{{ q.get_status_display }}{% if q.sent_at %} · sent {{ q.sent_at|ds_date }}{% endif %}</div></div><span class="fw-700">{{ q.total|money:q.currency }}</span></a>{% endfor %}</div>{% endif %}
+      {% if followups %}<p class="section-title">Next follow-ups</p><div class="list mb-3">{% for t in followups %}<div class="list-item"><div class="grow"><div class="title">{{ t.title }}</div><div class="meta {% if t.is_overdue %}text-late{% endif %}">{{ t.get_kind_display }} · due {{ t.due_at|ds_datetime }}</div></div></div>{% endfor %}</div>{% endif %}
+      {% if calls %}<p class="section-title">Recent calls</p><div class="list">{% for c in calls %}<div class="list-item"><div class="grow"><div class="title">{{ c.get_outcome_display }}</div><div class="meta">{{ c.called_at|ds_datetime }}{% if c.duration_seconds %} · {{ c.duration_seconds|duration_hm }}{% endif %}{% if c.notes %} · {{ c.notes|truncatechars:60 }}{% endif %}</div></div></div>{% endfor %}</div>{% endif %}
+      {% if not quotations and not calls and not followups and not booking %}<p class="text-muted text-sm">No calls, quotations or follow-ups yet.</p>{% endif %}
+    </div>
+    {% endif %}
+
+    <div class="card">
+      <div class="card-head"><h2>Activity</h2><span class="sub">Calls, messages, notes and stage changes</span></div>
+      <form class="flex gap-2 wrap mb-4" hx-post="{% url 'leads:note' enquiry.pk %}" hx-target="#timeline" hx-swap="outerHTML" hx-on::after-request="if(event.detail.successful) this.reset()">
+        <label class="visually-hidden" for="id_activity_type">Type</label>{{ note_form.activity_type }}
+        <label class="visually-hidden" for="id_details">Details</label>
+        <input type="text" name="details" id="id_details" class="input grow" placeholder="Log a call outcome, WhatsApp or note…" required style="min-width:200px;flex:1">
+        <button class="btn btn-primary" type="submit">Log</button>
+      </form>
+      {% include "leads/partials/timeline.html" %}
+    </div>
+  </div>
+
+  <div class="stack">
+    {% if nba %}<div class="card" style="border-left:4px solid {% if nba.urgency == 'high' %}var(--danger){% elif nba.urgency == 'medium' %}var(--accent){% else %}var(--border-strong){% endif %}"><div class="card-head"><h2>Next best action</h2><span class="pill pill-{% if nba.urgency == 'high' %}danger{% elif nba.urgency == 'medium' %}warning{% else %}neutral{% endif %}">{{ nba.urgency|title }}</span></div>
+      <div class="fw-700">{{ nba.action }}</div><p class="text-sm text-muted mb-2">{{ nba.reason }}</p>
+      {% if enquiry.client.phone and nba.urgency != "low" %}<button type="button" class="btn btn-secondary btn-sm" id="draft-btn" data-url="{% url 'leads:draft' enquiry.pk %}">Draft a WhatsApp message</button><div id="draft-box" class="mt-3" hidden><textarea class="input textarea" id="draft-text" rows="4"></textarea><div class="btn-row mt-2"><a class="btn btn-primary btn-sm" id="draft-send" target="_blank" rel="noopener" href="#">Open in WhatsApp</a><span class="text-xs text-muted" id="draft-note"></span></div></div>
+      <script>(function(){var b=document.getElementById("draft-btn");if(!b)return;b.addEventListener("click",function(){b.disabled=true;var m=document.querySelector("[name=csrfmiddlewaretoken]");fetch(b.dataset.url,{method:"POST",headers:{"X-CSRFToken":m?m.value:"","X-Requested-With":"XMLHttpRequest"},credentials:"same-origin"}).then(function(r){return r.json()}).then(function(j){var t=document.getElementById("draft-text");t.value=j.text;document.getElementById("draft-box").hidden=false;document.getElementById("draft-note").textContent=j.ai?"Written with AI. Check it before sending.":"Template. Edit it, then send.";var a=document.getElementById("draft-send");function upd(){a.href="https://wa.me/"+j.wa+"?text="+encodeURIComponent(t.value)}t.addEventListener("input",upd);upd();b.disabled=false})})})();</script>{% endif %}</div>{% endif %}
+    {% if matches %}<div class="card"><div class="card-head"><h2>Matching safaris</h2><span class="sub">By destination, budget and party size</span></div>
+      {% for m in matches %}<div class="list-item" style="align-items:flex-start"><div class="grow"><div class="fw-700"><a href="{{ m.package.get_absolute_url }}">{{ m.package.title }}</a></div><div class="text-xs text-muted">{{ m.package.days }} days · from {{ m.package.currency }} {{ m.package.price_per_person|floatformat:0 }} pp</div>
+        {% for w in m.why %}<div class="text-xs" style="color:var(--success)">✔ {{ w }}</div>{% endfor %}{% for c in m.concerns %}<div class="text-xs" style="color:var(--warning)">! {{ c }}</div>{% endfor %}</div><div class="text-right" style="display:flex;flex-direction:column;gap:6px;align-items:flex-end"><span class="pill pill-info">{{ m.score }}%</span>{% if can_sell %}<a class="btn btn-secondary btn-sm" href="{% url 'sales:itinerary_new' %}?enquiry={{ enquiry.pk|unlocalize }}&package={{ m.package.pk|unlocalize }}">Build from this</a>{% endif %}</div></div>{% endfor %}</div>{% endif %}
+    <div class="card" x-data="{ stage: '{{ enquiry.stage }}' }">
+      <div class="card-head"><h2>Move stage</h2></div>
+      <form hx-post="{% url 'leads:stage' enquiry.pk %}" class="stack" style="gap:10px">
+        <label class="visually-hidden" for="stage-select">Stage</label>
+        <select name="stage" id="stage-select" class="input select" x-model="stage">
+          {% for val, label in stage_form.fields.stage.choices %}<option value="{{ val }}" {% if val == enquiry.stage %}selected{% endif %}>{{ label }}</option>{% endfor %}
+        </select>
+        <div x-show="stage === 'lost'" x-cloak class="field"><label for="lost-reason">Why was it lost?</label>
+          <input id="lost-reason" name="lost_reason" class="input" placeholder="e.g. Price, chose another operator, dates" maxlength="160"></div>
+        <button class="btn btn-secondary" type="submit">Update stage</button>
+      </form>
+    </div>
+
+    {% if request.user.can_edit_operations %}
+    <div class="card">
+      <div class="card-head"><h2>Assignment</h2></div>
+      <form hx-post="{% url 'leads:assign' enquiry.pk %}" class="flex gap-2">
+        <label class="visually-hidden" for="{{ assign_form.agent.id_for_label }}">Agent</label>{{ assign_form.agent }}
+        <button class="btn btn-primary" type="submit">Assign</button>
+      </form>
+      {% if assignments %}<p class="section-title mt-4">History</p>
+      <div class="list">{% for a in assignments %}
+        <div class="list-item"><span class="avatar avatar-sm">{{ a.agent.initials }}</span><div class="grow"><div class="title">{{ a.agent.full_name }} {% if a.active %}{% status_pill "Active" "success" %}{% endif %}</div>
+          <div class="meta">{{ a.get_method_display }} · {{ a.assigned_at|ds_datetime }}{% if a.assigned_by %} by {{ a.assigned_by.full_name }}{% endif %}{% if a.end_reason %} · ended: {{ a.end_reason }}{% endif %}</div></div></div>
+      {% endfor %}</div>{% endif %}
+    </div>
+    {% endif %}
+
+    <div class="card">
+      <div class="card-head"><h2>Client</h2><a href="{{ c.get_absolute_url }}">Profile →</a></div>
+      <dl class="dl">
+        <dt>Phone</dt><dd>{% if c.phone %}<a href="tel:{{ c.phone }}">{{ c.phone|phone }}</a>{% else %}—{% endif %}</dd>
+        <dt>Email</dt><dd>{{ c.email|default:"—" }}</dd>
+        <dt>Nationality</dt><dd>{{ c.nationality|default:"—" }}{% if c.is_international %} · <span class="pill pill-info">International</span>{% endif %}</dd>
+      </dl>
+      {% if party %}<p class="section-title mt-4">Travel party</p>
+        <div class="list">{% for m in party %}<div class="list-item"><div class="grow"><div class="title">{{ m.full_name }}</div><div class="meta">{{ m.get_relationship_display }}{% if m.is_child %} · child{% if m.age %} ({{ m.age }}){% endif %}{% endif %}</div></div></div>{% endfor %}</div>{% endif %}
+      {% if other_enquiries %}<p class="section-title mt-4">Other enquiries</p>
+        <div class="list">{% for o in other_enquiries %}<a class="list-item row-link" href="{{ o.get_absolute_url }}"><div class="grow"><div class="title">{{ o.reference }}</div><div class="meta">{{ o.interest_label }} · {{ o.created_at|ds_date }}</div></div>{% stage_pill o %}</a>{% endfor %}</div>{% endif %}
+    </div>
+  </div>
+</div>
+{% endwith %}
+{% endblock %}

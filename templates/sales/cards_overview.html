@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% block title %}Agent cards{% endblock %}
+{% block content %}
+<div class="page-header"><div><h1>Agent QR cards</h1><p>Every agent's digital business card and what it brings in: scans, saved contacts, leads and bookings. Click an agent for the details.</p></div></div>
+<div class="grid grid-4 mb-4">
+  {% include "components/kpi_card.html" with label="Scans, all agents" value=totals.scans accent=True %}
+  {% include "components/kpi_card.html" with label="Contacts saved" value=totals.saved %}
+  {% include "components/kpi_card.html" with label="Leads captured" value=totals.leads %}
+  {% with c=totals.conversion|stringformat:"d" %}{% include "components/kpi_card.html" with label="Became bookings" value=totals.won note=c|add:"% conversion" %}{% endwith %}</div>
+<div class="grid grid-3">
+{% for r in rows %}<button type="button" class="card" style="text-align:left;cursor:pointer;font:inherit;border:1px solid var(--border)" data-card="{% url 'sales:card_detail' r.card.pk %}" aria-haspopup="dialog">
+  <div style="display:flex;gap:12px;align-items:center"><span class="avatar">{{ r.card.employee.initials|default:"?" }}</span><div class="grow"><b>{{ r.card.employee.full_name }}</b><div class="text-xs text-muted">{{ r.card.headline|default:"Travel consultant" }}</div></div>{% if not r.card.is_active %}<span class="pill pill-neutral">Off</span>{% endif %}</div>
+  <div class="flex gap-3 mt-3 text-sm" style="flex-wrap:wrap"><span><b>{{ r.stats.scans }}</b> scans</span><span><b>{{ r.stats.saved }}</b> saved</span><span><b>{{ r.stats.leads }}</b> leads</span><span><b>{{ r.stats.won }}</b> won</span></div></button>
+{% empty %}<p class="text-muted">No sales agents yet.</p>{% endfor %}</div>
+<div class="modal-backdrop" id="card-modal" hidden><div class="modal" role="dialog" aria-modal="true" aria-labelledby="card-modal-title" style="width:min(820px,100%)"><div id="card-modal-body"><p class="text-muted">Loading…</p></div></div></div>
+<script>(function(){var m=document.getElementById("card-modal"),b=document.getElementById("card-modal-body"),last=null;
+function close(){m.hidden=true;if(last)last.focus()}
+document.addEventListener("click",function(e){var t=e.target.closest("[data-card]");if(t){last=t;b.innerHTML='<p class="text-muted">Loading…</p>';m.hidden=false;fetch(t.dataset.card,{headers:{"X-Requested-With":"XMLHttpRequest"}}).then(function(r){return r.text()}).then(function(h){b.innerHTML=h;var x=b.querySelector("[data-close]");if(x)x.focus()});return}
+ if(e.target===m||e.target.closest("[data-close]"))close()});
+document.addEventListener("keydown",function(e){if(e.key==="Escape"&&!m.hidden)close()});})();</script>
+{% endblock %}

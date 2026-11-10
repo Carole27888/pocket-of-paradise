@@ -1,0 +1,12 @@
+{% extends "base.html" %}{% load static %}
+{% block title %}Destinations{% endblock %}
+{% block content %}
+<div class="page-header">
+  <div><h1>{{ title }}</h1><p>{{ subtitle }}</p></div>
+  {% if request.user.can_edit_operations %}<div class="actions"><a class="btn btn-primary" href="{% url 'catalog:destination_create' %}">{% include "components/icon.html" with name="plus" %} New destination</a></div>{% endif %}
+</div>
+<div class="card card-flush">
+  {% include "components/filter_bar.html" with placeholder="Search destinations or activities…" %}
+  <div id="list-region">{% include "catalog/partials/destination_grid.html" %}</div>
+</div>
+{% endblock %}

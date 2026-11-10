@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% block title %}Standard Terms{% endblock %}
+{% block content %}
+<div class="page-header"><div><h1>Standard Terms</h1><p>The payment and cancellation terms that are filled into every new itinerary and quotation. Agents can still adjust them for one client.</p></div>
+  <div class="actions"><a class="btn btn-accent" href="{% url 'core:standard_terms' %}" data-modal-form="{% url 'core:standard_terms' %}" data-modal-title="Edit standard terms">{% include "components/icon.html" with name="edit" %} Edit terms</a></div></div>
+<div class="grid grid-6-4" style="align-items:start">
+  <div class="card"><div class="card-head"><h2>Current terms</h2>{% if is_default %}{% status_pill "Built-in default" "neutral" %}{% else %}{% status_pill "Customised" "success" %}{% endif %}</div>
+    <div style="white-space:pre-line;line-height:1.65;font-size:14px">{{ terms }}</div></div>
+  <div class="card"><div class="card-head"><h2>Where they are used</h2></div>
+    <div class="list-item"><div class="grow"><b>New itineraries</b><div class="text-xs text-muted">Filled into the "Payment &amp; cancellation terms" box and printed on the client PDF.</div></div></div>
+    <div class="list-item"><div class="grow"><b>New quotations</b><div class="text-xs text-muted">Shown under Terms &amp; conditions on the quotation.</div></div></div>
+    <div class="list-item"><div class="grow"><b>Older itineraries</b><div class="text-xs text-muted">Ones with no terms of their own show these on the client PDF and trip page.</div></div></div>
+    <p class="text-xs text-muted" style="margin:12px 0 0">Changing the terms here does not change itineraries or quotations that already have their own wording.</p></div>
+</div>
+{% endblock %}

@@ -1,0 +1,10 @@
+{% load l10n %}<span id="duty-{{ e.pk|unlocalize }}">
+{% if request.user.can_edit_operations or request.user.employee == e %}
+  <select name="on_duty" class="input select inline-select" aria-label="Duty status for {{ e.full_name }}"
+          hx-post="{% url 'people:set_duty' e.pk %}" hx-target="#duty-{{ e.pk|unlocalize }}" hx-swap="outerHTML" hx-trigger="change">
+    {% for val, label in duty_choices %}<option value="{{ val }}" {% if val == e.on_duty %}selected{% endif %}>{{ label }}</option>{% endfor %}
+  </select>
+{% else %}
+  {% if e.on_duty == "in_office" %}{% status_pill "In office" "success" %}{% elif e.on_duty == "out_on_trip" %}{% status_pill "Out on trip" "warning" %}{% elif e.on_duty == "off" %}{% status_pill "Off" "neutral" %}{% else %}{% status_pill "On leave" "danger" %}{% endif %}
+{% endif %}
+</span>

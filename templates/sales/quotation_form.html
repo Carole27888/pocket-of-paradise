@@ -1,0 +1,53 @@
+{% extends "base.html" %}{% load static %}
+{% block title %}Edit {{ q.reference }}{% endblock %}
+{% block extra_css %}<link rel="stylesheet" href="{% static 'css/sales.css' %}">{% endblock %}
+{% block content %}
+<div class="page-header"><div><div class="crumbs"><a href="{{ q.get_absolute_url }}">{% include "components/icon.html" with name="arrow-left" size="14" %} {{ q.reference }}</a></div>
+  <h1>Edit quotation {{ q.reference }} <small class="text-muted">v{{ q.version }}</small></h1><p>{{ q.enquiry.client.full_name }} · {{ q.enquiry.reference }} · {{ q.enquiry.party_label }}</p></div></div>
+<form method="post" novalidate id="quote-form" x-data>
+  {% csrf_token %}
+  <div class="card mb-4">{% include "components/form_fields.html" %}</div>
+  <div class="card mb-4">
+    <div class="card-head"><h2>Price lines</h2><span class="sub">Amounts in <span id="cur-label">{{ q.currency }}</span></span></div>
+    {{ formset.management_form }}
+    {% if formset.non_form_errors %}<div class="alert alert-danger mb-4">{{ formset.non_form_errors|join:" " }}</div>{% endif %}
+    <div class="item-head"><span>Type</span><span>Description</span><span>Qty</span><span>Unit price</span><span class="text-right">Amount</span><span></span></div>
+    <div id="items-forms">{% for f in formset %}{% include "sales/partials/quotation_item_form.html" with form=f %}{% endfor %}</div>
+    <template id="items-empty">{% include "sales/partials/quotation_item_form.html" with form=formset.empty_form %}</template>
+    <div class="flex justify-between items-center mt-4 wrap gap-3">
+      <button type="button" class="btn btn-secondary" data-add-form="items">{% include "components/icon.html" with name="plus" %} Add line</button>
+      <div class="totals" id="live-totals"><div><span>Subtotal</span><b id="t-sub">—</b></div><div><span>Discount</span><b id="t-disc">—</b></div><div><span>VAT</span><b id="t-vat">—</b></div><div class="grand"><span>Total</span><span id="t-total">—</span></div></div>
+    </div>
+  </div>
+  <div class="form-actions"><a class="btn btn-secondary" href="{{ q.get_absolute_url }}">Cancel</a><button class="btn btn-primary" type="submit">{% include "components/icon.html" with name="check" %} Save draft</button></div>
+</form>
+<script>
+(function () {
+  const form = document.getElementById("quote-form");
+  const fmt = (n) => n.toLocaleString("en-KE", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  function calc() {
+    let sub = 0;
+    form.querySelectorAll("#items-forms .item-row").forEach((row) => {
+      const del = row.querySelector('input[type="checkbox"]');
+      const qty = parseFloat(row.querySelector('[name$="-quantity"]').value) || 0;
+      const unit = parseFloat(row.querySelector('[name$="-unit_price"]').value) || 0;
+      const line = qty * unit;
+      row.querySelector("[data-line]").textContent = fmt(line);
+      row.style.opacity = del && del.checked ? ".4" : "1";
+      if (!(del && del.checked)) sub += line;
+    });
+    const disc = parseFloat(form.querySelector('[name="discount"]').value) || 0;
+    const rate = parseFloat(form.querySelector('[name="vat_rate"]').value) || 0;
+    const taxable = Math.max(sub - disc, 0), vat = taxable * rate / 100;
+    document.getElementById("t-sub").textContent = fmt(sub);
+    document.getElementById("t-disc").textContent = "−" + fmt(disc);
+    document.getElementById("t-vat").textContent = fmt(vat);
+    document.getElementById("t-total").textContent = fmt(taxable + vat);
+    document.getElementById("cur-label").textContent = form.querySelector('[name="currency"]').value;
+  }
+  form.addEventListener("input", calc); form.addEventListener("change", calc);
+  document.addEventListener("click", (e) => { if (e.target.closest("[data-add-form]")) setTimeout(calc, 0); });
+  calc();
+})();
+</script>
+{% endblock %}

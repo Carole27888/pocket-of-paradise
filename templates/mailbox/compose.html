@@ -1,0 +1,13 @@
+<form method="post" action="{% url 'mailbox:compose' %}" enctype="multipart/form-data" data-modal-form-body novalidate data-tpls="{{ tpl_json }}">
+  {% csrf_token %}
+  {% if enq %}<input type="hidden" name="enquiry" value="{{ enq.pk }}"><p class="text-sm text-muted mb-3">{{ enq.reference }} · {{ enq.client.full_name }}</p>{% endif %}
+  {% if error %}<div class="alert alert-danger mb-3">{{ error }}</div>{% endif %}
+  {% if not box or not box.is_ready %}<div class="alert alert-danger mb-3">Connect your email first: <a href="{% url 'mailbox:setup' %}">My email settings</a>.</div>{% endif %}
+  <div class="field"><label>Start from a template</label><select class="input" id="mail-tpl" onchange="var f=this.form,d=JSON.parse(f.dataset.tpls),t=d[this.value];if(t){f.subject.value=t.subject;f.body.value=t.body;}"><option value="">Blank</option>{% for t in templates %}<option value="{{ forloop.counter0 }}">{{ t.name }}</option>{% endfor %}</select></div>
+  <div class="field"><label>To</label><input class="input" type="email" name="to" value="{{ to }}" required></div>
+  <div class="field"><label>Subject</label><input class="input" name="subject" id="mail-subject" value="{{ subject }}" required></div>
+  <div class="field"><label>Message</label><textarea class="input" name="body" id="mail-body" rows="9" required>{{ body }}</textarea></div>
+  <div class="field"><label>Attachments (10 MB in total)</label><input class="input" type="file" name="files" multiple></div>
+  {% if cc %}<p class="text-sm text-muted">Management is copied: {{ cc|join:", " }}</p>{% endif %}
+  <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:14px"><button type="button" class="btn btn-secondary" data-modal-close>Cancel</button><button type="submit" class="btn btn-primary">Send email</button></div>
+</form>

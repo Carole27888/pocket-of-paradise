@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+{% block title %}KYC · {{ client.full_name }}{% endblock %}
+{% block content %}
+<div class="page-header"><div><div class="crumbs"><a href="{% url 'deals:kyc' %}">Client KYC</a><span>/</span><span>{{ client.full_name }}</span></div><h1>KYC for {{ client.full_name }}</h1>{% if kyc %}<p>Current status: {{ kyc.get_status_display }}</p>{% endif %}</div></div>
+<div class="card" style="max-width:560px"><form method="post" enctype="multipart/form-data" class="stack" style="gap:10px">{% csrf_token %}
+<div class="field"><label for="k-t">ID type</label><select class="input select" id="k-t" name="id_type">{% for v, l in id_types %}<option value="{{ v }}" {% if kyc.id_type == v %}selected{% endif %}>{{ l }}</option>{% endfor %}</select></div>
+<div class="field"><label for="k-n">ID / passport number</label><input class="input" id="k-n" name="id_number" required autocomplete="off"></div>
+<div class="field"><label for="k-d">Scan or photo (optional, max 8 MB)</label><input class="input" id="k-d" type="file" name="document" accept="image/*,.pdf"></div>
+<button class="btn btn-primary" type="submit">Submit for verification</button></form></div>
+{% endblock %}

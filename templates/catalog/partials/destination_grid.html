@@ -1,0 +1,23 @@
+<div class="p-4" style="padding:20px">
+{% if object_list %}
+<div class="gallery">
+  {% for d in object_list %}
+    <a class="media-card" href="{{ d.get_absolute_url }}">
+      <div class="media-cover">
+        {% if d.cover_photo %}<img src="{{ d.cover_photo.url }}" alt="" loading="lazy">{% else %}<div class="ph">{% include "components/icon.html" with name="tree" %}</div>{% endif %}
+        <span class="tag pill pill-brand">{{ d.get_country_display }}</span>
+      </div>
+      <div class="media-body">
+        <h3>{{ d.name }}</h3>
+        <span class="meta">{{ d.get_region_display }}{% if d.best_time_to_visit %} · Best: {{ d.best_time_to_visit }}{% endif %}</span>
+        {% if d.summary %}<p class="text-sm text-muted mt-1 mb-0">{{ d.summary|truncatechars:110 }}</p>{% endif %}
+      </div>
+      <div class="media-foot"><span>{{ d.package_count }} package{{ d.package_count|pluralize }}</span><span>{{ d.enquiry_count }} open enquir{{ d.enquiry_count|pluralize:"y,ies" }}</span></div>
+    </a>
+  {% endfor %}
+</div>
+{% else %}
+  {% include "components/empty_state.html" with icon="map-pin" title="No destinations found" %}
+{% endif %}
+</div>
+{% include "components/pagination.html" %}

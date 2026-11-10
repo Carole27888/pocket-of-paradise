@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% load l10n %}
+{% block title %}Import Data{% endblock %}
+{% block content %}
+<div class="page-header"><div><h1>Import data</h1><p>Bulk-add records from Excel, CSV or another CRM. Everything is checked first; nothing is saved until you confirm, and an import can be undone for 7 days.</p></div></div>
+<div class="grid grid-main-side">
+  <div class="card"><div class="card-head"><h2>Download CSV format</h2></div>
+    <p class="text-sm text-muted">Download the format for what you're adding, copy your data into those exact columns, then upload the filled file on the right.</p>
+    <ol class="import-list">{% for i in importers %}<li><div class="grow"><b>{{ i.label }}</b><div class="text-xs text-muted">{{ i.description }}</div><div class="text-xs mt-1"><b>Columns:</b> {% for n, req, h in i.columns %}<code>{{ n }}</code>{% if req %}*{% endif %}{% if not forloop.last %}, {% endif %}{% endfor %}</div></div>
+      <a class="btn btn-ghost btn-sm" href="{% url ns|add:'import_template' i.kind %}">{% include "components/icon.html" with name="download-file" size="14" %} Download format</a></li>{% endfor %}</ol>
+    <p class="text-xs text-muted mb-0">Order matters: staff first (clients and leads name their agent), then clients, leads and suppliers. Opening balances are your trial balance on the go-live date.</p></div>
+  <div class="card"><div class="card-head"><h2>Add data</h2></div>
+    <form method="post" enctype="multipart/form-data" class="stack" style="gap:12px">{% csrf_token %}
+      <div class="field"><label for="imp-kind">What is this data?</label><select class="input select" id="imp-kind" name="kind" required><option value="">Choose…</option>{% for i in importers %}<option value="{{ i.kind }}">{{ i.label }}</option>{% endfor %}</select></div>
+      <div class="field"><label for="imp-file">Excel (.xlsx) or CSV file</label><input class="input" type="file" id="imp-file" name="file" accept=".csv,.xlsx" required></div>
+      <button class="btn btn-primary" type="submit">Check data</button></form></div>
+</div>
+<div class="card card-flush mt-4"><div class="card-head" style="padding:16px 18px 0"><h2>Recent imports</h2></div><div class="table-wrap mt-3"><table class="table stack-phone"><thead><tr><th>Uploaded</th><th>Type</th><th>File</th><th>Rows</th><th>Result</th><th>Status</th></tr></thead><tbody>
+  {% for b in batches %}<tr><td data-label="Uploaded">{{ b.created_at|ds_datetime }}</td><td data-label="Type">{{ b.kind|title }}</td><td class="cell-first"><a href="{% url ns|add:'import_batch' b.pk|unlocalize %}">{{ b.filename|truncatechars:34 }}</a></td><td data-label="Rows">{{ b.rows|length }}</td><td data-label="Result">{{ b.created }} new · {{ b.updated }} updated{% if b.failed %} · {{ b.failed }} failed{% endif %}</td>
+    <td data-label="Status">{% if b.status == "imported" %}{% status_pill "Imported" "success" %}{% elif b.status == "checked" %}{% status_pill "Checked" "info" %}{% elif b.status == "undone" %}{% status_pill "Undone" "neutral" %}{% else %}{% status_pill "Discarded" "neutral" %}{% endif %}</td></tr>
+  {% empty %}<tr><td colspan="6">{% include "components/empty_state.html" with icon="download-file" title="No imports yet" text="Download a template, fill it in, and upload it here." %}</td></tr>{% endfor %}</tbody></table></div></div>
+{% endblock %}

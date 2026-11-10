@@ -1,0 +1,15 @@
+{% extends "base.html" %}{% load l10n %}
+{% block title %}Budget Requests{% endblock %}
+{% block content %}
+<div class="page-header"><div><h1>Budget Requests</h1><p>Ask for spend to be approved by the COO or CEO.{% if deciders %} You see everyone's requests.{% endif %}</p></div></div>
+<div class="grid grid-main-side"><div class="card"><div class="card-head"><h2>Requests</h2></div>
+{% for r in items %}<div class="list-item"><div class="grow"><div class="fw-700">{{ r.reference }} · {{ r.title }}</div><div class="text-xs text-muted">KES {{ r.amount|floatformat:0 }} · {{ r.requested_by.full_name }}{% if r.reason %} · {{ r.reason }}{% endif %}{% if r.decision_note %} · “{{ r.decision_note }}”{% endif %}</div></div>
+{% if r.status == "approved" %}{% status_pill "Approved" "success" %}{% elif r.status == "rejected" %}{% status_pill "Rejected" "danger" %}{% else %}{% status_pill "Pending" "warning" %}{% endif %}
+{% if deciders and r.status == "pending" %}<form method="post" class="btn-row">{% csrf_token %}<input type="hidden" name="pk" value="{{ r.pk|unlocalize }}"><input class="input" name="note" placeholder="Note" style="max-width:150px"><button class="btn btn-primary btn-sm" name="action" value="approve" type="submit">Approve</button><button class="btn btn-secondary btn-sm" name="action" value="reject" type="submit">Reject</button></form>{% endif %}</div>
+{% empty %}<p class="text-muted text-sm">No requests.</p>{% endfor %}</div>
+<div class="card"><div class="card-head"><h2>New request</h2></div><form method="post" class="stack" style="gap:10px">{% csrf_token %}<input type="hidden" name="action" value="new">
+<div class="field"><label for="b-t">What for</label><input class="input" id="b-t" name="title" required maxlength="160"></div>
+<div class="field"><label for="b-a">Amount (KES)</label><input class="input" id="b-a" name="amount" type="number" step="0.01" min="1" required></div>
+<div class="field"><label for="b-d">Department</label><input class="input" id="b-d" name="department"></div>
+<div class="field"><label for="b-r">Reason</label><textarea class="input textarea" id="b-r" name="reason" rows="3"></textarea></div><button class="btn btn-primary" type="submit">Send</button></form></div></div>
+{% endblock %}

@@ -1,0 +1,12 @@
+{% extends "base.html" %}{% load l10n static %}
+{% block title %}Roles & Access{% endblock %}
+{% block extra_css %}<link rel="stylesheet" href="{% static 'css/sales.css' %}">{% endblock %}
+{% block extra_js %}<script src="{% static 'js/roles-board.js' %}" defer></script>{% endblock %}
+{% block content %}
+<div class="page-header"><div><h1>Roles & Access</h1><p>Drag a person to another role column to change their role. Every change is written to the <a href="{% url 'system:logs' %}">System Logs</a> and the person is notified.{% if not is_ceo %} Only the CEO can change who is Director.{% endif %}</p></div></div>
+{% if no_role %}<div class="alert alert-warning mb-4">{% include "components/icon.html" with name="alert" %}<span class="grow"><strong>{{ no_role|length }} active user{{ no_role|length|pluralize }}</strong> have no role: {% for u in no_role %}{{ u.full_name }}{% if not forloop.last %}, {% endif %}{% endfor %}</span></div>{% endif %}
+<div class="board" id="roles-board" data-url="{% url 'system:roles_move' %}" style="grid-auto-columns:minmax(220px,1fr)">
+  {% for c in cols %}<section class="kcol" data-role="{{ c.role }}" {% if not c.locked %}data-droppable="1"{% endif %} aria-label="{{ c.role }}"><header class="kcol-head"><div class="top"><b>{{ c.role }}</b><span class="count fw-800">{{ c.members|length }}</span></div><div class="sum text-xs"><span>{{ c.desc|truncatechars:70 }}</span></div></header>
+    <div class="kcol-body">{% for u in c.members %}<article class="dcard person" {% if not c.locked %}draggable="true"{% endif %} data-user="{{ u.pk|unlocalize }}" data-from="{{ c.role }}"><div class="flex items-center gap-2"><span class="avatar avatar-sm">{{ u.initials }}</span><div><div class="t">{{ u.full_name }}</div><div class="m">{{ u.email }}</div></div></div></article>{% empty %}<p class="text-muted text-sm empty-note" style="padding:8px">Nobody yet. Drop someone here.</p>{% endfor %}</div></section>{% endfor %}
+</div>
+{% endblock %}

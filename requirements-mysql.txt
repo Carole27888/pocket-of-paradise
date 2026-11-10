@@ -1,0 +1,5 @@
+# MySQL / MariaDB on shared hosting. Pure-Python driver: set DB_MYSQL_DRIVER=pymysql in .env
+-r requirements.txt
+PyMySQL==1.1.1
+# Or, if your host can compile C extensions, use mysqlclient instead and leave DB_MYSQL_DRIVER empty:
+# mysqlclient>=2.2

@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% block title %}Team Plans{% endblock %}
+{% block content %}
+<div class="page-header"><div><h1>Team Plans</h1><p>Who has planned their week and how much they have got done · {{ monday|ds_date }} – {{ sunday|ds_date }}</p></div>
+  <div class="actions"><a class="btn btn-secondary" href="?week={{ prev_week|date:'Y-m-d' }}">← Previous week</a><a class="btn btn-secondary" href="?week={{ next_week|date:'Y-m-d' }}">Next week →</a></div></div>
+{% if not_planned %}<div class="alert alert-warning mb-4">{% include "components/icon.html" with name="alert" %}<span class="grow"><strong>{{ not_planned }}</strong> {{ not_planned|pluralize:"person has,people have" }} not planned this week yet.</span></div>{% endif %}
+<div class="card card-flush"><div class="table-wrap"><table class="table stack-phone">
+  <thead><tr><th>Person</th><th>Plan</th><th class="num">Items</th><th class="num">Done</th><th class="num">Partly</th><th class="num">Not done</th><th class="num">Still to mark</th><th>Score</th></tr></thead>
+  <tbody>{% for r in rows %}<tr>
+    <td class="cell-first"><span class="cell-main">{{ r.user.full_name }}</span><div class="cell-sub">{{ r.user.primary_role }}</div></td>
+    <td data-label="Plan">{% if r.planned %}{% status_pill "Planned" "success" %}{% else %}{% status_pill "Not planned" "danger" %}{% endif %}</td>
+    <td data-label="Items" class="num">{{ r.s.total }}</td><td data-label="Done" class="num">{{ r.s.done }}</td><td data-label="Partly" class="num">{{ r.s.partial }}</td><td data-label="Not done" class="num">{{ r.s.missed }}</td><td data-label="Still to mark" class="num">{{ r.s.planned }}</td>
+    <td data-label="Score" style="min-width:130px">{% if r.s.pct is not None %}<div class="bar {% if r.s.pct >= 80 %}ok{% elif r.s.pct >= 50 %}warn{% else %}bad{% endif %}"><span style="width:{{ r.s.pct }}%"></span></div><span class="text-xs text-muted">{{ r.s.pct }}%</span>{% else %}<span class="text-muted text-sm">–</span>{% endif %}</td></tr>
+  {% empty %}<tr><td colspan="8" class="text-muted">No staff yet.</td></tr>{% endfor %}</tbody></table></div></div>
+{% endblock %}

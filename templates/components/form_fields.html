@@ -1,0 +1,18 @@
+{% if form.non_field_errors %}<div class="alert alert-danger mb-4">{{ form.non_field_errors|join:" " }}</div>{% endif %}
+{% for hidden in form.hidden_fields %}{{ hidden }}{% endfor %}
+<div class="form-grid">
+  {% for field in form.visible_fields %}
+    {% with ftype=field.field.widget.input_type %}
+    <div class="field{% if field.errors %} invalid{% endif %}{% if field.name in form.full_width_fields or field.field.widget.allow_multiple_selected %} full{% endif %}{% if ftype == 'checkbox' %} check-field{% endif %}">
+      {% if ftype == "checkbox" %}
+        {{ field }}<label for="{{ field.id_for_label }}">{{ field.label }}</label>
+      {% else %}
+        <label for="{{ field.id_for_label }}">{{ field.label }}{% if field.field.required %} <span class="req">*</span>{% endif %}</label>
+        {{ field }}
+      {% endif %}
+      {% if field.help_text %}<span class="help">{{ field.help_text }}</span>{% endif %}
+      {% for e in field.errors %}<span class="error">{{ e }}</span>{% endfor %}
+    </div>
+    {% endwith %}
+  {% endfor %}
+</div>

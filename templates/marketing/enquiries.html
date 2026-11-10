@@ -1,0 +1,24 @@
+{% extends "base.html" %}{% load l10n %}
+{% block title %}Leads{% endblock %}
+{% block content %}
+<div class="page-header"><div><h1>Leads</h1><p>Every enquiry from the social channels, from first message to closed deal. Sales moves the leads; this page is for tracking. Open a card for its whole journey.</p></div>
+  <div class="actions"><div class="mseg"><a class="{% if view != 'list' %}active{% endif %}" href="?view=pipeline&range={{ range_key }}{% if channel %}&channel={{ channel }}{% endif %}">Pipeline</a><a class="{% if view == 'list' %}active{% endif %}" href="?view=list&range={{ range_key }}{% if channel %}&channel={{ channel }}{% endif %}">List</a></div>
+  <form method="get"><input type="hidden" name="view" value="{{ view }}">{% if channel %}<input type="hidden" name="channel" value="{{ channel }}">{% endif %}<select class="input" name="range" onchange="this.form.submit()">{% for k, label in ranges %}<option value="{{ k }}" {% if k == range_key %}selected{% endif %}>{{ label }}</option>{% endfor %}</select></form></div></div>
+<div class="mtiles">
+  <div class="mtile"><span class="lbl">TOTAL LEADS ({{ start|ds_date }} – {{ end|ds_date }})</span><span class="num">{{ total }}</span><span class="mdelta {% if total_pct > 0 %}up{% elif total_pct < 0 %}down{% endif %}">{% if total_pct > 0 %}↑{% elif total_pct < 0 %}↓{% endif %} {{ total_pct }}% vs previous</span></div>
+  <div class="mtile"><span class="lbl">NEW TODAY</span><span class="num">{{ new_today }}</span><span class="mdelta {% if uncontacted_today %}down{% endif %}">{{ uncontacted_today }} still uncontacted</span></div>
+  <div class="mtile"><span class="lbl">AVG. FIRST RESPONSE</span><span class="num">{% if avg_response is not None %}{{ avg_response }}m{% else %}—{% endif %}</span><span class="mdelta">Target: under 30 min</span></div>
+  <div class="mtile"><span class="lbl">LEAD TO DEAL RATE</span><span class="num">{{ deal_rate }}%</span><span class="mdelta">{{ deals }} deals closed</span></div>
+</div>
+<div class="mchips"><a class="mchip {% if not channel %}active{% endif %}" href="?view={{ view }}&range={{ range_key }}">All channels</a>{% for c in channels %}<a class="mchip {% if channel == c.key %}active{% endif %}" href="?view={{ view }}&range={{ range_key }}&channel={{ c.key }}">{% source_badge c.key %} {{ c.name }}</a>{% endfor %}</div>
+{% if view == "list" %}
+<div class="card card-flush"><div class="table-wrap"><table class="table stack-phone"><thead><tr><th>Date</th><th>Name</th><th>Source</th><th>Interest</th><th>Agent</th><th>Status</th></tr></thead><tbody>
+{% for e in listing %}<tr><td data-label="Date">{{ e.created_at|ds_datetime }}</td><td class="cell-first"><a class="row-link cell-main" href="{% url 'marketing:lead_journey' e.pk|unlocalize %}">{{ e.client.full_name }}</a></td><td data-label="Source">{% source_badge e True %}</td><td data-label="Interest">{{ e.interest_label|truncatechars:30 }}</td><td data-label="Agent">{{ e.assigned_agent.short_name|default:"Unassigned" }}</td><td data-label="Status">{% stage_pill e %}</td></tr>
+{% empty %}<tr><td colspan="6" class="text-muted">No leads in this period.</td></tr>{% endfor %}</tbody></table></div></div>
+{% else %}
+<div class="mpipe">{% for col in board %}<section class="mcol"><h3><i class="dot" style="background:{% cycle '#4F46E5' '#C2410C' '#16A34A' '#9333EA' '#0E7490' '#374151' %}"></i>{{ col.label }}<span class="n">{{ col.count }}</span></h3>
+  {% for e in col.items %}<a class="mlead" href="{% url 'marketing:lead_journey' e.pk|unlocalize %}"><div class="top"><span>{{ e.client.full_name }}</span>{% source_badge e %}</div><div class="interest">{{ e.interest_label|truncatechars:30 }}{% if e.party_label %} · {{ e.party_label }}{% endif %}</div><div class="foot"><span>{{ e.assigned_agent.short_name|default:"Unassigned" }}</span><span>{{ e.created_at|timesince }}</span></div></a>
+  {% empty %}<p class="text-muted text-sm">Nothing here.</p>{% endfor %}</section>{% endfor %}</div>
+{% endif %}
+<div class="card mt-4"><div class="card-head"><h2>Lost leads</h2><span class="sub">{{ lost_count }} in this period</span></div>{% for r in reasons %}<div class="list-item"><span class="grow">{{ r.lost_reason }}</span><b>{{ r.n }}</b></div>{% empty %}<p class="text-muted text-sm">No lost leads with a reason.</p>{% endfor %}</div>
+{% endblock %}

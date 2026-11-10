@@ -1,0 +1,135 @@
+{% extends "base.html" %}{% load static %}
+{% block title %}Itinerary builder{% endblock %}
+{% block extra_css %}<link rel="stylesheet" href="{% static 'css/sales.css' %}"><link rel="stylesheet" href="{% static 'css/itinerary.css' %}">{% endblock %}
+{% block content %}
+<div class="page-header"><div><div class="crumbs"><a href="{{ it.get_absolute_url }}">{% include "components/icon.html" with name="arrow-left" size="14" %} {{ it.title|truncatechars:40 }}</a></div>
+  <h1>Itinerary builder</h1><p>{{ it.enquiry.reference }} · {{ it.enquiry.client.full_name }} · {{ it.enquiry.party_label }} ({{ pax }} guest{{ pax|pluralize }}). Pick a lodge and the catalogue rate fills in.</p></div></div>
+<form method="post" enctype="multipart/form-data" novalidate id="itin-form" data-floor="{{ margin_floor|default:0 }}" data-pax="{{ pax }}" data-rate-url="{% url 'sales:itinerary_rate' %}" data-photo-url="{% url 'catalog:photo_search' %}" data-packs='{{ packs_json }}'>{% csrf_token %}
+  <div class="ib-bar" id="ib-bar" role="region" aria-label="Itinerary summary">
+    <nav class="ib-jump" aria-label="Jump to a section"><a href="#ib-basics">Basics</a><a href="#ib-days">Days <b id="ib-ndays">0</b></a><a href="#ib-extras">Extras</a><a href="#ib-lodges">Lodges</a><a href="#ib-travel">Travel</a></nav>
+    <div class="ib-figs"><div><small>Total price</small><b id="ib-total">—</b></div><div><small>Per person</small><b id="ib-pp">—</b></div></div>
+    <div class="ib-actions">
+      <div class="ib-ready-wrap"><button type="button" class="ib-ready" id="ib-ready" aria-expanded="false">{% include "components/icon.html" with name="check" size="14" %}<span id="ib-ready-text">Checking…</span></button><div class="ib-pop" id="ib-pop" hidden></div></div>
+      <a class="btn btn-secondary btn-sm" href="{% url 'sales:itinerary_print' it.pk %}" target="_blank" rel="noopener" title="Opens the last saved version as the client sees it">{% include "components/icon.html" with name="eye" size="14" %} Preview</a>
+      <button class="btn btn-primary btn-sm" type="submit">{% include "components/icon.html" with name="check" size="14" %} Save</button>
+    </div>
+  </div>
+  <div class="card mb-4" id="ib-basics">{% include "components/form_fields.html" %}<div class="mt-3"><button type="button" class="btn btn-secondary btn-sm" data-write="intro">{% include "components/icon.html" with name="sparkles" size="16" %} Write the welcome paragraph for me</button> <span class="text-sm text-muted" data-intro-note></span></div></div>
+  {% include "sales/partials/template_library.html" %}
+  {{ formset.management_form }}{% if formset.non_form_errors %}<div class="alert alert-danger mb-4">{{ formset.non_form_errors|join:" " }}</div>{% endif %}
+  <div class="ib-days-head" id="ib-days"><h2>Days</h2><span class="ib-days-tools"><button type="button" class="btn btn-ghost btn-sm" data-days-toggle="collapse">Collapse all</button><button type="button" class="btn btn-ghost btn-sm" data-days-toggle="expand">Expand all</button></span></div>
+  <div id="days-forms">{% for f in formset %}{% include "sales/partials/itinerary_day_form.html" with form=f %}{% endfor %}</div>
+  <template id="days-empty">{% include "sales/partials/itinerary_day_form.html" with form=formset.empty_form %}</template>
+  <div class="card mt-4" id="ib-extras"><div class="card-head"><h2>Extra priced lines</h2><span class="sub">Park fees, flights, visas, anything on top. Added to the price without margin.</span></div>
+    {{ lines.management_form }}<div id="price_lines-forms">{% for f in lines %}{% include "sales/partials/price_line_form.html" with form=f %}{% endfor %}</div>
+    <template id="price_lines-empty">{% include "sales/partials/price_line_form.html" with form=lines.empty_form %}</template>
+    <button type="button" class="btn btn-secondary mt-3" data-add-form="price_lines">{% include "components/icon.html" with name="plus" %} Add line</button></div>
+  <div class="card mt-4" id="ib-lodges"><div class="card-head"><h2>Lodge options</h2><span class="sub">Offer the client alternatives, each with its own price per person. The cheapest is used in the headline price. Each option gets its own page in the PDF.</span></div>
+    {{ hotels.management_form }}<div id="hotels-forms">{% for f in hotels %}{% include "sales/partials/hotel_form.html" with form=f %}{% endfor %}</div>
+    <template id="hotels-empty">{% include "sales/partials/hotel_form.html" with form=hotels.empty_form %}</template>
+    <button type="button" class="btn btn-secondary mt-3" data-add-form="hotels">{% include "components/icon.html" with name="plus" %} Add lodge option</button></div>
+  <div class="card mt-4" id="ib-travel"><div class="card-head"><h2>Travel options</h2><span class="sub">How the group gets there: a safari van, a Noah, a Land Cruiser, the SGR or a flight. Offer alternatives, each with its own price. The cheapest is used in the headline price.</span></div>
+    {{ travel.management_form }}<div id="travel-forms">{% for f in travel %}{% include "sales/partials/travel_form.html" with form=f %}{% endfor %}</div>
+    <template id="travel-empty">{% include "sales/partials/travel_form.html" with form=travel.empty_form %}</template>
+    <button type="button" class="btn btn-secondary mt-3" data-add-form="travel">{% include "components/icon.html" with name="plus" %} Add travel option</button></div>
+  <div class="card mt-4"><div class="flex justify-between items-center wrap gap-3"><button type="button" class="btn btn-secondary" data-add-form="days">{% include "components/icon.html" with name="plus" %} Add day</button>
+    <div class="totals" style="margin:0"><div><span>Cost to us</span><b id="t-cost">—</b></div><div><span>Margin <span id="t-margin-pct"></span></span><b id="t-margin">—</b></div><div><span>Extra lines + lodge + travel</span><b id="t-extra">—</b></div><div class="grand"><span>Total price</span><span id="t-sell">—</span></div><div class="text-sm text-muted" style="display:flex;justify-content:space-between"><span>Per person</span><b id="t-pp">—</b></div></div></div></div>
+  <div class="form-actions"><a class="btn btn-secondary" href="{{ it.get_absolute_url }}">Cancel</a><button class="btn btn-secondary" type="submit" name="save_pdf" value="1">Save &amp; make PDF</button><button class="btn btn-primary" type="submit">{% include "components/icon.html" with name="check" %} Save itinerary</button></div>
+</form>
+<script src="{% static 'js/itinerary-dnd.js' %}"></script>
+<script src="{% static 'js/itinerary-builder.js' %}"></script>
+<script src="{% static 'js/photo-picker.js' %}"></script>
+<script>
+(function () {
+  const form = document.getElementById("itin-form");
+  const pax = parseInt(form.dataset.pax, 10) || 1;
+  const fmt = (n) => n.toLocaleString("en-KE", { maximumFractionDigits: 0 });
+  const num = (el) => parseFloat(el && el.value) || 0;
+  function rows() { return Array.from(form.querySelectorAll("#days-forms .day-row")); }
+  function calc() {
+    let cost = 0;
+    const start = form.querySelector('[name="start_date"]').value;
+    rows().forEach((row, i) => {
+      const del = row.querySelector('input[type="checkbox"][name$="-DELETE"]');
+      const c = (num(row.querySelector('[name$="-lodging_pp"]')) + num(row.querySelector('[name$="-activities_pp"]'))) * pax + num(row.querySelector('[name$="-transport"]'));
+      row.querySelector("[data-day-cost]").textContent = fmt(c);
+      let label = "Day " + (i + 1);
+      if (start) { const d = new Date(start); d.setDate(d.getDate() + i); label += " · " + d.toLocaleDateString("en-GB", { day: "numeric", month: "short", weekday: "short" }); }
+      row.querySelector(".day-label").textContent = label;
+      row.style.opacity = del && del.checked ? ".4" : "1";
+      if (!(del && del.checked)) cost += c;
+    });
+    const m = num(form.querySelector('[name="margin_percent"]'));
+    let extra = 0;
+    form.querySelectorAll("[data-line]").forEach((r) => {
+      const del = r.querySelector('input[name$="-DELETE"]');
+      const t = num(r.querySelector('[name$="-quantity"]')) * num(r.querySelector('[name$="-unit_price"]'));
+      r.querySelector("[data-line-total]").textContent = fmt(t);
+      if (!(del && del.checked)) extra += t;
+    });
+    const hp = Array.from(form.querySelectorAll("[data-hotel]")).filter((r) => { const d = r.querySelector('input[name$="-DELETE"]'); return !(d && d.checked); }).map((r) => num(r.querySelector('[name$="-price_per_person"]'))).filter((v) => v > 0);
+    if (hp.length) extra += Math.min.apply(null, hp) * pax;
+    const tv = Array.from(form.querySelectorAll("[data-travel]")).filter((r) => { const d = r.querySelector('input[name$="-DELETE"]'); return !(d && d.checked); }).map((r) => { const p = num(r.querySelector('[name$="-price"]')); return r.querySelector('[name$="-basis"]').value === "person" ? p * pax : p; }).filter((v) => v > 0);
+    if (tv.length) extra += Math.min.apply(null, tv);
+    const sell = cost * (1 + m / 100) + extra;
+    document.getElementById("t-extra").textContent = form.querySelector('[name="currency"]').value + " " + fmt(extra);
+    const cur = form.querySelector('[name="currency"]').value;
+    document.getElementById("t-cost").textContent = cur + " " + fmt(cost);
+    document.getElementById("t-margin").textContent = cur + " " + fmt(cost * m / 100);
+    document.getElementById("t-margin-pct").textContent = "(" + m + "%)";
+    document.getElementById("t-sell").textContent = cur + " " + fmt(sell);
+    document.getElementById("t-pp").textContent = cur + " " + fmt(sell / pax);
+  }
+  async function suggest(row) {
+    const acc = row.querySelector('[name$="-accommodation"]').value;
+    if (!acc) return;
+    const i = rows().indexOf(row);
+    const start = form.querySelector('[name="start_date"]').value;
+    let date = "";
+    if (start) { const d = new Date(start); d.setDate(d.getDate() + i); date = d.toISOString().slice(0, 10); }
+    const q = new URLSearchParams({ accommodation: acc, date, currency: form.querySelector('[name="currency"]').value, room: row.querySelector('[name$="-room_type"]').value });
+    const r = await fetch(form.dataset.rateUrl + "?" + q);
+    const data = await r.json();
+    const note = row.querySelector("[data-rate-note]");
+    if (data.rate === null) { note.textContent = "No rate in the catalogue for this lodge: enter one."; return; }
+    row.querySelector('[name$="-lodging_pp"]').value = data.rate;
+    const room = row.querySelector('[name$="-room_type"]');
+    if (!room.value) room.value = data.room_type;
+    const dest = row.querySelector('[name$="-destination"]');
+    if (dest && !dest.value && data.destination) dest.value = data.destination;
+    note.textContent = "Catalogue rate applied (" + data.room_type + ").";
+    calc();
+  }
+  form.addEventListener("click", async (e) => {
+    const b = e.target.closest("[data-write]");
+    if (!b) return;
+    const csrf = form.querySelector('[name="csrfmiddlewaretoken"]').value;
+    const fd = new FormData();
+    fd.append("csrfmiddlewaretoken", csrf);
+    const row = b.closest(".day-row");
+    let target, note;
+    if (b.dataset.write === "intro") { fd.append("what", "intro"); target = form.querySelector('[name="intro"]'); note = form.querySelector("[data-intro-note]"); }
+    else {
+      ["title", "destination", "accommodation", "room_type", "activities", "drive_km", "drive_hours"].forEach((n) => { const el = row.querySelector('[name$="-' + n + '"]'); if (el) fd.append(n, el.value); });
+      ["breakfast", "lunch", "dinner"].forEach((n) => { const el = row.querySelector('[name$="-' + n + '"]'); fd.append(n, el && el.checked ? "1" : ""); });
+      target = row.querySelector("textarea[name$='-description']"); note = row.querySelector("[data-write-note]");
+    }
+    if (target.value.trim() && !confirm("Replace what is written here?")) return;
+    b.disabled = true; note.textContent = "Writing…";
+    try {
+      const r = await fetch("{{ write_url }}", { method: "POST", body: fd });
+      const j = await r.json();
+      target.value = j.text; note.textContent = j.mode === "ai" ? "Written by AI from your facts. Check it before you save." : "Drafted from the catalogue. Edit it freely.";
+    } catch (err) { note.textContent = "Could not write just now."; }
+    b.disabled = false;
+  });
+  form.addEventListener("input", calc);
+  form.addEventListener("change", (e) => {
+    calc();
+    if (e.target.matches('[name$="-accommodation"]')) { const row = e.target.closest(".day-row"); if (!num(row.querySelector('[name$="-lodging_pp"]'))) suggest(row); }
+  });
+  form.addEventListener("click", (e) => { const b = e.target.closest("[data-suggest]"); if (b) suggest(b.closest(".day-row")); if (e.target.closest("[data-add-form]")) setTimeout(calc, 0); });
+  calc();
+})();
+</script>
+{% endblock %}

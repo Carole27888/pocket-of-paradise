@@ -1,0 +1,8 @@
+<form method="post" action="{% url 'core:standard_terms' %}" data-modal-form-body novalidate>
+  {% csrf_token %}
+  {% if error %}<div class="alert alert-danger mb-3">{{ error }}</div>{% endif %}
+  <div class="field"><label for="st-t">Payment &amp; cancellation terms</label><textarea class="input textarea" id="st-t" name="standard_terms" rows="10" maxlength="4000">{{ terms }}</textarea><span class="help">One point per line.</span></div>
+  <div style="display:flex;gap:10px;justify-content:space-between;align-items:center;margin-top:14px">
+    <button class="btn btn-ghost btn-sm" name="action" value="reset" type="submit" onclick="return confirm('Replace the terms with the built-in default?')">Reset to default</button>
+    <span style="display:flex;gap:10px"><button type="button" class="btn btn-secondary" data-modal-close>Cancel</button><button class="btn btn-primary" type="submit">{% include "components/icon.html" with name="check" %} Save terms</button></span></div>
+</form>

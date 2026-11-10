@@ -1,0 +1,169 @@
+{% load static pwa %}<!doctype html>
+<html lang="en-GB">
+<head>
+  <meta charset="utf-8">
+  {% pwa_head %}
+  <meta name="csrf-token" content="{{ csrf_token }}">
+  <meta name="description" content="Pocket of Paradise Travel Company — tours, bookings, fleet and finance.">
+  <title>{% block title %}{{ title|default:"Pocket of Paradise" }}{% endblock %} · Pocket of Paradise Travel Company</title>
+  <link rel="preload" href="{% static 'fonts/manrope-latin-400-normal.woff2' %}" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="{% static 'fonts/manrope-latin-700-normal.woff2' %}" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="{% static 'css/tokens.css' %}">
+  <link rel="stylesheet" href="{% static 'css/base.css' %}">
+  <link rel="stylesheet" href="{% static 'css/layout.css' %}">
+  <link rel="stylesheet" href="{% static 'css/components.css' %}">
+  <link rel="stylesheet" href="{% static 'css/utilities.css' %}">
+  <link rel="stylesheet" href="{% static 'css/vibrant.css' %}">
+  <link rel="stylesheet" href="{% static 'css/media.css' %}">
+  <style>#splash{position:fixed;inset:0;z-index:99999;display:grid;place-items:center;background:#2E2114;color:#fff;transition:opacity .45s ease,visibility .45s}#splash.out{opacity:0;visibility:hidden}.sp-in{text-align:center;padding:24px;animation:spin .7s ease both}.sp-in img{border-radius:22px;box-shadow:0 10px 40px rgba(0,0,0,.4)}.sp-name{margin-top:18px;font-weight:800;letter-spacing:.14em;font-size:15px}.sp-tag{margin-top:6px;font-size:12px;opacity:.7}.sp-bar{margin:22px auto 0;width:120px;height:3px;border-radius:3px;background:rgba(255,255,255,.15);overflow:hidden}.sp-bar i{display:block;height:100%;width:40%;background:#D98A22;border-radius:3px;animation:slide 1s ease-in-out infinite}@keyframes slide{0%{margin-left:-40%}100%{margin-left:100%}}@keyframes spin{from{opacity:0;transform:translateY(8px) scale(.97)}to{opacity:1;transform:none}}html.splashing{overflow:hidden}@media (prefers-reduced-motion:reduce){.sp-in,.sp-bar i{animation:none}}</style>
+  {% block extra_css %}{% endblock %}
+  <script src="{% static 'vendor/htmx/htmx.min.js' %}" defer></script>
+  <script src="{% static 'vendor/alpine/alpine.min.js' %}" defer></script>
+  <script src="{% static 'js/modal-form.js' %}" defer></script>
+  <script src="{% static 'js/dropzone.js' %}" defer></script>
+  <script src="{% static 'js/autotitle.js' %}" defer></script>
+  {% block extra_vendor %}{% endblock %}
+  <script src="{% static 'js/app.js' %}" defer></script>
+  {% block extra_js %}{% endblock %}
+</head>
+<body data-vapid="{{ VAPID_PUBLIC_KEY }}" class="{% block body_class %}{% endblock %}">
+<div id="splash" aria-hidden="true"><div class="sp-in"><img src="{% static 'pwa/mark-96.png' %}" alt="" width="88" height="88"><div class="sp-name">POCKET OF PARADISE</div><div class="sp-tag">Where everyday is an exploration</div><div class="sp-bar"><i></i></div></div></div>
+<script>(function(){var s=document.getElementById("splash"),show=false;try{show=!sessionStorage.getItem("ds_splash");sessionStorage.setItem("ds_splash","1")}catch(e){}
+if(!show){s.remove();return}document.documentElement.classList.add("splashing");function go(){s.classList.add("out");document.documentElement.classList.remove("splashing");setTimeout(function(){s.remove()},500)}
+var t=Date.now();window.addEventListener("load",function(){setTimeout(go,Math.max(0,1100-(Date.now()-t)))});setTimeout(go,3500)})();</script>
+{% block body %}
+<div class="app">
+  <aside class="sidebar" id="sidebar" aria-label="Main navigation">
+    <a class="brand" href="{% url 'core:home' %}">
+      <img src="{% static 'pwa/mark-96.png' %}" alt="" width="42" height="42">
+      <span class="brand-name">POCKET OF PARADISE<br>ADVENTURES<small>Where everyday is an exploration</small></span>
+    </a>
+    <nav class="nav" aria-label="Modules">
+      <a href="{% url 'core:home' %}" class="{% if on_home %}active{% endif %}" {% if on_home %}aria-current="page"{% endif %}>{% include "components/icon.html" with name="grid" %}<span>Main menu</span></a>
+      {% if my_space %}<p class="nav-section">My Space</p>
+      {% for m in my_space %}<a href="{{ m.item.url }}" class="{% if m.active %}active{% endif %}" {% if m.active %}aria-current="page"{% endif %}>{% include "components/icon.html" with name=m.item.icon size="18" %}<span>{{ m.item.label }}</span>{% if m.item.label == "My To-Do" and plan_due %}<span class="nav-count nav-need" title="{{ plan_due.title }}">!</span>{% endif %}{% if m.item.label == "Notifications" and unread_notifications %}<span class="nav-count" aria-label="{{ unread_notifications }} unread">{% if unread_notifications > 99 %}99+{% else %}{{ unread_notifications }}{% endif %}</span>{% endif %}</a>{% endfor %}{% endif %}
+      <p class="nav-section">Modules</p>
+      {% for s in sidebar_modules %}
+        {% if s.current %}<div class="mod-wrap" x-data="{ open: true }">{% endif %}
+        <a href="{{ s.url }}" class="mod-link {% if s.current %}open{% endif %}" {% if s.current %}@click.prevent="open = !open" :aria-expanded="open"{% endif %}>
+          {% include "components/icon.html" with name=s.module.icon %}<span>{{ s.module.name }}</span>
+          <svg class="nav-caret" {% if s.current %}:style="open ? 'transform:rotate(90deg)' : ''"{% endif %} viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg>
+        </a>
+        {% if s.current %}
+        <div class="mod-sub" x-show="open">
+          {% for n in nav_items %}
+            {% if n.children %}
+            <div class="nav-group" x-data="{ open: {{ n.active|yesno:'true,false' }} }">
+              <button type="button" class="nav-parent {% if n.active %}active{% endif %}" @click="open = !open" :aria-expanded="open">
+                {% include "components/icon.html" with name=n.item.icon size="18" %}<span>{{ n.item.label }}</span>
+                <svg class="nav-caret" :style="open ? 'transform:rotate(90deg)' : ''" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg>
+              </button>
+              <div class="nav-sub" x-show="open" {% if not n.active %}style="display:none"{% endif %}>
+                {% for c in n.children %}<a href="{{ c.item.url }}" class="{% if c.active %}active{% endif %}" {% if c.active %}aria-current="page"{% endif %}>{% include "components/icon.html" with name=c.item.icon size="16" %}<span>{{ c.item.label }}</span></a>{% endfor %}
+              </div>
+            </div>
+            {% else %}
+            {% ifchanged n.item.section %}{% if n.item.section %}<p class="nav-section">{{ n.item.section }}</p>{% endif %}{% endifchanged %}
+            <a href="{{ n.item.url }}" class="{% if n.active %}active{% endif %}" {% if n.active %}aria-current="page"{% endif %}>
+              {% if n.item.args and n.item.args.0 == n.item.icon %}<span class="nav-brand">{% source_badge n.item.args.0 %}</span>{% else %}{% include "components/icon.html" with name=n.item.icon size="18" %}{% endif %}<span>{{ n.item.label }}</span>
+            </a>
+            {% endif %}
+          {% endfor %}
+        </div>
+        </div>
+        {% endif %}
+      {% endfor %}
+      <a href="{% url 'accounts:install' %}" class="{% if request.resolver_match.view_name == 'accounts:install' %}active{% endif %}">{% include "components/icon.html" with name="smartphone" %}<span>Install on your phone</span></a>
+    </nav>
+    {% block sidebar_extra %}
+      {% if current_module.key == "operations" and not on_home %}
+      <p class="nav-title">Pipeline key</p>
+      <div class="sidebar-key mb-5">
+        <span><i class="dot-enquiry"></i>Enquiry</span><span><i class="dot-quoted"></i>Quoted</span>
+        <span><i class="dot-hot"></i>Hot lead</span><span><i class="dot-itinerary"></i>Itinerary sent</span>
+        <span><i class="dot-deposit"></i>Deposit paid</span><span><i class="dot-confirmed"></i>Confirmed</span>
+      </div>
+      {% endif %}
+    {% endblock %}
+    <script>(function(){var s=document.getElementById("sidebar"),o=s&&s.querySelector(".mod-link.open");if(o){s.scrollTop=Math.max(0,o.offsetTop-90);}})();</script>
+    <div class="user-card">
+      <span class="avatar">{{ request.user.initials }}</span>
+      <div class="grow"><strong class="truncate">{{ request.user.full_name }}</strong><small>{{ request.user.primary_role }}</small></div>
+    </div>
+  </aside>
+  <div class="scrim" data-drawer-close></div>
+
+  <div class="main">
+    <header class="topbar">
+      <button type="button" class="icon-btn menu-btn" data-drawer-open aria-label="Open menu" aria-controls="sidebar">{% include "components/icon.html" with name="menu" %}</button>
+      <div class="search" x-data="{ open: false }" @click.outside="open = false" @keydown.escape="open = false">
+        {% include "components/icon.html" with name="search" %}
+        <label for="global-search" class="visually-hidden">Search clients, enquiries, packages, references</label>
+        <input id="global-search" type="search" name="q" placeholder="Search anything…  (Ctrl K)" autocomplete="off"
+               hx-get="{% url 'core:search' %}" hx-trigger="input changed delay:250ms, search" hx-target="#search-results"
+               @focus="open = true" @input="open = true">
+        <div id="search-results" class="search-results" x-show="open" x-cloak></div>
+      </div>
+      <div class="topbar-actions">
+        {% if quick_add %}<div class="quick-add" x-data="{ open: false }" @click.outside="open = false" @keydown.escape.window="open = false">
+          <button type="button" class="quick-btn" @click="open = !open" :aria-expanded="open" aria-label="Quick add">{% include "components/icon.html" with name="plus" size="18" %}<span>New</span></button>
+          <div class="dropdown quick-menu" x-show="open" x-cloak>{% for q in quick_add %}<a href="{{ q.url }}" {% if q.modal %}data-modal-form="{{ q.url }}" data-modal-title="{{ q.modal }}"{% endif %} @click="open = false">{% include "components/icon.html" with name=q.icon size="16" %} {{ q.label }}</a>{% endfor %}</div></div>{% endif %}
+        <div class="relative" x-data="{ open: false }" @click.outside="open = false" style="position:relative">
+          <button type="button" class="icon-btn" aria-label="Notifications{% if unread_notifications %} ({{ unread_notifications }} unread){% endif %}"
+                  @click="open = !open" hx-get="{% url 'notifications:dropdown' %}" hx-target="#notif-panel" hx-trigger="click">
+            {% include "components/icon.html" with name="bell" %}
+            <span class="dot" data-notif-dot {% if not unread_notifications %}hidden{% endif %}>{{ unread_notifications|stringformat:"d" }}</span>
+          </button>
+          <div class="dropdown" id="notif-panel" x-show="open" x-cloak style="width:340px"><p class="text-muted text-sm p-4">Loading…</p></div>
+        </div>
+        <div x-data="{ open: false }" @click.outside="open = false" style="position:relative">
+          <button type="button" class="me" @click="open = !open" :aria-expanded="open" aria-haspopup="menu">
+            <span class="avatar">{{ request.user.initials }}</span>
+            <span class="me-text"><strong>{{ request.user.full_name }}</strong><small>{{ request.user.primary_role }}</small></span>
+          </button>
+          <div class="dropdown" x-show="open" x-cloak role="menu">
+            <div class="dd-email">{{ request.user.email }}</div>
+            {% for q in quick_add %}<a class="qa-phone" href="{{ q.url }}" role="menuitem" {% if q.modal %}data-modal-form="{{ q.url }}" data-modal-title="{{ q.modal }}"{% endif %}>{% include "components/icon.html" with name=q.icon %} {{ q.label }}</a>{% endfor %}
+            <a href="{% url 'core:home' %}" role="menuitem">{% include "components/icon.html" with name="grid" %} Main menu</a>
+            <a href="{% url 'accounts:profile' %}" role="menuitem">{% include "components/icon.html" with name="user" %} My profile</a>
+            {% if request.user.is_superuser or "Sales Agent" in request.user.role_names or "Sales Manager" in request.user.role_names or "COO" in request.user.role_names or "Admin" in request.user.role_names %}<a href="{% url 'coach:inbox' %}" role="menuitem">{% include "components/icon.html" with name="bell" %} My assistant</a>{% endif %}
+            <a href="{% url 'mailbox:inbox' %}" role="menuitem">{% include "components/icon.html" with name="mail" %} My email</a>
+            <a href="{% url 'notifications:list' %}" role="menuitem">{% include "components/icon.html" with name="inbox" %} My inbox</a>
+            <a href="{% url 'system:todo' %}" role="menuitem">{% include "components/icon.html" with name="check-square" %} My To-Do</a>
+            <a href="{% url 'accounts:install' %}" role="menuitem">{% include "components/icon.html" with name="smartphone" %} Install on your phone</a>
+            <button type="button" class="dd-item" data-refresh-app role="menuitem">{% include "components/icon.html" with name="refresh" %} Refresh app</button>
+            <button type="button" class="dd-item" data-push-toggle role="menuitem"
+                    data-subscribe-url="{% url 'notifications:push_subscribe' %}" data-unsubscribe-url="{% url 'notifications:push_unsubscribe' %}">
+              {% include "components/icon.html" with name="bell" %} <span data-push-label>Enable notifications</span>
+            </button>
+            <a href="{% url 'hr:my_attendance' %}" role="menuitem">{% include "components/icon.html" with name="logout" %} Clock in / out</a>
+            {% if request.user.is_superuser or "Admin" in request.user.role_names %}<a href="{% url 'core:system_status' %}" role="menuitem">{% include "components/icon.html" with name="activity" %} System status</a>{% endif %}
+            {% if request.user.is_staff %}<a href="/django-admin/" role="menuitem">{% include "components/icon.html" with name="settings" %} Django admin</a>{% endif %}
+            <div class="dd-sep"></div>
+            <form method="post" action="{% url 'accounts:logout' %}">{% csrf_token %}
+              <button type="submit" class="dd-item" role="menuitem">{% include "components/icon.html" with name="logout" %} Sign out</button>
+            </form>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <main class="content" id="main">
+      {% for m in messages %}<span data-toast="{{ m }}" data-level="{% if m.tags == 'error' %}danger{% else %}{{ m.tags|default:'success' }}{% endif %}" hidden></span>{% endfor %}
+      {% block content %}{% endblock %}
+    </main>
+  </div>
+
+  <nav class="bottom-nav" aria-label="Quick navigation">
+    {% for n in bottom_items %}
+      <a href="{{ n.item.url }}" class="{% if n.active %}active{% endif %}">{% include "components/icon.html" with name=n.item.icon %}<span>{{ n.item.bottom_label|default:n.item.label }}</span></a>
+    {% endfor %}
+    <button type="button" data-drawer-open>{% include "components/icon.html" with name="more" %}<span>More</span></button>
+  </nav>
+</div>
+{% include "components/ios_banner.html" %}
+{% if request.user.is_authenticated %}{% include "components/assistant.html" %}{% endif %}
+{% endblock %}
+<div id="toasts" class="toasts" role="status" aria-live="polite"></div>
+</body>
+</html>

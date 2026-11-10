@@ -1,0 +1,15 @@
+{% extends "base.html" %}{% load static %}
+{% block title %}{% if inv %}Edit {{ inv.number }}{% else %}New invoice{% endif %}{% endblock %}
+{% block extra_css %}<link rel="stylesheet" href="{% static 'css/sales.css' %}">{% endblock %}
+{% block content %}
+<div class="page-header"><div><h1>{% if inv %}Edit {{ inv.number }}{% else %}New invoice{% endif %}</h1><p>Add lines, choose VAT, then issue it from the invoice page.</p></div></div>
+<form method="post" novalidate>{% csrf_token %}
+  <div class="card mb-4">{% include "components/form_fields.html" %}</div>
+  <div class="card mb-4"><div class="card-head"><h2>Lines</h2></div>
+    {{ formset.management_form }}{% if formset.non_form_errors %}<div class="alert alert-danger mb-4">{{ formset.non_form_errors|join:" " }}</div>{% endif %}
+    <div id="lines-forms">{% for f in formset %}{% include "finance/partials/invoice_line.html" with form=f %}{% endfor %}</div>
+    <template id="lines-empty">{% include "finance/partials/invoice_line.html" with form=formset.empty_form %}</template>
+    <button type="button" class="btn btn-secondary mt-3" data-add-form="lines">{% include "components/icon.html" with name="plus" %} Add line</button></div>
+  <div class="form-actions"><a class="btn btn-secondary" href="{% if inv %}{{ inv.get_absolute_url }}{% else %}{% url 'finance:invoices' %}{% endif %}">Cancel</a><button class="btn btn-primary" type="submit">{% include "components/icon.html" with name="check" %} Save draft</button></div>
+</form>
+{% endblock %}

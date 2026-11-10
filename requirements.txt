@@ -1,0 +1,19 @@
+# Pocket of Paradise Travel Company — runtime dependencies (Python 3.11+). No Node/npm needed.
+Django==5.2.17
+django-environ==0.14.0
+django-htmx==1.29.0
+django-filter==26.1
+django-simple-history==3.13.0
+djangorestframework==3.18.1
+djangorestframework-simplejwt==5.5.1
+whitenoise==6.12.0
+cryptography>=44
+pillow>=11
+openpyxl==3.1.5
+qrcode==8.2
+pywebpush==2.5.0
+# PostgreSQL driver (pure wheel, no compiler needed). Remove if you only use SQLite/MySQL.
+psycopg[binary]==3.3.6
+# PDFs (quotations, invoices, receipts, payslips) use WeasyPrint. It needs Pango on the server; when it is missing
+# the PDF buttons fall back to the print page (Print → Save as PDF).
+weasyprint>=62

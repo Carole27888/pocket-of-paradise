@@ -1,0 +1,90 @@
+{% load static l10n %}<!doctype html>
+<html lang="en-GB"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex,nofollow">
+<title>{{ it.title }} · {{ company.name }}</title><meta name="theme-color" content="#1F6F6B">
+<link rel="stylesheet" href="{% static 'css/tokens.css' %}">
+<style>
+*{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:#FBF5EA;color:var(--text,#2B2014);font:16px/1.6 Manrope,system-ui,-apple-system,"Segoe UI",sans-serif;-webkit-font-smoothing:antialiased}
+a{color:inherit}h1,h2,h3{line-height:1.2;margin:0}.wrap{width:min(980px,100%);margin:0 auto;padding:0 18px}
+.hero{position:relative;min-height:min(78vh,620px);display:flex;align-items:flex-end;color:#fff;background:#143F3C center/cover no-repeat;overflow:hidden}
+.hero:before{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(20,63,60,.35) 0%,rgba(20,63,60,.2) 35%,rgba(16,46,44,.88) 100%)}
+.hero .bar{position:absolute;top:0;left:0;right:0;display:flex;justify-content:space-between;align-items:center;padding:16px 18px;z-index:2}.hero .bar img{height:52px;border-radius:10px;box-shadow:0 2px 10px rgba(0,0,0,.35)}
+.hero .in{position:relative;z-index:2;padding:0 18px 38px;width:min(980px,100%)}.kicker{font-size:.8rem;letter-spacing:.14em;text-transform:uppercase;color:#F6DDA6;font-weight:700}
+.hero h1{font-family:"Playfair Display",Georgia,serif;font-size:clamp(2rem,6vw,3.6rem);margin:8px 0 14px;text-wrap:balance}
+.chips{display:flex;flex-wrap:wrap;gap:8px}.chip{background:rgba(255,255,255,.16);backdrop-filter:blur(6px);border:1px solid rgba(255,255,255,.28);border-radius:999px;padding:6px 14px;font-size:.9rem}
+.intro{padding:34px 0 8px;font-size:1.1rem;color:#4a3d37;max-width:70ch}.intro b{color:#1F6F6B}
+.stays{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px;margin:22px 0}.stay{background:#fff;border:1px solid #EDE3D3;border-radius:14px;padding:14px 16px}.stay small{color:#6E6250;display:block}.stay b{display:block}
+h2.sec{font-family:"Playfair Display",Georgia,serif;font-size:1.7rem;color:#1F6F6B;margin:34px 0 14px}
+.day{background:#fff;border:1px solid #EDE3D3;border-radius:18px;overflow:hidden;margin-bottom:22px;box-shadow:0 4px 18px rgba(20,63,60,.06)}
+.day .ph{position:relative;height:clamp(190px,38vw,340px);background:#E2F1EE center/cover}.day .ph span{position:absolute;left:16px;top:16px;background:#D98A22;color:#fff;border-radius:999px;padding:4px 14px;font-weight:800;font-size:.85rem;box-shadow:0 2px 8px rgba(0,0,0,.25)}
+.day .bd{padding:18px 20px 20px}.day h3{font-size:1.3rem;color:#2B2014}.date{color:#6E6250;font-size:.9rem;margin:2px 0 8px}.facts{display:flex;flex-wrap:wrap;gap:8px 18px;margin:12px 0 4px;color:#4a3d37;font-size:.92rem}
+.meal{display:inline-block;width:20px;height:20px;line-height:20px;text-align:center;border-radius:5px;background:#EDE3D3;color:#9A8E86;font-size:.72rem;font-weight:800;margin-right:2px}.meal.on{background:#DDF3E7;color:#14663B}
+.tags{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}.tag{background:#FDEFD6;color:#9A5A0C;border-radius:999px;padding:3px 12px;font-size:.84rem;font-weight:600}
+.invest{background:linear-gradient(135deg,#1F6F6B,#2A8580);color:#fff;border-radius:20px;padding:26px;display:flex;flex-wrap:wrap;gap:18px;justify-content:space-between;align-items:center;margin:34px 0}
+.invest .big{font-family:"Playfair Display",Georgia,serif;font-size:clamp(1.8rem,5vw,2.6rem);color:#F6DDA6}.invest small{opacity:.8;display:block}
+.agent{background:#fff;border:1px solid #EDE3D3;border-radius:18px;padding:20px;display:flex;gap:16px;align-items:center;flex-wrap:wrap;margin-bottom:110px}.av{width:56px;height:56px;border-radius:50%;background:#1F6F6B;color:#F6DDA6;display:grid;place-items:center;font-weight:800;font-size:1.2rem}
+.btn{display:inline-flex;align-items:center;gap:8px;border:0;border-radius:12px;padding:12px 18px;font:inherit;font-weight:700;cursor:pointer;text-decoration:none}.btn-p{background:#1F6F6B;color:#fff}.btn-w{background:#128C4A;color:#fff}.btn-o{background:#fff;color:#1F6F6B;border:1.5px solid #1F6F6B}
+footer{text-align:center;color:#6E6250;font-size:.85rem;padding:0 0 120px}
+.pay-fab{position:fixed;left:16px;bottom:16px;z-index:50;background:#D98A22;color:#fff;border:0;border-radius:999px;padding:15px 24px;font:inherit;font-weight:800;font-size:1rem;display:flex;gap:10px;align-items:center;cursor:pointer;box-shadow:0 10px 28px rgba(154,90,12,.45)}.pay-fab:hover{background:#C27716}
+.ov{position:fixed;inset:0;background:rgba(35,24,21,.6);z-index:80;display:grid;place-items:center;padding:16px}.ov[hidden]{display:none}
+.modal{background:#fff;border-radius:20px;width:min(480px,100%);max-height:92vh;overflow:auto;padding:22px;box-shadow:0 24px 60px rgba(0,0,0,.35)}.modal h2{font-size:1.3rem;margin-bottom:4px}.modal .x{float:right;border:0;background:#E2F1EE;border-radius:10px;width:36px;height:36px;font-size:1.2rem;cursor:pointer}
+.methods{display:grid;gap:10px;margin:16px 0}.m{display:flex;gap:14px;align-items:center;width:100%;text-align:left;background:#fff;border:1.5px solid #EDE3D3;border-radius:14px;padding:14px;font:inherit;cursor:pointer}.m:hover,.m.sel{border-color:#1F6F6B;background:#E2F1EE}
+.m i{flex:none;width:44px;height:44px;border-radius:12px;display:grid;place-items:center;font-style:normal;font-weight:800;color:#fff}.m small{display:block;color:#6E6250}.mp i{background:#2EA043}.cd i{background:#1F4FD8}.cr i{background:#F7931A}
+.note{background:#FFF6E6;border-left:4px solid #D98A22;border-radius:10px;padding:12px 14px;font-size:.93rem}
+@media(max-width:560px){.hero .bar img{height:34px}.day .bd{padding:14px}.pay-fab{padding:13px 20px}}
+@media print{.pay-fab,.ov{display:none!important}}
+.opts{grid-template-columns:repeat(auto-fit,minmax(220px,1fr))}.opt img{width:100%;height:130px;object-fit:cover;border-radius:10px;margin-bottom:8px}.optp{display:block;margin-top:6px;font-weight:800;font-size:1.05rem;color:#1F6F6B}.incl{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:18px;margin-top:22px}.incl h3{margin:0 0 8px;font-size:1rem}.incl ul{list-style:none;padding:0;margin:0}.incl li{padding:3px 0 3px 22px;position:relative}.ok li:before{content:"✓";position:absolute;left:0;color:#2e7d32;font-weight:800}.no li:before{content:"✕";position:absolute;left:0;color:#b3261e;font-weight:800}.plines{background:#fff;border:1px solid #eadfce;border-radius:12px;padding:6px 14px}.plines div{display:flex;justify-content:space-between;gap:10px;padding:8px 0;border-bottom:1px solid #f1e9dc}.plines div:last-child{border:0}
+.respond{background:#fff;border:1px solid #eadfce;border-radius:14px;padding:18px;margin-top:26px}.rl{display:block;font-weight:700;font-size:.9rem;margin-bottom:12px}.rl select,.rl textarea{display:block;width:100%;margin-top:6px;padding:10px;border:1px solid #d9c9b3;border-radius:10px;font:inherit}.rbtn{display:flex;gap:10px;flex-wrap:wrap}.rmsg{margin:12px 0 0;font-weight:700;color:#2e7d32}.rmsg.bad{color:#b3261e}
+</style></head><body>
+<header class="hero" {% if cover %}style="background-image:url('{{ cover }}')"{% endif %}>
+  <div class="bar"><img src="{% static 'brand/logo-full.png' %}" alt="{{ company.name }}"></div>
+  <div class="wrap in" style="margin:0 auto"><div class="kicker">Prepared for {{ client_first }}</div><h1>{{ it.title }}</h1>
+    <div class="chips"><span class="chip">{{ it.day_count }} day{{ it.day_count|pluralize }}</span>{% if it.start_date %}<span class="chip">{{ it.start_date|date:"j M Y" }} – {{ it.end_date|date:"j M Y" }}</span>{% endif %}<span class="chip">{{ it.enquiry.party_label }}</span></div>
+    <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:18px"><a class="btn btn-o" href="{{ it.proposal_path }}" target="_blank" rel="noopener">View designed proposal</a><a class="btn btn-o" href="{{ it.pdf_path }}">Download PDF</a></div></div>
+</header>
+<main class="wrap">
+  {% if it.intro %}<p class="intro">{{ it.intro|linebreaksbr }}</p>{% else %}<p class="intro">Hello <b>{{ client_first }}</b>, here is the safari we have planned for you, day by day. Tell us what you would like to change and we will adjust it.</p>{% endif %}
+  {% if stays %}<h2 class="sec">Where you will stay</h2><div class="stays">{% for s in stays %}<div class="stay"><b>{{ s.name }}</b><small>{{ s.nights }} night{{ s.nights|pluralize }}</small></div>{% endfor %}</div>{% endif %}
+  <h2 class="sec">Your journey, day by day</h2>
+  {% for day in days %}<article class="day"><div class="ph" {% if day.gallery_files %}style="background-image:url('{% url 'public_trip_image' it.share_token day.pk|unlocalize %}')"{% endif %}><span>Day {{ day.day_number }}</span></div>
+    <div class="bd"><h3>{{ day.title }}</h3>{% if day.date %}<div class="date">{{ day.date|date:"l j F Y" }}</div>{% endif %}
+      {% if day.story %}<p style="margin:8px 0 0">{{ day.story|linebreaksbr }}</p>{% endif %}
+      <div class="facts">{% if day.destination %}<span>📍 {{ day.destination.name }}</span>{% endif %}{% if day.accommodation %}<span>🛏 {{ day.accommodation.name }}{% if day.room_type %} · {{ day.room_type }}{% endif %}</span>{% endif %}{% if day.drive_km or day.drive_hours %}<span>🚙 {% if day.drive_km %}{{ day.drive_km }} km{% endif %}{% if day.drive_hours %} · {{ day.drive_hours|floatformat:"-1" }} h{% endif %}</span>{% endif %}
+        <span title="Meals"><i class="meal {% if day.breakfast %}on{% endif %}">B</i><i class="meal {% if day.lunch %}on{% endif %}">L</i><i class="meal {% if day.dinner %}on{% endif %}">D</i></span></div>
+      {% if day.activity_list %}<div class="tags">{% for a in day.activity_list %}<span class="tag">{{ a }}</span>{% endfor %}</div>{% endif %}</div></article>{% endfor %}
+  {% if hotels %}<h2 class="sec">Choose your stay</h2><div class="stays opts">{% for h in hotels %}<div class="stay opt">{% if h.cover %}<img src="{% url 'public_trip_hotel_image' it.share_token h.pk|unlocalize %}" alt="" loading="lazy">{% endif %}<b>{{ h.name }}</b><small>{{ h.meal_plan }}{% if h.room_type %} · {{ h.room_type }}{% endif %}</small>{% if h.price_per_person %}<span class="optp">{{ h.price_per_person|money:it.currency }} <small>per person</small></span><small>{{ h.total|money:it.currency }} for {{ it.pax }}</small>{% endif %}</div>{% endfor %}</div>{% endif %}
+  {% if it.inclusion_list or it.exclusion_list %}<div class="incl"><div>{% if it.inclusion_list %}<h3>Included</h3><ul class="ok">{% for i in it.inclusion_list %}<li>{{ i }}</li>{% endfor %}</ul>{% endif %}</div><div>{% if it.exclusion_list %}<h3>Not included</h3><ul class="no">{% for i in it.exclusion_list %}<li>{{ i }}</li>{% endfor %}</ul>{% endif %}</div></div>{% endif %}
+  {% if it.price_lines.all %}<h2 class="sec">Extra costs</h2><div class="plines">{% for p in it.price_lines.all %}<div><span>{{ p.description }}{% if p.quantity > 1 %} × {{ p.quantity }}{% endif %}</span><b>{{ p.line_total|money:it.currency }}</b></div>{% endfor %}</div>{% endif %}
+  {% if it.sell_total %}<section class="invest"><div><small>Your investment</small><div class="big">{{ it.sell_total|money:it.currency }}</div><small>{{ it.sell_pp|money:it.currency }} per person · {{ it.pax }} traveller{{ it.pax|pluralize }}</small></div>
+    <div style="max-width:360px;font-size:.92rem;opacity:.9">Final price is confirmed in your quotation. Ready to go ahead? Use the Pay button to see how to pay your deposit.</div></section>{% endif %}
+  {% if it.effective_terms %}<h2 class="sec">Terms</h2><p class="terms-p" style="white-space:pre-line;color:#6E6250;font-size:.9rem">{{ it.effective_terms }}</p>{% endif %}
+  <section class="respond" id="respond"><h2 class="sec" style="margin-top:0">Ready to go ahead?</h2>
+    <form id="resp-form" method="post" action="{% url 'public_trip_respond' it.share_token %}">{% csrf_token %}
+      {% if hotels %}<label class="rl">Which stay do you prefer?<select name="hotel"><option value="">Not sure yet</option>{% for h in hotels %}<option value="{{ h.pk|unlocalize }}">{{ h.name }}{% if h.price_per_person %} · {{ h.price_per_person|money:it.currency }} pp{% endif %}</option>{% endfor %}</select></label>{% endif %}
+      <label class="rl">Anything you want us to know? (optional)<textarea name="message" rows="3" maxlength="1000" placeholder="Dates, changes, questions…"></textarea></label>
+      <div class="rbtn"><button type="submit" name="kind" value="book" class="btn btn-w">Yes, I'd like to book this</button><button type="submit" name="kind" value="change" class="btn btn-o">Ask for a change</button><button type="submit" name="kind" value="question" class="btn btn-o">I have a question</button></div>
+      <p class="rmsg" id="resp-msg" role="status" hidden></p></form></section>
+  <section class="agent"><div class="av">{% if agent %}{{ agent.initials }}{% else %}DS{% endif %}</div><div style="flex:1;min-width:200px"><b>{% if agent %}{{ agent.full_name }}{% else %}{{ company.name }}{% endif %}</b><div style="color:#6E6250">Your travel consultant{% if company.phone and not agent %} · {{ company.phone }}{% endif %}</div></div>
+    <div style="display:flex;gap:10px;flex-wrap:wrap">{% if agent.phone %}<a class="btn btn-w" href="{{ agent.phone|wa_link }}?text=Hello%2C%20I%20am%20looking%20at%20the%20itinerary%20%22{{ it.title|urlencode }}%22">WhatsApp</a><a class="btn btn-o" href="tel:{{ agent.phone }}">Call</a>{% elif company.phone %}<a class="btn btn-o" href="tel:{{ company.phone }}">Call us</a>{% endif %}</div></section>
+</main>
+<footer>{{ company.name }}{% if company.address %} · {{ company.address|truncatechars:60 }}{% endif %}</footer>
+
+<button type="button" class="pay-fab" id="pay-open" aria-haspopup="dialog"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2.5" y="5" width="19" height="14" rx="2.5"/><path d="M2.5 10h19M6.5 15h4"/></svg>Pay</button>
+<div class="ov" id="pay-ov" hidden><div class="modal" role="dialog" aria-modal="true" aria-labelledby="pay-t">
+  <button class="x" type="button" data-close aria-label="Close">&times;</button><h2 id="pay-t">Choose how to pay</h2><p style="color:#6E6250;margin:0">{{ it.title }}{% if it.sell_total %} · {{ it.sell_total|money:it.currency }}{% endif %}</p>
+  <div class="methods"><button type="button" class="m mp" data-m="M-PESA"><i>M</i><span><b>M-PESA</b><small>Pay from your phone, Paybill or Till</small></span></button>
+    <button type="button" class="m cd" data-m="Card"><i>▭</i><span><b>Card</b><small>Visa or Mastercard, debit or credit</small></span></button>
+    <button type="button" class="m cr" data-m="Crypto"><i>₿</i><span><b>Crypto</b><small>Bitcoin, USDT and other major coins</small></span></button></div>
+  <div class="note" id="pay-note" hidden></div>
+  <div style="margin-top:14px;display:flex;gap:10px;flex-wrap:wrap">{% if agent.phone %}<a class="btn btn-w" id="pay-wa" href="{{ agent.phone|wa_link }}">Ask {{ agent.full_name|default:"your consultant" }} for payment details</a>{% endif %}<button type="button" class="btn btn-o" data-close>Close</button></div>
+</div></div>
+<script>(function(){var f=document.getElementById("resp-form");if(!f)return;var sub=null;f.addEventListener("click",function(e){var b=e.target.closest("button[name=kind]");if(b)sub=b});
+f.addEventListener("submit",function(e){e.preventDefault();var fd=new FormData(f);if(sub)fd.set("kind",sub.value);var m=document.getElementById("resp-msg");
+fetch(f.action,{method:"POST",body:fd,headers:{"X-Requested-With":"XMLHttpRequest"}}).then(function(r){return r.json()}).then(function(j){m.hidden=false;m.textContent=j.message;m.className="rmsg"+(j.ok?"":" bad");if(j.ok){f.querySelectorAll("button").forEach(function(b){b.disabled=true})}}).catch(function(){m.hidden=false;m.className="rmsg bad";m.textContent="Could not send. Please call us."})})})();</script>
+<script>(function(){var ov=document.getElementById("pay-ov"),note=document.getElementById("pay-note"),wa=document.getElementById("pay-wa"),title="{{ it.title|escapejs }}";
+function open(){ov.hidden=false}function close(){ov.hidden=true}
+document.getElementById("pay-open").addEventListener("click",open);
+ov.addEventListener("click",function(e){if(e.target===ov||e.target.closest("[data-close]"))close()});document.addEventListener("keydown",function(e){if(e.key==="Escape")close()});
+ov.querySelectorAll(".m").forEach(function(b){b.addEventListener("click",function(){ov.querySelectorAll(".m").forEach(function(x){x.classList.remove("sel")});b.classList.add("sel");
+ note.hidden=false;note.textContent="Online "+b.dataset.m+" payment is being set up and will be available here soon. For now, your consultant will send you the "+b.dataset.m+" payment details directly.";
+ if(wa){var base=wa.href.split("?")[0];wa.href=base+"?text="+encodeURIComponent("Hello, I would like to pay by "+b.dataset.m+" for \""+title+"\". Please send me the details.")}})});})();</script>
+</body></html>

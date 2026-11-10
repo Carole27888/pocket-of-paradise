@@ -1,0 +1,6 @@
+<div class="empty">
+  {% include "components/icon.html" with name=icon|default:"compass" size="44" %}
+  <h3>{{ title|default:"Nothing here yet" }}</h3>
+  <p>{{ text|default:"Try another filter or add the first record." }}</p>
+  {% if action_url %}<a class="btn btn-primary mt-3" href="{{ action_url }}">{{ action_label|default:"Add" }}</a>{% endif %}
+</div>

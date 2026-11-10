@@ -1,0 +1,11 @@
+{% extends "base.html" %}
+{% block title %}Client KYC{% endblock %}
+{% block content %}
+<div class="page-header"><div><h1>Client KYC</h1><p>Identity checks. The person who owns the client can't verify their own client.</p></div></div>
+<div class="card mb-4"><div class="card-head"><h2>Submissions</h2><form method="get"><select class="input select" name="status" onchange="this.form.submit()" aria-label="Status"><option value="">All</option><option value="pending" {% if status == "pending" %}selected{% endif %}>Pending</option><option value="verified" {% if status == "verified" %}selected{% endif %}>Verified</option><option value="rejected" {% if status == "rejected" %}selected{% endif %}>Rejected</option></select></form></div>
+{% for k in items %}<div class="list-item"><div class="grow"><div class="fw-700">{{ k.client.full_name }}</div><div class="text-xs text-muted">{{ k.get_id_type_display }}{% if k.document %} · <a href="{{ k.document.url }}" target="_blank" rel="noopener">document</a>{% endif %}{% if k.note %} · {{ k.note }}{% endif %}</div></div>
+ {% if k.status == "verified" %}{% status_pill "Verified" "success" %}{% elif k.status == "rejected" %}{% status_pill "Rejected" "danger" %}{% else %}{% status_pill "Pending" "warning" %}{% endif %}
+ {% if can_manage and k.status == "pending" %}<form method="post" action="{% url 'deals:kyc_decide' k.pk %}" class="btn-row">{% csrf_token %}<input class="input" name="note" placeholder="Note" style="max-width:160px"><button class="btn btn-primary btn-sm" name="action" value="verify" type="submit">Verify</button><button class="btn btn-secondary btn-sm" name="action" value="reject" type="submit">Reject</button></form>{% endif %}</div>
+{% empty %}<p class="text-muted text-sm">No KYC submissions yet.</p>{% endfor %}</div>
+<div class="card"><div class="card-head"><h2>Clients with no KYC</h2></div>{% for c in unverified %}<a class="list-item" href="{% url 'deals:kyc_submit' c.pk %}" data-modal-form="{% url 'deals:kyc_submit' c.pk %}" data-modal-title="Add KYC · {{ c.full_name }}"><span class="grow">{{ c.full_name }}</span><span class="text-muted text-sm">Add KYC</span></a>{% empty %}<p class="text-muted text-sm">Every client has a KYC record.</p>{% endfor %}</div>
+{% endblock %}

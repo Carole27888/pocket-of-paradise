@@ -1,0 +1,62 @@
+{% extends "base.html" %}{% load static l10n %}
+{% block title %}Marketing Dashboard{% endblock %}
+{% block extra_vendor %}<script src="{% static 'vendor/chartjs/chart.umd.min.js' %}" defer></script>{% endblock %}
+{% block extra_js %}<script src="{% static 'js/charts.js' %}" defer></script>{% endblock %}
+{% block content %}
+<div class="page-header"><div><h1>Media Dashboard</h1><p>Campaigns, leads and performance across all social media channels · {{ start|ds_date }} – {{ end|ds_date }}</p></div>
+  <div class="actions"><form method="get" class="flex gap-2">{% if selected %}<input type="hidden" name="channel" value="{{ selected }}">{% endif %}<select class="input" name="range" onchange="this.form.submit()">{% for k, label in ranges %}<option value="{{ k }}" {% if k == range_key %}selected{% endif %}>{{ label }}</option>{% endfor %}</select></form>
+  {% if can_manage %}<a class="btn btn-primary" href="{% url 'marketing:campaign_new' %}">{% include "components/icon.html" with name="plus" %} New campaign</a>{% endif %}</div></div>
+
+<div class="mchips"><a class="mchip {% if not selected %}active{% endif %}" href="?range={{ range_key }}">All channels</a>{% for t in tiles %}<a class="mchip {% if selected == t.key %}active{% endif %}" href="?range={{ range_key }}&channel={{ t.key }}">{% source_badge t.key %} {{ t.name }}</a>{% endfor %}</div>
+
+<div class="mtiles">
+  <a class="mtile {% if not selected %}active{% endif %}" href="?range={{ range_key }}"><span class="lbl">Total leads</span><span class="num">{{ total }}</span><span class="mdelta {% if total_pct > 0 %}up{% elif total_pct < 0 %}down{% endif %}">{% if total_pct > 0 %}↑{% elif total_pct < 0 %}↓{% endif %} {{ total_pct }}%</span></a>
+  {% for t in tiles %}<a class="mtile {% if selected == t.key %}active{% endif %}" href="?range={{ range_key }}&channel={{ t.key }}"><span class="lbl">{% source_badge t.key %} {{ t.name }}</span><span class="num">{{ t.count }}</span><span class="mdelta {% if t.pct > 0 %}up{% elif t.pct < 0 %}down{% endif %}">{% if t.pct > 0 %}↑{% elif t.pct < 0 %}↓{% endif %} {{ t.pct }}%</span></a>{% endfor %}
+</div>
+
+{{ charts|json_script:"mk-charts" }}
+<div class="mgrid">
+  <div class="stack">
+    <div class="card"><div class="card-head"><h2>Leads overview <span class="text-muted" style="font-weight:400;font-size:15px">(cumulative, {% if selected %}{{ names|get_item:selected|default:selected }}{% else %}all channels{% endif %})</span></h2></div>
+      <div class="moverview"><div class="chart-box"><canvas data-chart="multiline" data-chart-source="mk-charts" data-chart-key="cumulative" aria-label="Cumulative leads" role="img"></canvas></div>
+        <div class="side"><span class="text-sm text-muted">Total leads this period</span><div class="mbig">{{ total }}</div><span class="mdelta {% if total_pct > 0 %}up{% elif total_pct < 0 %}down{% endif %}">{% if total_pct > 0 %}↑{% elif total_pct < 0 %}↓{% endif %} {{ total_pct }}% vs previous</span>
+          <div class="mt-3">{% for b in breakdown %}<div class="mrow"><i class="dot" style="background:{{ b.colour }}"></i><span class="grow">{{ b.name }}</span><b>{{ b.count }}</b><span class="pct">{{ b.share }}%</span></div>{% endfor %}</div></div></div></div>
+
+    <div class="card card-flush"><div class="card-head mhead" style="padding:16px 18px 0"><h2>Lead management</h2>
+      <form method="get" class="mfilters">{% if selected %}<input type="hidden" name="channel" value="{{ selected }}">{% endif %}<input type="hidden" name="range" value="{{ range_key }}">
+        <select class="input" name="agent" onchange="this.form.submit()"><option value="">All agents</option>{% for a in agents %}<option value="{{ a.pk|unlocalize }}" {% if agent == a.pk|unlocalize|stringformat:"s" %}selected{% endif %}>{{ a.full_name }}</option>{% endfor %}</select>
+        <select class="input" name="status" onchange="this.form.submit()"><option value="">All status</option>{% for v, l in stages %}<option value="{{ v }}" {% if stage == v %}selected{% endif %}>{{ l }}</option>{% endfor %}</select>
+        <a class="btn btn-primary" href="{% url 'marketing:enquiries' %}">Open leads</a></form></div>
+      <div class="table-wrap mt-3"><table class="table stack-phone"><thead><tr><th>Date</th><th>Name</th><th>Phone</th><th>Source</th><th>Interest</th><th>Agent</th><th>Status</th></tr></thead><tbody>
+      {% for e in enquiries %}<tr><td data-label="Date">{{ e.created_at|ds_datetime }}</td><td class="cell-first"><a class="row-link cell-main" href="{% url 'marketing:lead_journey' e.pk|unlocalize %}">{{ e.client.full_name }}</a></td><td data-label="Phone">{{ e.client.phone|default:"–" }}</td><td data-label="Source">{% source_badge e True %}</td><td data-label="Interest">{{ e.interest_label|truncatechars:30 }}</td><td data-label="Agent">{{ e.assigned_agent.short_name|default:"Unassigned" }}</td><td data-label="Status">{% stage_pill e %}</td></tr>
+      {% empty %}<tr><td colspan="7" class="text-muted">No leads match.</td></tr>{% endfor %}</tbody></table></div>
+      <div class="mfoot"><span>Showing {{ enquiries|length }} of {{ enquiries_total }}</span><a href="{% url 'marketing:enquiries' %}">All leads →</a></div></div>
+
+    <div class="card"><div class="card-head"><h2>Campaign performance</h2><a href="{% url 'marketing:campaigns' %}">View all</a></div>
+      <div class="mperf">
+        <div><small>Total spend</small><b>{{ perf.spend|money_compact }}</b><span class="mdelta {% if perf.spend_pct > 0 %}down{% elif perf.spend_pct < 0 %}up{% endif %}">{% if perf.spend_pct > 0 %}↑{% elif perf.spend_pct < 0 %}↓{% endif %} {{ perf.spend_pct }}%</span></div>
+        <div><small>Impressions</small><b>{{ perf.impressions }}</b><span class="mdelta {% if perf.impressions_pct > 0 %}up{% elif perf.impressions_pct < 0 %}down{% endif %}">{% if perf.impressions_pct > 0 %}↑{% elif perf.impressions_pct < 0 %}↓{% endif %} {{ perf.impressions_pct }}%</span></div>
+        <div><small>Clicks</small><b>{{ perf.clicks }}</b><span class="mdelta {% if perf.clicks_pct > 0 %}up{% elif perf.clicks_pct < 0 %}down{% endif %}">{% if perf.clicks_pct > 0 %}↑{% elif perf.clicks_pct < 0 %}↓{% endif %} {{ perf.clicks_pct }}%</span></div>
+        <div><small>CTR</small><b>{{ perf.ctr }}%</b><span class="mdelta {% if perf.ctr_pct > 0 %}up{% elif perf.ctr_pct < 0 %}down{% endif %}">{% if perf.ctr_pct > 0 %}↑{% elif perf.ctr_pct < 0 %}↓{% endif %} {{ perf.ctr_pct }}%</span></div>
+        <div><small>Cost per lead</small><b>{% if perf.cpl %}KES {{ perf.cpl }}{% else %}–{% endif %}</b></div>
+      </div></div>
+  </div>
+
+  <div class="stack">
+    <div class="card"><div class="card-head"><h2>Quick stats</h2></div>
+      <form method="get"><input type="hidden" name="range" value="{{ range_key }}">{% if selected %}<input type="hidden" name="channel" value="{{ selected }}">{% endif %}<select class="input" name="q" onchange="this.form.submit()" style="width:100%">{% for t in tiles %}<option value="{{ t.key }}" {% if q == t.key %}selected{% endif %}>{{ t.name }}</option>{% endfor %}</select></form>
+      <div class="mmini"><div><small>Leads</small><b>{{ qleads }}</b><span class="mdelta {% if qleads_pct > 0 %}up{% elif qleads_pct < 0 %}down{% endif %}">{% if qleads_pct > 0 %}↑{% elif qleads_pct < 0 %}↓{% endif %} {{ qleads_pct }}%</span></div>
+        <div><small>Ad spend</small><b>{{ qspend|money_compact }}</b><span class="mdelta {% if qspend_pct > 0 %}down{% elif qspend_pct < 0 %}up{% endif %}">{% if qspend_pct > 0 %}↑{% elif qspend_pct < 0 %}↓{% endif %} {{ qspend_pct }}%</span></div>
+        <div><small>Cost per lead</small><b>{% if qcpl %}KES {{ qcpl }}{% else %}—{% endif %}</b></div>
+        <div><small>Reach</small><b>{{ qreach }}</b><span class="mdelta {% if qreach_pct > 0 %}up{% elif qreach_pct < 0 %}down{% endif %}">{% if qreach_pct > 0 %}↑{% elif qreach_pct < 0 %}↓{% endif %} {{ qreach_pct }}%</span></div></div>
+      <p class="text-sm" style="font-weight:700;margin:8px 0 0">Leads vs ad spend (weekly)</p><div class="chart-box" style="height:200px"><canvas data-chart="combo" data-chart-source="mk-charts" data-chart-key="weekly" aria-label="Leads vs ad spend" role="img"></canvas></div></div>
+    <div class="card"><div class="card-head"><h2>Latest blogs</h2><a href="{% url 'marketing:blogs' %}">All blogs</a></div>
+      {% for b in latest_blogs %}<a class="list-item row-link" href="{{ b.url }}" target="_blank" rel="noopener"><div class="grow"><div class="title">{{ b.title|truncatechars:60 }}</div><div class="text-xs text-muted">{% if b.published_at %}{{ b.published_at|ds_date }}{% else %}{{ b.fetched_at|ds_date }}{% endif %}</div></div></a>
+      {% empty %}<p class="text-muted text-sm mb-0">No blogs yet. <a href="{% url 'marketing:blogs' %}">Set the website blog address.</a></p>{% endfor %}</div>
+    <div class="card"><div class="card-head"><h2>Top performing posts</h2><a href="{% url 'marketing:content' %}">View all</a></div>{% for p in top_posts %}<a class="list-item row-link" href="{{ p.get_absolute_url }}"><div class="grow"><div class="title">{{ p.title|truncatechars:34 }}</div><div class="meta">{{ p.reach }} reach · {{ p.leads }} leads</div></div></a>{% empty %}<p class="text-muted text-sm">No published posts yet.</p>{% endfor %}</div>
+    <div class="card"><div class="card-head"><h2>Lead sources</h2></div>
+      <div class="chart-box" style="height:200px"><canvas data-chart="doughnut" data-chart-source="mk-charts" data-chart-key="sources" aria-label="Lead sources" role="img"></canvas></div>
+      <div class="mt-3">{% for b in breakdown %}<div class="mrow"><i class="dot" style="background:{{ b.colour }}"></i><span class="grow">{{ b.name }}</span><b>{{ b.count }}</b><span class="pct">{{ b.share }}%</span></div>{% endfor %}</div></div>
+  </div>
+</div>
+{% endblock %}

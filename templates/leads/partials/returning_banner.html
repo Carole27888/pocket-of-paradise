@@ -1,0 +1,8 @@
+{% if match.returning %}
+<div class="alert alert-warning">{% include "components/icon.html" with name="star" %}
+  <span class="grow"><strong>Returning client: {{ match.client.full_name }}</strong> · {{ match.client.enquiries.count }} previous enquir{{ match.client.enquiries.count|pluralize:"y,ies" }}
+  {% if match.last_enquiry %}· last: {{ match.last_enquiry.interest_label }} ({{ match.last_enquiry.get_stage_display }}, {{ match.last_enquiry.created_at|ds_date }}{% if match.last_enquiry.assigned_agent %}, {{ match.last_enquiry.assigned_agent.short_name }}{% endif %}){% endif %}.
+  The new enquiry will be linked to this client.</span>
+  <a class="btn btn-sm btn-secondary" href="{{ match.client.get_absolute_url }}" target="_blank" rel="noopener">History</a>
+</div>
+{% endif %}

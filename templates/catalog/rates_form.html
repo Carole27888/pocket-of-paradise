@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+{% block title %}Rates · {{ object.name }}{% endblock %}
+{% block content %}
+<div class="page-header">
+  <div><div class="crumbs"><a href="{{ object.get_absolute_url }}">{% include "components/icon.html" with name="arrow-left" size="14" %} {{ object.name }}</a></div>
+    <h1>Room rates</h1><p>Seasonal rates per person. Prices keep their own currency.</p></div>
+</div>
+<form method="post" novalidate>
+  {% csrf_token %}{{ formset.management_form }}
+  {% if formset.non_form_errors %}<div class="alert alert-danger mb-4">{{ formset.non_form_errors|join:" " }}</div>{% endif %}
+  <div id="rates-forms">{% for form in formset %}{% include "catalog/partials/rate_form.html" %}{% endfor %}</div>
+  <template id="rates-empty">{% with form=formset.empty_form %}{% include "catalog/partials/rate_form.html" %}{% endwith %}</template>
+  <div class="form-actions" style="justify-content:space-between">
+    <button type="button" class="btn btn-secondary" data-add-form="rates">{% include "components/icon.html" with name="plus" %} Add rate</button>
+    <div class="flex gap-2"><a class="btn btn-secondary" href="{{ object.get_absolute_url }}">Cancel</a><button class="btn btn-primary" type="submit">Save rates</button></div>
+  </div>
+</form>
+{% endblock %}

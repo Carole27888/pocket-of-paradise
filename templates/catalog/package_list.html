@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+{% block title %}Tour Packages{% endblock %}
+{% block content %}
+<div class="page-header">
+  <div><h1>{{ title }}</h1><p>{{ subtitle }}</p></div>
+  {% if request.user.can_edit_packages %}<div class="actions"><a class="btn btn-primary" href="{% url 'catalog:package_create' %}">{% include "components/icon.html" with name="plus" %} New package</a></div>{% endif %}
+</div>
+<div class="grid grid-4 mb-4">
+  {% include "components/kpi_card.html" with label="Published" value=kpis.published accent=True %}
+  {% include "components/kpi_card.html" with label="Seasonal" value=kpis.seasonal %}
+  {% include "components/kpi_card.html" with label="Drafts" value=kpis.draft %}
+  {% include "components/kpi_card.html" with label="All packages" value=kpis.total %}
+</div>
+<div class="card card-flush">
+  {% include "components/filter_bar.html" with placeholder="Search code, title or destination…" %}
+  <div id="list-region">{% include "catalog/partials/package_table.html" %}</div>
+</div>
+{% endblock %}

@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% load l10n %}
+{% block title %}ICT Dashboard{% endblock %}
+{% block content %}
+<div class="page-header"><div><h1>ICT Dashboard</h1><p>The AI WhatsApp assistant: status, recent conversations and quick stats.</p></div></div>
+<div class="alert {% if cfg.enabled %}alert-info{% else %}alert-warn{% endif %} mb-4" style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+  <span class="grow">{% if cfg.enabled %}<b>AI auto-reply is on.</b> {{ cfg.bot_name }} answers WhatsApp messages and hands over to a person when needed.{% else %}<b>AI auto-reply is turned off.</b> WhatsApp messages are still captured as leads, but nobody gets an automatic reply.{% endif %}{% if cfg.enabled and not ai_ready %} <b>No AI key saved yet</b>, so every chat is handed to a person.{% endif %}</span>
+  {% if can_configure %}<form method="post" action="{% url 'ict:bot_toggle' %}">{% csrf_token %}<input type="hidden" name="next" value="/ict/"><button class="btn btn-secondary btn-sm" type="submit">{% if cfg.enabled %}Turn it off{% else %}Turn it on{% endif %}</button></form>{% endif %}
+</div>
+<div class="alert {% if routing_on %}alert-info{% else %}alert-warn{% endif %} mb-4" style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+  <span class="grow">{% if routing_on %}<b>Automatic lead assignment is on.</b> New leads are given to agents by the system (client's own agent, routing rules, specialists, then round-robin).{% else %}<b>Automatic lead assignment is off.</b> Leads still come in, but nobody is assigned automatically. They wait in <a href="{% url 'sales:assign_leads' %}">Assign Leads</a> for the Sales Manager to give out.{% endif %}</span>
+  {% if can_configure %}<form method="post" action="{% url 'ict:routing_toggle' %}">{% csrf_token %}<input type="hidden" name="next" value="/ict/"><button class="btn btn-secondary btn-sm" type="submit">{% if routing_on %}Stop lead routing{% else %}Start lead routing{% endif %}</button></form>{% endif %}
+</div>
+<div class="card mb-4"><div class="card-head"><h2>Go-live checklist</h2><span class="sub">WhatsApp &amp; AI</span></div>
+  <div class="grid grid-2" style="gap:8px">{% for c in checklist %}<a class="alert {% if c.ok %}alert-success{% else %}alert-warn{% endif %}" style="margin:0;text-decoration:none" href="{% url c.url %}"><span class="grow">{% if c.ok %}✔{% else %}○{% endif %} {{ c.label }}</span></a>{% endfor %}</div></div>
+<div class="stat-grid mb-4">
+  <div class="stat"><span class="stat-ico">{% include "components/icon.html" with name="whatsapp" %}</span><div><small>Conversations (14 days)</small><b>{{ n }}</b></div></div>
+  <div class="stat"><span class="stat-ico">{% include "components/icon.html" with name="user-plus" %}</span><div><small>Linked to a lead</small><b>{{ linked }}</b></div></div>
+  <div class="stat"><span class="stat-ico">{% include "components/icon.html" with name="trending-up" %}</span><div><small>Conversion rate</small><b>{{ rate }}%</b></div></div>
+  <div class="stat"><span class="stat-ico">{% include "components/icon.html" with name="brain" %}</span><div><small>Answers taught</small><b>{{ taught }}</b></div></div>
+</div>
+<div class="card"><div class="card-head"><h2>Recent conversations</h2><a href="{% url 'ict:chats' %}">All chat logs →</a></div>
+{% for c in recent %}<div class="list-item list-wrap"><span class="stat-ico" style="width:36px;height:36px">{% include "components/icon.html" with name="whatsapp" size="18" %}</span>
+  <div class="grow"><div class="fw-700">{{ c.display_name|default:c.phone }}{% if c.unread %} <span class="badge">{{ c.unread }}</span>{% endif %}</div><div class="text-xs text-muted">{{ c.phone }} · {{ c.last_message_at|timesince }} ago{% if c.client %} · linked to {{ c.client }}{% endif %}</div></div>
+  {% if c.status == "human" %}{% status_pill "Handed to human" "warning" %}{% elif c.status == "closed" %}{% status_pill "Closed" "neutral" %}{% else %}{% status_pill "AI replying" "success" %}{% endif %}
+  <a class="btn btn-secondary btn-sm" href="{% url 'ict:chat' c.pk|unlocalize %}">Open</a></div>
+{% empty %}<p class="text-muted text-sm">No conversations yet. They appear here when someone messages your WhatsApp number.</p>{% endfor %}</div>
+{% endblock %}

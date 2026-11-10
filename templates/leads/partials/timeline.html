@@ -1,0 +1,7 @@
+<ul class="timeline" id="timeline">
+{% for a in activities %}
+  <li><div class="t-head">{{ a.get_activity_type_display }}{% if a.user %} · {{ a.user.full_name }}{% endif %}</div>
+    <div class="t-meta">{{ a.timestamp|ds_datetime }}</div>
+    {% if a.details %}<div class="text-sm mt-1">{{ a.details|linebreaksbr }}</div>{% endif %}</li>
+{% empty %}<li><div class="t-meta">No activity yet.</div></li>{% endfor %}
+</ul>

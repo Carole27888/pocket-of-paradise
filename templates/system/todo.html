@@ -1,0 +1,64 @@
+{% extends "base.html" %}{% load l10n %}
+{% block title %}My To-Do{% endblock %}
+{% block content %}
+<div class="page-header"><div><h1>My To-Do</h1><p>Your week plan, checked off each day, and a private to-do list nobody else can see.</p></div>
+  <div class="actions"><a class="btn btn-accent" href="{% url 'system:plan_add' %}?day={{ today|date:'Y-m-d' }}" data-modal-form="{% url 'system:plan_add' %}?day={{ today|date:'Y-m-d' }}" data-modal-title="Add to my week">{% include "components/icon.html" with name="plus" %} Add to my week</a></div></div>
+
+{% if nudge and this_week %}
+<section class="plan-nudge {{ nudge.kind }}" role="alert">
+  <span class="pn-ico">{% include "components/icon.html" with name="alert" size="22" %}</span>
+  <div class="grow"><b>{{ nudge.title }} <span class="req-tag">Required</span></b><p>{{ nudge.text }}</p></div>
+  {% if nudge.kind == "plan" %}<a class="btn btn-primary" href="{% url 'system:plan_add' %}?day={{ today|date:'Y-m-d' }}" data-modal-form="{% url 'system:plan_add' %}?day={{ today|date:'Y-m-d' }}" data-modal-title="Add to my week">{{ nudge.cta }}</a>{% else %}<a class="btn btn-primary" href="#my-week">{{ nudge.cta }}</a>{% endif %}
+</section>
+{% endif %}
+
+<div class="card card-flush mb-4" id="my-week">
+  <div class="card-head" style="padding:16px 18px 0"><div><h2>My week</h2><span class="sub">{{ monday|ds_date }} – {{ sunday|ds_date }}{% if this_week %} · this week{% endif %}</span></div>
+    <div class="flex gap-2"><a class="btn btn-secondary btn-sm" href="?week={{ prev_week|date:'Y-m-d' }}">← Prev</a>{% if not this_week %}<a class="btn btn-secondary btn-sm" href="{% url 'system:todo' %}">This week</a>{% endif %}<a class="btn btn-secondary btn-sm" href="?week={{ next_week|date:'Y-m-d' }}">Next →</a></div></div>
+  {% if summary.total %}
+  <div class="plan-sum">
+    <div><b>{{ summary.total }}</b><small>planned</small></div><div class="s-done"><b>{{ summary.done }}</b><small>done</small></div>
+    <div class="s-part"><b>{{ summary.partial }}</b><small>partly</small></div><div class="s-miss"><b>{{ summary.missed }}</b><small>not done</small></div>
+    <div class="grow"><div class="bar {% if summary.pct is None %}{% elif summary.pct >= 80 %}ok{% elif summary.pct >= 50 %}warn{% else %}bad{% endif %}"><span style="width:{{ summary.pct|default:0 }}%"></span></div>
+      <small>{% if summary.pct is None %}Nothing marked yet{% else %}{{ summary.pct }}% of what you have marked is done{% endif %} · {{ summary.planned }} still to mark</small></div>
+  </div>{% endif %}
+  <div class="plan-days">
+  {% for d in days %}
+    <div class="plan-day {% if d.today %}today{% endif %}">
+      <div class="pd-head"><span><b>{{ d.date|date:"l" }}</b> {{ d.date|date:"j M" }}{% if d.today %} <span class="pill pill-info">Today</span>{% endif %}</span>
+        <a class="pd-add" href="{% url 'system:plan_add' %}?day={{ d.date|date:'Y-m-d' }}" data-modal-form="{% url 'system:plan_add' %}?day={{ d.date|date:'Y-m-d' }}" data-modal-title="Add to {{ d.date|date:'l j M' }}">+ Add</a></div>
+      {% for i in d.items %}
+        <div class="pd-item st-{{ i.status }}">
+          <div class="pd-main">{% if i.start_time %}<span class="pd-time">{{ i.start_time|time:"H:i" }}</span>{% endif %}<span class="pd-title">{{ i.title }}</span>
+            {% if i.status != "planned" %}<span class="pill {% if i.status == 'done' %}pill-success{% elif i.status == 'partial' %}pill-warning{% else %}pill-danger{% endif %}">{{ i.get_status_display }}</span>{% endif %}</div>
+          {% if i.note %}<div class="pd-note">“{{ i.note }}”</div>{% endif %}
+          <div class="pd-actions">
+            {% if d.can_mark %}
+              {% if i.status == "planned" %}
+                <form method="post" action="{% url 'system:plan_mark' i.pk %}">{% csrf_token %}<input type="hidden" name="status" value="done"><button class="btn btn-secondary btn-sm" type="submit">{% include "components/icon.html" with name="check" size="14" %} Done</button></form>
+                <a class="btn btn-ghost btn-sm" href="{% url 'system:plan_mark' i.pk %}?status=partial" data-modal-form="{% url 'system:plan_mark' i.pk %}?status=partial" data-modal-title="Partly done">Partly</a>
+                <a class="btn btn-ghost btn-sm text-danger" href="{% url 'system:plan_mark' i.pk %}?status=missed" data-modal-form="{% url 'system:plan_mark' i.pk %}?status=missed" data-modal-title="Not done">Not done</a>
+              {% else %}
+                <form method="post" action="{% url 'system:plan_mark' i.pk %}">{% csrf_token %}<input type="hidden" name="status" value="planned"><button class="btn btn-ghost btn-sm" type="submit">Undo</button></form>
+              {% endif %}
+            {% endif %}
+            <a class="btn btn-ghost btn-sm" href="{% url 'system:plan_edit' i.pk %}" data-modal-form="{% url 'system:plan_edit' i.pk %}" data-modal-title="Edit">Edit</a>
+            <form method="post" action="{% url 'system:plan_delete' i.pk %}" onsubmit="return confirm('Remove this from your week?')">{% csrf_token %}<button class="btn btn-ghost btn-sm text-danger" type="submit" aria-label="Remove">{% include "components/icon.html" with name="x" size="14" %}</button></form>
+          </div>
+        </div>
+      {% empty %}<p class="pd-empty">Nothing planned</p>{% endfor %}
+    </div>
+  {% endfor %}
+  </div>
+</div>
+
+<div class="grid grid-main-side">
+  <div class="card"><div class="card-head"><h2>My private to-do list</h2><span class="sub">{{ open|length }} open · only you can see it</span></div>
+    {% for t in open %}<div class="todo-row"><form method="post" action="{% url 'system:todo_action' t.pk %}">{% csrf_token %}<input type="hidden" name="action" value="done"><button class="btn btn-secondary btn-sm" type="submit" aria-label="Mark done">{% include "components/icon.html" with name="check" size="16" %}</button></form>
+      <div class="grow"><div class="fw-700">{{ t.text }}</div>{% if t.due %}<div class="text-xs {% if t.due < today %}text-late{% else %}text-muted{% endif %}">Due {{ t.due|ds_date }}</div>{% endif %}</div>
+      <form method="post" action="{% url 'system:todo_action' t.pk %}">{% csrf_token %}<input type="hidden" name="action" value="remove"><button class="btn btn-ghost btn-sm text-danger" type="submit">Remove</button></form></div>
+    {% empty %}<p class="text-muted text-sm">Nothing to do. Add something below.</p>{% endfor %}
+    <form method="post" action="{% url 'system:todo_add' %}" class="todo-add">{% csrf_token %}<input class="input" name="text" required maxlength="240" placeholder="Add an item, e.g. Call Mara Serena about July rates" aria-label="New item"><input class="input" type="date" name="due" aria-label="Due date (optional)" style="max-width:170px"><button class="btn btn-primary" type="submit">Add</button></form></div>
+  <div class="card"><div class="card-head"><h2>Done</h2></div>{% for t in done %}<div class="todo-row"><div class="grow text-muted"><s>{{ t.text }}</s></div><form method="post" action="{% url 'system:todo_action' t.pk %}">{% csrf_token %}<input type="hidden" name="action" value="undo"><button class="btn btn-ghost btn-sm" type="submit">Undo</button></form><form method="post" action="{% url 'system:todo_action' t.pk %}">{% csrf_token %}<input type="hidden" name="action" value="remove"><button class="btn btn-ghost btn-sm text-danger" type="submit">Remove</button></form></div>{% empty %}<p class="text-muted text-sm">Completed items appear here.</p>{% endfor %}</div>
+</div>
+{% endblock %}

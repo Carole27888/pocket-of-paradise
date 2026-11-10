@@ -1,0 +1,16 @@
+<a class="trip row-link{% if m.is_late %} is-late{% endif %}" href="{{ m.get_absolute_url }}" style="color:inherit">
+  <span class="avatar avatar-sm">{% if m.vehicle %}{% include "components/icon.html" with name="truck" size="14" %}{% else %}{% include "components/icon.html" with name="user" size="14" %}{% endif %}</span>
+  <div class="grow">
+    <div class="title">{{ m.subject_label }}{% if m.vehicle.nickname %} <span class="text-muted fw-600">· {{ m.vehicle.nickname }}</span>{% endif %}</div>
+    <div class="meta">{{ m.destination_label }}{% for p in m.crew %}{% if forloop.first %} · {% endif %}{{ p.short_name }}{% if not forloop.last %}, {% endif %}{% endfor %}{% if m.passengers %} · {{ m.passengers }} pax{% endif %}</div>
+  </div>
+  <div class="when">
+    {% if m.is_open %}
+      {% if m.is_late %}<span class="text-late">{{ m.late_label }} late</span>{% else %}<span class="text-muted">Back</span>{% endif %}
+      <div class="{% if m.is_late %}text-late{% else %}text-muted{% endif %} fw-600">{{ m.expected_return_at|ds_datetime }}</div>
+    {% else %}
+      <span class="{% if m.returned_late %}text-late{% else %}text-success{% endif %}">Back {{ m.checked_in_at|ds_time }}</span>
+      {% if m.distance_km is not None %}<div class="text-muted fw-600">{{ m.distance_km }} km</div>{% endif %}
+    {% endif %}
+  </div>
+</a>

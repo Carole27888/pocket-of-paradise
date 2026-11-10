@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% load l10n %}
+{% block title %}Work Log{% endblock %}
+{% block content %}
+<div class="page-header"><div><h1>Work Log</h1><p>What ICT did outside what the system already tracks: a repair, an install, a one-off fix. A record of who did what, and when.</p></div></div>
+<div class="grid grid-main-side">
+  <div class="card card-flush"><div class="card-head" style="padding:16px 18px 0"><h2>Entries</h2></div>
+    <div class="table-wrap mt-3"><table class="table stack-phone"><thead><tr><th>Date</th><th>Who</th><th>What was done</th><th>Time</th><th></th></tr></thead><tbody>
+    {% for e in entries %}<tr><td data-label="Date">{{ e.date|ds_date }}</td><td data-label="Who">{{ e.employee }}</td><td class="cell-first">{{ e.description }}</td>
+      <td data-label="Time">{% if e.started_at %}{{ e.started_at|time:"H:i" }}{% if e.ended_at %}–{{ e.ended_at|time:"H:i" }}{% endif %}{% else %}–{% endif %}</td>
+      <td><form method="post" action="{% url 'ict:work_log_delete' e.pk|unlocalize %}" onsubmit="return confirm('Remove this entry?')">{% csrf_token %}<button class="btn btn-ghost btn-sm text-danger" type="submit">Remove</button></form></td></tr>
+    {% empty %}<tr><td colspan="5">{% include "components/empty_state.html" with icon="list" title="Nothing logged yet" text="Add what you did today using the form." %}</td></tr>{% endfor %}</tbody></table></div></div>
+  <div class="card"><div class="card-head"><h2>Add an entry</h2></div>
+    <form method="post" class="stack" style="gap:12px">{% csrf_token %}
+      <div class="field"><label for="w-d">Date</label><input class="input" id="w-d" type="date" name="date" value="{{ today|date:'Y-m-d' }}"></div>
+      <div class="field"><label for="w-t">What did you do?</label><textarea class="input textarea" id="w-t" name="description" rows="3" maxlength="300" required></textarea></div>
+      <div class="flex gap-2"><div class="field grow"><label for="w-s">From</label><input class="input" id="w-s" type="time" name="started_at"></div><div class="field grow"><label for="w-e">To</label><input class="input" id="w-e" type="time" name="ended_at"></div></div>
+      <button class="btn btn-primary" type="submit">Add to work log</button></form></div>
+</div>
+{% endblock %}

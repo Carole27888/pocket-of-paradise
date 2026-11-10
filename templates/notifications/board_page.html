@@ -1,0 +1,6 @@
+{% extends "base.html" %}
+{% block title %}{% if a %}Edit notice{% else %}Post a notice{% endif %}{% endblock %}
+{% block content %}
+<div class="page-header"><div><div class="crumbs"><a href="{% url 'notifications:board' %}">Notice Board</a></div><h1>{% if a %}Edit notice{% else %}Post a notice{% endif %}</h1></div></div>
+<div class="card" style="max-width:680px">{% include "notifications/board_modal.html" %}</div>
+{% endblock %}

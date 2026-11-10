@@ -1,0 +1,67 @@
+{% extends "base.html" %}{% load l10n %}
+{% block title %}Trip Movement{% endblock %}
+{% block content %}
+<div class="page-header">
+  <div><h1>Trip Movement</h1><p>Check guides, drivers and vehicles out and in. Fleet and staff status update automatically.</p></div>
+  <div class="actions">
+    <a class="btn btn-secondary" href="{% url 'frontdesk:movement_history' %}">{% include "components/icon.html" with name="clock" %} Movement log</a>
+    {% if can_run_movement %}<a class="btn btn-accent" href="{% url 'frontdesk:checkout' %}">{% include "components/icon.html" with name="route" %} Check out</a>{% endif %}
+  </div>
+</div>
+
+<div class="grid grid-4 mb-4">
+  {% include "components/kpi_card.html" with label="Out now" value=open_count accent=True %}
+  {% if late %}{% include "components/kpi_card.html" with label="Late" value=late|length note="Past expected return" delta_dir="down" %}{% else %}{% include "components/kpi_card.html" with label="Late" value=0 note="Nobody overdue" %}{% endif %}
+  {% include "components/kpi_card.html" with label="Due back today" value=due_today|length %}
+  {% include "components/kpi_card.html" with label="Vehicles ready" value=available_vehicles|length note=unavailable_vehicles|length|stringformat:"d"|add:" in maintenance / off the road" %}
+</div>
+
+<div class="grid grid-main-side">
+  <div class="stack">
+    {% if late %}
+    <div class="card" style="border-top:3px solid var(--danger)">
+      <div class="card-head"><h2 class="text-danger">Late</h2><span class="sub">Call the driver, then check in on return</span></div>
+      {% for m in late %}{% include "frontdesk/partials/trip_item.html" %}{% endfor %}
+    </div>{% endif %}
+    <div class="card">
+      <div class="card-head"><h2>Due back today</h2><span class="sub">{{ due_today|length }}</span></div>
+      {% for m in due_today %}{% include "frontdesk/partials/trip_item.html" %}
+      {% empty %}<p class="text-muted text-sm">No other returns expected today.</p>{% endfor %}
+    </div>
+    <div class="card">
+      <div class="card-head"><h2>Out on longer trips</h2><span class="sub">Back after today</span></div>
+      {% for m in later %}{% include "frontdesk/partials/trip_item.html" %}
+      {% empty %}<p class="text-muted text-sm">No multi-day trips out.</p>{% endfor %}
+    </div>
+    <div class="card">
+      <div class="card-head"><h2>Recently checked in</h2><a href="{% url 'frontdesk:movement_history' %}?status=back">All →</a></div>
+      {% for m in recent %}{% include "frontdesk/partials/trip_item.html" %}
+      {% empty %}<p class="text-muted text-sm">No check-ins yet.</p>{% endfor %}
+    </div>
+  </div>
+  <div class="stack">
+    <div class="card">
+      <div class="card-head"><h2>Vehicles ready</h2><a href="{% url 'fleet:list' %}">Fleet →</a></div>
+      <div class="list">
+      {% for v in available_vehicles %}
+        <div class="list-item">
+          <div class="grow"><div class="title">{{ v.registration_no }}{% if v.nickname %} <span class="text-muted fw-600">· {{ v.nickname }}</span>{% endif %}</div>
+            <div class="meta">{{ v.seats }} seats · {{ v.odometer_km|floatformat:"0g" }} km{% if v.current_driver %} · {{ v.current_driver.short_name }}{% endif %}</div></div>
+          {% if can_run_movement %}<a class="btn btn-secondary btn-sm" href="{% url 'frontdesk:checkout' %}?vehicle={{ v.pk|unlocalize }}">Check out</a>{% endif %}
+        </div>
+      {% empty %}<p class="text-muted text-sm">No vehicles available.</p>{% endfor %}
+      {% for v in unavailable_vehicles %}
+        <a class="list-item row-link" href="{{ v.get_absolute_url }}" style="color:inherit">
+          <div class="grow"><div class="title text-muted">{{ v.registration_no }}</div></div>{% include "fleet/partials/vehicle_status.html" %}</a>
+      {% endfor %}
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-head"><h2>Drivers free</h2><span class="sub">{{ available_drivers|length }}</span></div>
+      <div class="crew-chips">{% for p in available_drivers %}<span class="chip">{{ p.short_name }}</span>{% empty %}<p class="text-muted text-sm mb-0">All drivers are out or off.</p>{% endfor %}</div>
+      <div class="card-head mt-4"><h2>Guides free</h2><span class="sub">{{ available_guides|length }}</span></div>
+      <div class="crew-chips">{% for p in available_guides %}<span class="chip">{{ p.short_name }}</span>{% empty %}<p class="text-muted text-sm mb-0">All guides are out or off.</p>{% endfor %}</div>
+    </div>
+  </div>
+</div>
+{% endblock %}

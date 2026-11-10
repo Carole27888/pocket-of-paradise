@@ -1,0 +1,44 @@
+{% extends "base.html" %}{% load l10n static %}
+{% block title %}Finance Dashboard{% endblock %}
+{% block extra_css %}<link rel="stylesheet" href="{% static 'css/sales.css' %}">{% endblock %}
+{% block extra_vendor %}<script src="{% static 'vendor/chartjs/chart.umd.min.js' %}" defer></script>{% endblock %}
+{% block extra_js %}<script src="{% static 'js/charts.js' %}" defer></script>{% endblock %}
+{% block content %}
+<div class="page-header"><div><h1>Finance Dashboard</h1><p>Live from the ledger · {{ start|ds_date }} – {{ end|ds_date }}</p></div>
+  <div class="actions">{% include "sales/partials/range_bar.html" %}</div></div>
+<div class="grid grid-4 mb-4">
+  <div class="card kpi kpi-accent"><span class="kpi-label">Total revenue</span><span class="kpi-value">{{ pnl.revenue|money_compact }}</span><span class="kpi-delta {% if pnl.revenue >= prev.revenue %}up{% else %}down{% endif %}">vs {{ prev.revenue|money_compact }} previous period</span></div>
+  <div class="card kpi"><span class="kpi-label">Total expenses</span><span class="kpi-value">{{ pnl.expenses|money_compact }}</span><span class="kpi-delta">Cost of sales + operating</span></div>
+  <div class="card kpi"><span class="kpi-label">Net profit (before tax)</span><span class="kpi-value {% if pnl.profit_before_tax < 0 %}text-danger{% endif %}">{{ pnl.profit_before_tax|money_compact }}</span><span class="kpi-delta {% if profit_delta >= 0 %}up{% else %}down{% endif %}">{{ profit_delta|money_compact }} vs previous</span></div>
+  <div class="card kpi"><span class="kpi-label">Cash & bank</span><span class="kpi-value">{{ cash|money_compact }}</span><span class="kpi-delta">Bank + M-PESA + cash</span></div>
+</div>
+<div class="grid grid-4 mb-4">
+  <div class="card kpi"><span class="kpi-label">Total assets</span><span class="kpi-value" style="font-size:20px">{{ bs.assets|money_compact }}</span></div>
+  <div class="card kpi"><span class="kpi-label">Total liabilities</span><span class="kpi-value" style="font-size:20px">{{ bs.liabilities|money_compact }}</span></div>
+  <div class="card kpi"><span class="kpi-label">Owed to us</span><span class="kpi-value" style="font-size:20px">{{ ar.total|money_compact }}</span><a class="kpi-delta" href="{% url 'finance:receivables' %}">Receivables →</a></div>
+  <div class="card kpi"><span class="kpi-label">Owed to suppliers</span><span class="kpi-value" style="font-size:20px">{{ ap.total|money_compact }}</span><a class="kpi-delta" href="{% url 'finance:payables' %}">Payables →</a></div>
+</div>
+{{ charts|json_script:"fin-charts" }}
+<div class="grid grid-main-side mb-4">
+  <div class="card"><div class="card-head"><h2>Income vs expenses</h2><span class="sub">Last 6 months, KES</span></div><div class="chart-box"><canvas data-chart="grouped" data-chart-source="fin-charts" data-chart-key="cash" aria-label="Income vs expenses" role="img"></canvas></div></div>
+  {% include "components/chart_card.html" with title="Expense breakdown" sub="Selected period" kind="doughnut" source="fin-charts" key="expense" %}
+</div>
+<div class="grid grid-3 mb-4">
+  <div class="card"><div class="card-head"><h2>Receivables aging</h2></div><div class="chart-box sm"><canvas data-chart="bar" data-chart-source="fin-charts" data-chart-key="aging" aria-label="Receivables aging" role="img"></canvas></div></div>
+  <div class="card"><div class="card-head"><h2>Upcoming deadlines</h2><a href="{% url 'finance:calendar' %}">Calendar →</a></div>
+    {% for d, title, amt, kind, late in upcoming %}<div class="task-row"><div class="grow"><div class="fw-700">{{ title }}</div><div class="text-sm text-muted">{{ amt|money }}</div></div><span class="when {% if late %}late{% endif %}">{{ d|ds_date }}</span></div>{% empty %}<p class="text-muted text-sm">Nothing due in the next two weeks.</p>{% endfor %}</div>
+  <div class="card"><div class="card-head"><h2>KRA compliance</h2><a href="{% url 'finance:kra' %}">All →</a></div>
+    <div class="kpi-value" style="font-size:22px">{{ kra_total|money_compact }}</div><span class="text-sm text-muted">unpaid obligations</span>
+    {% for o in kra %}<div class="task-row"><div class="grow">{{ o.get_tax_display }} · {{ o.period|date:"M" }}</div><span class="when {% if o.is_overdue %}late{% endif %}">{{ o.due_date|ds_date }}</span></div>{% endfor %}</div>
+</div>
+<div class="grid grid-main-side">
+  <div class="stack">
+    <div class="card card-flush"><div class="card-head"><h2>Recent transactions</h2><a href="{% url 'finance:statements' %}">Statements →</a></div><div class="table-wrap mt-3"><table class="table stack-phone"><thead><tr><th>Entry</th><th>Date</th><th>Memo</th><th class="num">Amount</th></tr></thead>
+      <tbody>{% for e in recent %}<tr><td class="cell-first">{{ e.number }}</td><td data-label="Date">{{ e.date|ds_date }}</td><td data-label="Memo">{{ e.memo|truncatechars:60 }}</td><td data-label="Amount" class="num">{{ e.total|money }}</td></tr>{% empty %}<tr><td colspan="4" class="text-muted">No postings yet.</td></tr>{% endfor %}</tbody></table></div></div>
+    <div class="card"><div class="card-head"><h2>Budget vs actual</h2><a href="{% url 'finance:budgets' %}">All →</a></div>
+      {% for r in budget_rows %}<div class="progress-row mb-3"><div class="top"><span>{{ r.budget.category_label }}</span><span>{{ r.actual|money_compact }} / {{ r.budget.amount|money_compact }} · {{ r.status }}</span></div><div class="bar {% if r.status == 'Over budget' %}bad{% elif r.used >= 80 %}warn{% else %}ok{% endif %}"><span style="width:{% if r.used > 100 %}100{% else %}{{ r.used }}{% endif %}%"></span></div></div>{% empty %}<p class="text-muted text-sm">No budgets set for this month.</p>{% endfor %}</div>
+  </div>
+  <div class="card"><div class="card-head"><h2>Departures needing prepayment</h2></div><p class="text-sm text-muted">Leaving within 21 days with no prepaid supplier bill.</p>
+    <div class="list">{% for d in need_prepay %}<a class="list-item row-link" href="{% url 'suppliers:bill_new' %}?departure={{ d.pk|unlocalize }}"><div class="grow"><div class="title">{{ d.reference }} · {{ d.package.title|truncatechars:26 }}</div><div class="meta">Leaves {{ d.start_date|ds_date }}</div></div><span class="pill pill-warning">Add bill</span></a>{% empty %}<p class="text-muted text-sm">All upcoming trips have a prepayment.</p>{% endfor %}</div></div>
+</div>
+{% endblock %}

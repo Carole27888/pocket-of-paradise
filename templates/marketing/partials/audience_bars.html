@@ -1,0 +1,2 @@
+{% for a in rows %}<div style="margin-bottom:12px"><div class="flex" style="justify-content:space-between;font-size:13px"><span>{{ a.name }}</span><b>{{ a.share }}%</b></div><div class="bar-track"><span class="bar-fill" style="width:{{ a.share }}%"></span></div></div>
+{% empty %}<p class="text-muted text-sm mb-0">Not enough leads from this channel yet.</p>{% endfor %}

@@ -1,0 +1,115 @@
+{% extends "base.html" %}{% load static %}
+{% block title %}Operations Dashboard{% endblock %}
+{% block extra_vendor %}<script src="{% static 'vendor/chartjs/chart.umd.min.js' %}" defer></script>{% endblock %}
+{% block extra_js %}<script src="{% static 'js/charts.js' %}" defer></script>{% endblock %}
+{% block content %}
+<div class="page-header">
+  <div><h1>Operations Dashboard</h1><p>{% now "l, j F Y" %} · live figures from enquiries, clients, catalogue and fleet</p></div>
+  <div class="actions">
+    <a class="btn btn-secondary" href="{% url 'leads:list' %}">{% include "components/icon.html" with name="inbox" %} Enquiries</a>
+    {% if request.user.can_capture_enquiries %}
+    <a class="btn btn-accent" href="{% url 'leads:create' %}">{% include "components/icon.html" with name="plus" %} New Enquiry</a>{% endif %}
+  </div>
+</div>
+
+{% if kpis.unassigned %}
+<div class="alert alert-warning mb-4">{% include "components/icon.html" with name="alert" %}
+  <span class="grow"><strong>{{ kpis.unassigned }} open enquir{{ kpis.unassigned|pluralize:"y,ies" }}</strong> waiting for an agent.</span>
+  <a class="btn btn-sm btn-primary" href="{% url 'leads:list' %}?unassigned=yes">Review</a>
+</div>{% endif %}
+
+<div class="grid grid-4 mb-4">
+  <div class="card kpi kpi-accent"><span class="kpi-label">Enquiries this month</span><span class="kpi-value">{{ kpis.enquiries_month }}</span>
+    {% with d=kpis.enquiries_delta %}<span class="kpi-delta {% if d > 0 %}up{% elif d < 0 %}down{% endif %}">{% if d > 0 %}+{{ d }} vs last month{% elif d < 0 %}{{ d }} vs last month{% else %}Same as last month{% endif %}</span>{% endwith %}</div>
+  {% include "components/kpi_card.html" with label="Open in pipeline" value=kpis.open note=kpis.unassigned|stringformat:"d"|add:" not yet assigned" %}
+  {% include "components/kpi_card.html" with label="Clients" value=kpis.clients note=kpis.international|stringformat:"d"|add:" diaspora / international" %}
+  <div class="card kpi"><span class="kpi-label">Fleet available</span><span class="kpi-value">{{ kpis.vehicles_available }}<small class="text-muted" style="font-size:15px"> / {{ kpis.vehicles_total }}</small></span>
+    <span class="kpi-delta">{{ kpis.vehicles_out }} vehicle{{ kpis.vehicles_out|pluralize }} · {{ kpis.guides_out }} guide{{ kpis.guides_out|pluralize }} out on trip</span></div>
+</div>
+
+<div class="card mb-4">
+  <div class="card-head"><h2>Pipeline by stage</h2><a href="{% url 'leads:list' %}">Open pipeline →</a></div>
+  <div class="grid" style="grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:10px">
+    {% for s in stage_list %}
+      <a href="{% url 'leads:list' %}?stage={{ s.code }}" class="card" style="padding:12px 14px;box-shadow:none;color:inherit">
+        <span class="pill stage-{{ s.code }}">{{ s.label }}</span>
+        <div class="kpi-value mt-2" style="font-size:24px">{{ s.count }}</div>
+      </a>
+    {% endfor %}
+  </div>
+</div>
+
+{{ charts|json_script:"ops-charts" }}
+<div class="grid grid-main-side mb-4">
+  {% include "components/chart_card.html" with title="New enquiries" sub="Last 14 days" kind="line" source="ops-charts" key="trend" %}
+  {% include "components/chart_card.html" with title="Enquiry sources" sub="Last 30 days" kind="doughnut" source="ops-charts" key="sources" %}
+</div>
+
+<div class="grid grid-main-side mb-4">
+  <div class="card card-flush">
+    <div class="card-head"><h2>Latest enquiries</h2><a href="{% url 'leads:list' %}">View all</a></div>
+    <div class="table-wrap mt-3">
+      <table class="table stack-phone">
+        <thead><tr><th>Client</th><th>Source</th><th>Interest</th><th>Stage</th><th>Agent</th></tr></thead>
+        <tbody>
+        {% for e in recent %}
+          <tr>
+            <td class="cell-first"><a class="row-link cell-main" href="{{ e.get_absolute_url }}">{{ e.client.full_name }}</a><div class="cell-sub">{{ e.reference }} · {{ e.created_at|ds_datetime }}</div></td>
+            <td data-label="Source">{% source_badge e True %}</td>
+            <td data-label="Interest">{{ e.interest_label }}</td>
+            <td data-label="Stage">{% stage_pill e %}</td>
+            <td data-label="Agent">{{ e.assigned_agent.short_name|default:"—" }}</td>
+          </tr>
+        {% empty %}<tr><td colspan="5">{% include "components/empty_state.html" with icon="inbox" title="No enquiries yet" text="New WhatsApp, walk-in, call and DM enquiries appear here." %}</td></tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+  <div class="stack">
+    <div class="card">
+      <div class="card-head"><h2>Top destinations</h2><span class="sub">Enquiries, 90 days</span></div>
+      {% for d in top_destinations %}
+        <div class="progress-row mb-3">
+          <div class="top"><a href="{{ d.get_absolute_url }}">{{ d.name }}</a><span>{{ d.n }}</span></div>
+          <div class="progress accent"><span style="width:{% widthratio d.n top_destinations.0.n 100 %}%"></span></div>
+        </div>
+      {% empty %}<p class="text-muted text-sm">No destination enquiries yet.</p>{% endfor %}
+    </div>
+    <div class="card">
+      <div class="card-head"><h2>Exchange rates</h2><span class="sub">to KES</span></div>
+      {% for r in rates %}
+        <div class="list-item"><span class="grow fw-700">1 {{ r.code }}</span><span class="fw-800">KES {{ r.rate|floatformat:2 }}</span><span class="text-xs text-muted">{{ r.date|ds_date }}</span></div>
+      {% empty %}<p class="text-muted text-sm">Rates refresh daily at 6:00 AM.</p>{% endfor %}
+    </div>
+  </div>
+</div>
+
+<div class="grid grid-2">
+  <div class="stack" style="display:contents">
+    <div class="card">
+      <div class="card-head"><h2>Stale enquiries</h2><span class="sub">No stage change in 7+ days</span></div>
+      <div class="list">
+      {% for e in stale %}
+        <a class="list-item row-link" href="{{ e.get_absolute_url }}">
+          <div class="grow"><div class="title">{{ e.client.full_name }}</div><div class="meta">{{ e.interest_label }} · {{ e.assigned_agent.short_name|default:"Unassigned" }}</div></div>
+          <span class="text-late">{{ e.days_in_stage }}d</span>
+        </a>
+      {% empty %}<p class="text-muted text-sm">Nothing stale. Nice work.</p>{% endfor %}
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-head"><h2>Fleet documents due</h2><a href="{% url 'fleet:list' %}">Fleet →</a></div>
+      <div class="list">
+      {% for v in expiring_vehicles %}
+        <a class="list-item row-link" href="{{ v.get_absolute_url }}">
+          <span class="avatar avatar-sm">{% include "components/icon.html" with name="truck" size="14" %}</span>
+          <div class="grow"><div class="title">{{ v.registration_no }}</div>
+            <div class="meta">{% for f in v.expiry_flags %}{{ f.label }} {% if f.overdue %}<span class="text-late">overdue</span>{% else %}{{ f.date|ds_date }}{% endif %}{% if not forloop.last %} · {% endif %}{% endfor %}</div></div>
+        </a>
+      {% empty %}<p class="text-muted text-sm">No insurance, inspection or service due in the next 30 days.</p>{% endfor %}
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,10 @@
+{% comment %}Template library: drag a day (or click +) into the days list below. Needs `library`.{% endcomment %}
+<div class="card mb-4 lib" id="tpl-library">
+  <div class="card-head" style="cursor:pointer" data-lib-toggle><h2>Template library</h2><span class="sub">Drag a day into your itinerary, or click + · <span data-lib-state>show</span></span></div>
+  <div data-lib-body hidden>
+    <input class="input mb-3" type="search" placeholder="Search templates and days…" data-lib-search aria-label="Search the template library">
+    {% for t in library %}<div class="lib-tpl" data-lib-tpl><div class="lib-tpl-head"><b>{{ t.title }}</b><span class="text-xs text-muted">{{ t.day_count }} day{{ t.day_count|pluralize }}{% if t.places %} · {{ t.places }}{% endif %}</span></div>
+      <div class="lib-days">{% for d in t.days.all %}<div class="lib-day" draggable="true" data-day='{{ d.payload_json }}' data-search="{{ t.title|lower }} {{ d.title|lower }}"><span class="lib-grip">{% include "components/icon.html" with name="grip" size="14" %}</span><span class="lib-label">Day {{ d.day_number }} · {{ d.title }}</span><button type="button" class="lib-add" data-lib-add aria-label="Add this day">+</button></div>{% endfor %}</div></div>
+    {% empty %}<p class="text-muted text-sm mb-0">No templates yet. Build one under Itineraries → Templates, or save a finished itinerary as a template.</p>{% endfor %}
+  </div>
+</div>

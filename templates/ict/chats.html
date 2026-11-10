@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% load l10n %}
+{% block title %}Chat Logs{% endblock %}
+{% block content %}
+<div class="page-header"><div><h1>Chat Logs</h1><p>Every WhatsApp conversation the AI assistant has had. Take over any chat to reply yourself; hand it back with Resume bot.</p></div></div>
+{% if not cfg.enabled %}<div class="alert alert-warn mb-4"><span class="grow">AI auto-reply is off, so new messages are saved and staff alerted with no automatic reply.</span></div>{% endif %}
+<div class="mchips" role="tablist" aria-label="Filter chats">
+  <a class="mchip {% if not status %}active{% endif %}" href="?">All</a>
+  <a class="mchip {% if status == 'bot' %}active{% endif %}" href="?status=bot">AI replying</a>
+  <a class="mchip {% if status == 'human' %}active{% endif %}" href="?status=human">Handed to a human</a>
+  <a class="mchip {% if status == 'closed' %}active{% endif %}" href="?status=closed">Closed</a>
+</div>
+<div class="card">
+{% for c in items %}<div class="list-item list-wrap"><span class="stat-ico" style="width:36px;height:36px">{% include "components/icon.html" with name="whatsapp" size="18" %}</span>
+  <div class="grow"><div class="fw-700">{{ c.display_name|default:c.phone }}{% if c.unread %} <span class="badge">{{ c.unread }}</span>{% endif %}</div><div class="text-xs text-muted">{{ c.phone }} · updated {{ c.last_message_at|timesince }} ago{% if c.client %} · linked to {{ c.client }}{% endif %}</div></div>
+  {% if c.lead_captured %}{% status_pill "Lead" "success" %}{% endif %}
+  {% if c.status == "human" %}{% status_pill "Handed to human" "warning" %}{% elif c.status == "closed" %}{% status_pill "Closed" "neutral" %}{% else %}{% status_pill "AI replying" "success" %}{% endif %}
+  <a class="btn btn-secondary btn-sm" href="{% url 'ict:chat' c.pk|unlocalize %}">Open</a></div>
+{% empty %}<p class="text-muted text-sm">No chats yet.</p>{% endfor %}</div>
+{% endblock %}

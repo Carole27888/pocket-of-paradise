@@ -1,0 +1,26 @@
+{% extends "base.html" %}{% load static l10n %}
+{% block title %}{{ t.title }}{% endblock %}
+{% block extra_css %}<link rel="stylesheet" href="{% static 'css/sales.css' %}">{% endblock %}
+{% block content %}
+<div class="page-header"><div><div class="crumbs"><a href="{% url 'sales:templates' %}">Templates</a><span>/</span><span>{{ t.title|truncatechars:34 }}</span></div>
+  <h1>{{ t.title }}</h1><p>{{ t.day_count }} day{{ t.day_count|pluralize }}{% if t.places %} · {{ t.places }}{% endif %}{% if t.created_by %} · by {{ t.created_by.full_name }}{% endif %} · used {{ t.times_used }} time{{ t.times_used|pluralize }} · updated {{ t.updated_at|ds_date }}</p></div>
+  <div class="actions">{% if can_edit %}<a class="btn btn-secondary" href="{% url 'sales:template_edit' t.pk %}">{% include "components/icon.html" with name="edit" %} Edit</a>{% endif %}
+    {% if can_work %}<form method="post" action="{% url 'sales:template_duplicate' t.pk %}" class="inline">{% csrf_token %}<button class="btn btn-secondary" type="submit">{% include "components/icon.html" with name="copy" %} Duplicate</button></form>
+    <a class="btn btn-accent" href="{% url 'sales:itinerary_new' %}?template={{ t.pk|unlocalize }}">Use for a lead</a>{% endif %}</div></div>
+<div class="grid grid-main-side">
+  <div class="stack">
+    {% if t.description %}<div class="card"><p class="mb-0">{{ t.description }}</p></div>{% endif %}
+    <div class="card"><div class="card-head"><h2>Day by day</h2><span class="sub">{{ days|length }} day{{ days|length|pluralize }}</span></div>
+      <ol class="itinerary">{% for day in days %}{% include "components/itinerary_day_card.html" %}{% empty %}<li class="text-muted">No days yet.</li>{% endfor %}</ol></div>
+  </div>
+  <div class="stack">
+    <div class="card"><div class="card-head"><h2>At a glance</h2></div>
+      <dl class="dl"><dt>Length</dt><dd>{{ t.day_count }} days{% if t.day_count > 1 %} / {{ t.day_count|add:"-1" }} nights{% endif %}</dd>
+        <dt>Places</dt><dd>{{ t.places|default:"—" }}</dd>
+        <dt>Rough cost</dt><dd>{% if t.cost_pp %}{{ t.cost_pp|floatformat:0 }} per person <span class="text-xs text-muted">(lodging + activities; rates are re-checked when you use it)</span>{% else %}No prices saved{% endif %}</dd></dl></div>
+    {% if t.stays %}<div class="card"><div class="card-head"><h2>Where guests stay</h2></div>{% for s in t.stays %}<div class="list-item"><span class="grow">{{ s.name }}</span><span class="text-muted text-sm">{{ s.nights }} night{{ s.nights|pluralize }}</span></div>{% endfor %}</div>{% endif %}
+    {% if t.activity_names %}<div class="card"><div class="card-head"><h2>Activities</h2></div><div class="chips">{% for a in t.activity_names %}<span class="pill pill-accent">{{ a }}</span>{% endfor %}</div></div>{% endif %}
+    {% if can_delete %}<div class="card"><form method="post" action="{% url 'sales:template_delete' t.pk %}" onsubmit="return confirm('Delete this template? Itineraries already built from it are not affected.')">{% csrf_token %}<button class="btn btn-ghost text-danger" type="submit">Delete template</button></form></div>{% endif %}
+  </div>
+</div>
+{% endblock %}

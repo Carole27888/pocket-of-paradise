@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+{% block title %}E-Signatures{% endblock %}
+{% block content %}
+<div class="page-header"><div><h1>E-Signatures</h1><p>Send a quotation or booking from its page. The client signs on any phone, no login. Name, drawing, time and IP are recorded.</p></div></div>
+<div class="card">{% for s in items %}<div class="list-item"><div class="grow"><div class="fw-700">{{ s.title }} · {{ s.client.full_name }}</div><div class="text-xs text-muted">Sent {{ s.created_at|ds_date }} by {{ s.sent_by.full_name|default:"—" }}{% if s.signed_at %} · signed {{ s.signed_at|ds_datetime }} by {{ s.signed_name }}{% endif %}</div></div>
+{% if s.status == "signed" %}{% status_pill "Signed" "success" %}{% elif s.status == "declined" %}{% status_pill "Declined" "danger" %}{% elif s.expired %}{% status_pill "Expired" "neutral" %}{% else %}{% status_pill "Awaiting" "warning" %}{% endif %}
+{% if s.status == "pending" and not s.expired %}<button class="btn btn-ghost btn-sm" type="button" data-copy="{{ request.scheme }}://{{ request.get_host }}{% url 'public_sign' s.token %}">Copy link</button>{% endif %}</div>
+{% empty %}<p class="text-muted text-sm">Nothing sent yet.</p>{% endfor %}</div>
+<script>document.querySelectorAll('[data-copy]').forEach(function(b){b.addEventListener('click',function(){navigator.clipboard.writeText(b.dataset.copy);b.textContent='Copied';});});</script>
+{% endblock %}

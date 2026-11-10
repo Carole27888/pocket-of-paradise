@@ -1,0 +1,11 @@
+{% extends "base.html" %}
+{% block title %}Leave Approvals{% endblock %}
+{% block content %}
+<div class="page-header"><div><h1>Leave Approvals</h1><p>Requests from your team. You can't approve your own leave.</p></div></div>
+{% if not team %}<div class="alert alert-info mb-4"><span class="grow">Nobody reports to you, so there is nothing to approve. Admin sets who reports to whom on each employee record.</span></div>{% endif %}
+<div class="card mb-4"><div class="card-head"><h2>Waiting</h2><span class="sub">{{ pending|length }}</span></div>
+{% for r in pending %}<form method="post" action="{% url 'hr:decide' r.pk %}" class="list-item">{% csrf_token %}<div class="grow"><div class="fw-700">{{ r.employee.full_name }} · {{ r.leave_type.name }}{% if r.status == "cancel_requested" %} <span class="text-muted">(cancellation)</span>{% endif %}</div><div class="text-xs text-muted">{{ r.start_date|ds_date }} – {{ r.end_date|ds_date }} · {{ r.days }} day(s){% if r.reason %} · {{ r.reason }}{% endif %}{% if r.cancel_reason %} · {{ r.cancel_reason }}{% endif %}</div></div>
+  <input class="input" name="note" placeholder="Note (optional)" style="max-width:200px"><button class="btn btn-primary btn-sm" name="action" value="approve" type="submit">{% if r.status == "cancel_requested" %}Confirm{% else %}Approve{% endif %}</button><button class="btn btn-secondary btn-sm" name="action" value="reject" type="submit">{% if r.status == "cancel_requested" %}Keep leave{% else %}Decline{% endif %}</button></form>
+{% empty %}<p class="text-muted text-sm">Nothing waiting.</p>{% endfor %}</div>
+<div class="card"><div class="card-head"><h2>Recently decided</h2></div>{% for r in recent %}<div class="list-item"><span class="grow">{{ r.employee.full_name }} · {{ r.leave_type.name }} · {{ r.start_date|ds_date }}</span>{% status_pill r.get_status_display "neutral" %}</div>{% empty %}<p class="text-muted text-sm">None yet.</p>{% endfor %}</div>
+{% endblock %}

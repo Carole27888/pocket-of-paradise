@@ -1,0 +1,10 @@
+{% load static %}<!doctype html><html lang="en-GB"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>Plan your safari · Pocket of Paradise Travel Company</title>
+<link rel="stylesheet" href="{% static 'css/tokens.css' %}"><link rel="stylesheet" href="{% static 'css/base.css' %}"><link rel="stylesheet" href="{% static 'css/components.css' %}"><link rel="stylesheet" href="{% static 'css/utilities.css' %}">
+<style>body{background:var(--page-bg);min-height:100vh;display:grid;place-items:start center;padding:24px 16px}.wrap{width:min(560px,100%)}.logo{display:block;margin:0 auto 16px;max-width:200px}.card{padding:24px}</style></head>
+<body><div class="wrap"><img class="logo" src="{% static 'brand/logo-full.png' %}" alt="Pocket of Paradise Travel Company">
+{% if done %}<div class="card" style="text-align:center"><h1 style="font-size:22px">Asante! 🎉</h1><p>We have your details and one of our travel consultants will contact you shortly on WhatsApp.</p><a class="btn btn-primary" href="?">Add another person</a></div>
+{% else %}<div class="card"><h1 style="font-size:22px;margin:0 0 4px">Plan your safari</h1><p class="text-muted text-sm mb-4">{% if event %}You're at <b>{{ event }}</b>. {% endif %}Tell us a little and we'll send you a tailored quote.</p>
+<form method="post" novalidate>{% csrf_token %}{% if form.non_field_errors %}<div class="alert alert-danger mb-4">{{ form.non_field_errors|join:" " }}</div>{% endif %}{% for h in form.hidden_fields %}{{ h }}{% endfor %}
+<div class="stack" style="gap:14px">{% for f in form.visible_fields %}<div class="field{% if f.errors %} invalid{% endif %}"><label for="{{ f.id_for_label }}">{{ f.label }}{% if f.field.required %} <span class="req">*</span>{% endif %}</label>{{ f }}{% for e in f.errors %}<span class="error">{{ e }}</span>{% endfor %}</div>{% endfor %}
+<button class="btn btn-accent btn-block" type="submit" style="min-height:48px">Get my quote</button></div></form></div>{% endif %}
+<p class="text-center text-xs text-muted mt-4">By submitting you agree to be contacted about your enquiry.</p></div></body></html>

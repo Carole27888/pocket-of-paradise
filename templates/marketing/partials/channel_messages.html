@@ -1,0 +1,12 @@
+{% load l10n %}
+<div class="card"><div class="card-head"><h2>Messages &amp; comments</h2>{% if inbox_open %}<span class="pill pill-danger">{{ inbox_open }} to reply</span>{% endif %}</div>
+{% for m in messages_ %}<div class="cmsg" x-data="{ reply: false, convert: false }">
+  <div class="flex gap-2" style="align-items:flex-start">{% source_badge ch.key %}<div class="grow"><div><b>{{ m.sender }}</b> <span class="text-xs text-muted">· {{ m.get_kind_display }} · {{ m.received_at|timesince }}</span></div><div class="text-sm">{{ m.message }}</div></div></div>
+  {% if m.replied %}<div class="text-sm text-success mt-1">↳ {{ m.reply_text|truncatechars:90 }}</div>{% endif %}
+  <div class="btn-row mt-2">{% if can_manage and not m.replied %}<button type="button" class="btn btn-secondary btn-sm" @click="reply = !reply; convert = false">Reply</button>{% endif %}
+    {% if m.enquiry %}<a class="pill pill-success" href="{{ m.enquiry.get_absolute_url }}">{{ m.enquiry.reference }}</a>{% elif can_manage %}<button type="button" class="btn btn-primary btn-sm" @click="convert = !convert; reply = false">Convert to lead</button>{% endif %}</div>
+  <form x-show="reply" x-cloak method="post" action="{% url 'marketing:inbox_reply' m.pk|unlocalize %}" class="flex gap-2 mt-2">{% csrf_token %}<input type="hidden" name="next" value="{{ request.get_full_path }}"><input class="input grow" name="text" placeholder="Write a reply" required><button class="btn btn-primary btn-sm" type="submit">Send</button></form>
+  <form x-show="convert" x-cloak method="post" action="{% url 'marketing:inbox_convert' m.pk|unlocalize %}" class="flex gap-2 mt-2">{% csrf_token %}<input type="hidden" name="next" value="{{ request.get_full_path }}"><input class="input grow" name="phone" placeholder="Guest phone number" required><button class="btn btn-primary btn-sm" type="submit">Create lead</button></form>
+</div>
+{% empty %}<p class="text-muted text-sm">No messages yet.</p>{% endfor %}
+<a class="btn btn-ghost mt-2" href="{% url 'marketing:inbox' %}?channel={{ ch.key }}">All messages →</a></div>

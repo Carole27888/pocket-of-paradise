@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+{% block title %}Security{% endblock %}
+{% block content %}
+<div class="page-header"><div><h1>Security</h1><p>Two-factor sign-in adds a code from your phone to your password.{% if required %} <b>Your role requires it.</b>{% endif %}</p></div></div>
+{% if not feature_on %}<div class="alert alert-info mb-4">Two-factor sign-in is switched off. An administrator can turn it on under Administration → Security Settings.</div>{% endif %}
+{% if codes %}<div class="card mb-4" style="border-top:3px solid var(--accent)"><div class="card-head"><h2>Save your recovery codes</h2></div><p class="text-sm">Each code works once if you lose your phone. They are shown only now: copy or print them and keep them somewhere safe.</p>
+  <div class="grid grid-4" style="font-family:monospace;font-size:15px">{% for c in codes %}<div class="card" style="padding:8px 12px;box-shadow:none">{{ c }}</div>{% endfor %}</div></div>{% endif %}
+<div class="grid grid-2">
+{% if enabled %}
+  <div class="card"><div class="card-head"><h2>Two-factor is on</h2><span class="pill pill-success">Active</span></div><p class="text-sm text-muted">{{ recovery_left }} recovery code{{ recovery_left|pluralize }} left.</p>
+    <form method="post" class="stack" style="gap:10px">{% csrf_token %}<div class="field"><label for="c1">Current code (to confirm)</label><input class="input" id="c1" name="code" inputmode="numeric" autocomplete="one-time-code" required></div>
+      <div class="btn-row"><button class="btn btn-secondary" name="action" value="regenerate" type="submit">New recovery codes</button>{% if not required %}<button class="btn btn-ghost text-danger" name="action" value="disable" type="submit">Turn off</button>{% endif %}</div></form></div>
+{% elif feature_on %}
+  <div class="card"><div class="card-head"><h2>Set up two-factor</h2></div><ol class="steps-list"><li>Install an authenticator app (Google Authenticator, Microsoft Authenticator, Authy…).</li><li>Scan this code, or type the key by hand.</li><li>Enter the 6-digit code it shows to finish.</li></ol>
+    <div style="text-align:center;margin:12px 0"><img alt="Authenticator QR code" src="data:image/svg+xml;base64,{{ qr }}" width="200" height="200"><div class="text-sm text-muted">Key: <code>{{ secret }}</code></div></div>
+    <form method="post" class="stack" style="gap:10px">{% csrf_token %}<input type="hidden" name="action" value="enable"><div class="field"><label for="c2">6-digit code</label><input class="input" id="c2" name="code" inputmode="numeric" autocomplete="one-time-code" required></div><button class="btn btn-primary" type="submit">Turn on two-factor</button></form></div>
+{% endif %}
+</div>
+{% endblock %}

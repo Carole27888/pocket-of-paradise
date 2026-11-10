@@ -1,0 +1,118 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><style>
+@font-face{font-family:Manrope;font-weight:400;src:url(assets/manrope-latin-400-normal.woff2)}
+@font-face{font-family:Manrope;font-weight:600;src:url(assets/manrope-latin-600-normal.woff2)}
+@font-face{font-family:Manrope;font-weight:700;src:url(assets/manrope-latin-700-normal.woff2)}
+@font-face{font-family:Manrope;font-weight:800;src:url(assets/manrope-latin-800-normal.woff2)}
+@font-face{font-family:Fraunces;font-weight:700;src:url(assets/fraunces-latin-700-normal.woff2)}
+@font-face{font-family:Fraunces;font-weight:800;src:url(assets/fraunces-latin-800-normal.woff2)}
+@font-face{font-family:Fraunces;font-weight:500;font-style:italic;src:url(assets/fraunces-latin-500-italic.woff2)}
+@page{size:A4;margin:0}
+*{box-sizing:border-box} body{margin:0;font-family:Manrope,sans-serif;color:#1F2A26;font-size:10.5pt;line-height:1.5}
+h1,h2,h3{font-family:Fraunces,serif;color:#1F6F6B;margin:0} p{margin:0}
+.page{width:210mm;height:297mm;position:relative;overflow:hidden;page-break-after:always;background:#FBF5EA;padding:16mm 15mm 18mm}
+.page:last-child{page-break-after:auto}
+.foot{position:absolute;left:15mm;right:15mm;bottom:8mm;display:flex;justify-content:space-between;font-size:8pt;color:#6B756F}
+.eyebrow{font-size:8.5pt;letter-spacing:.14em;text-transform:uppercase;font-weight:800;color:#D98A22}
+h2{font-size:22pt;line-height:1.1;margin:3px 0 6px} .lead{color:#6B756F;font-size:10.5pt;max-width:150mm}
+/* cover */
+.cover{background:#1F6F6B;color:#fff;padding:0}
+.cover .sun{position:absolute;right:-60mm;top:-50mm;width:190mm;height:190mm;border-radius:50%;opacity:.95}
+.cover .in{position:absolute;left:18mm;right:18mm;bottom:26mm}
+.cover img.logo{position:absolute;left:18mm;top:16mm;width:58mm;background:#FBF5EA;border-radius:10px;padding:5mm}
+.cover h1{color:#fff;font-size:40pt;line-height:1.04} .cover h1 em{color:#EEB63F;font-style:italic;font-weight:500}
+.cover p{color:#F3D9BF;font-size:12.5pt;margin-top:7mm;max-width:130mm}
+.cover .meta{margin-top:12mm;display:flex;gap:10mm;font-size:9pt;color:#EBC7A4;border-top:1px solid #2A8580;padding-top:5mm} .cover .meta b{display:block;color:#fff;font-size:10.5pt}
+/* cards */
+.card{background:#fff;border:1px solid #EADFCE;border-radius:12px;padding:5mm}
+.grid{display:grid;gap:5mm} .g2{grid-template-columns:1fr 1fr} .g3{grid-template-columns:1fr 1fr 1fr} .g4{grid-template-columns:repeat(4,1fr)}
+.kpi b{display:block;font-family:Fraunces,serif;font-size:19pt;color:#1F6F6B;line-height:1.1} .kpi span{font-size:8.5pt;color:#6B756F}
+.kpi.a{border-top:3px solid #D98A22}
+.pain{display:flex;gap:3mm;align-items:flex-start;margin-bottom:3.2mm} .pain i{flex:none;width:6mm;height:6mm;border-radius:50%;background:#E2F1EE;color:#B4231A;display:grid;place-items:center;font-style:normal;font-weight:800;font-size:9pt}
+.pain.ok i{background:#DDF3E7;color:#1F7A4D} .pain p{font-size:9.6pt} h3{font-size:13pt;margin-bottom:3mm}
+.shot{border-radius:10px;border:1px solid #D9CBB5;box-shadow:0 6px 18px rgba(31,111,107,.18);width:100%;display:block}
+.cap{font-size:8.3pt;color:#6B756F;margin-top:2mm} .tag{display:inline-block;background:#DDF3E7;color:#1F7A4D;font-weight:800;font-size:7.8pt;padding:1px 8px;border-radius:99px;letter-spacing:.04em}
+.tag.n{background:#FFEBD0;color:#9A5A0C}
+.sb{display:grid;grid-template-columns:62px 1fr 26px;gap:6px;align-items:center;font-size:8.8pt;margin-bottom:5px} .sb div{background:#F0E8DC;border-radius:99px;height:9px} .sb i{display:block;height:9px;border-radius:99px} .sb b{text-align:right}
+ul.lg{list-style:none;padding:0;margin:0;font-size:8.8pt} ul.lg li{margin:3px 0;display:flex;align-items:center;gap:6px} ul.lg i{display:inline-block;width:9px;height:9px;border-radius:3px} ul.lg b{margin-left:auto}
+.mob{width:42mm;border-radius:18px;border:3px solid #1F6F6B;box-shadow:0 6px 18px rgba(31,111,107,.25);display:block}
+.rm{display:flex;gap:4mm;background:#fff;border:1px solid #EADFCE;border-radius:12px;padding:4mm;margin-bottom:3.4mm}
+.ri{flex:none;width:11mm;height:11mm;border-radius:10px;background:#1F6F6B;display:grid;place-items:center} .rm h4{margin:0 0 1px;font-size:10.5pt;color:#1F6F6B} .rm p{font-size:8.9pt;color:#44524C;line-height:1.4}
+.band{background:#1F6F6B;color:#fff;border-radius:14px;padding:7mm 8mm} .band h2{color:#fff} .band p{color:#F3D9BF}
+.step{display:flex;gap:4mm;margin-bottom:3.5mm;align-items:flex-start} .step b.n{flex:none;width:8mm;height:8mm;border-radius:50%;background:#D98A22;color:#fff;display:grid;place-items:center;font-size:10pt}
+.step h4{margin:0;font-size:10.5pt;color:#1F6F6B} .step p{font-size:9pt;color:#44524C}
+.price{background:#fff;border:2px dashed #D98A22;border-radius:14px;padding:6mm 8mm;text-align:center} .price b{font-family:Fraunces,serif;font-size:19pt;color:#1F6F6B;display:block}
+.demo{font-size:7.6pt;color:#6B756F;font-style:italic}
+</style></head><body>
+
+<section class="page cover"><svg class="sun" viewBox="0 0 200 200"><circle cx="100" cy="100" r="100" fill="#FFD9A8"/><circle cx="100" cy="100" r="82" fill="#EDA036"/><circle cx="100" cy="100" r="62" fill="#D98A22"/><circle cx="100" cy="100" r="40" fill="#EEB63F"/></svg><img class="logo" src="assets/logo.png">
+ <div class="in"><div class="eyebrow" style="color:#EEB63F">Proposal for management</div>
+  <h1>One system.<br>Every lead, shilling<br>and employee <em>in view.</em></h1>
+  <p>A custom operating system for Pocket of Paradise Travel Company: sales CRM, staff accountability, automation and reporting, in your hands, on your phone, under your full control.</p>
+  <div class="meta"><div>Prepared for<b>Management, Pocket of Paradise Travel Company</b></div><div>Date<b>5 October 2026</b></div><div>Status<b>Sales CRM already built &amp; running</b></div></div></div></section>
+
+<section class="page"><div class="eyebrow">Why this matters</div><h2>From scattered leads to one source of truth</h2>
+ <p class="lead">Today leads, prices and staff activity live in chats, notebooks and memory. That makes accountability hard and revenue invisible. This system fixes it at the root.</p>
+ <div class="grid g2" style="margin-top:7mm">
+  <div class="card"><h3>What hurts today</h3>
+   <div class="pain"><i>✕</i><p>Leads from WhatsApp, calls, expos and the website are scattered and some are never followed up.</p></div>
+   <div class="pain"><i>✕</i><p>Packages are priced by hand: slow and error-prone, as happened with the Kuosha package.</p></div>
+   <div class="pain"><i>✕</i><p>No clear view of who is working, who is performing, or what each person contributes.</p></div>
+   <div class="pain"><i>✕</i><p>Reminders and follow-up emails depend on someone remembering.</p></div>
+   <div class="pain"><i>✕</i><p>Paying monthly for third-party tools, without owning the data.</p></div></div>
+  <div class="card"><h3>What you get</h3>
+   <div class="pain ok"><i>✓</i><p>Every lead captured once, assigned instantly and tracked to booking.</p></div>
+   <div class="pain ok"><i>✓</i><p>Packages generated in seconds from hotel prices and number of days.</p></div>
+   <div class="pain ok"><i>✓</i><p>Clock-in, EOD reports and a monthly scorecard for every employee.</p></div>
+   <div class="pain ok"><i>✓</i><p>Automatic SMS and email reminders and bulk campaigns to your leads.</p></div>
+   <div class="pain ok"><i>✓</i><p>Full ownership: one central database, no dependence on outside platforms.</p></div></div></div>
+ <div class="grid g4" style="margin-top:6mm">
+  <div class="card kpi a" style="padding:4mm"><b>1</b><span>central database</span></div>
+  <div class="card kpi"><b>8</b><span>modules planned</span></div>
+  <div class="card kpi"><b>24/7</b><span>visibility from any phone</span></div>
+  <div class="card kpi"><b>0</b><span>outside CRM fees</span></div></div>
+ <div class="card" style="margin-top:6mm"><h3>It installs on any phone</h3><p style="font-size:9.6pt;color:#44524C">The system is a web app that installs like a normal app on Android and iPhone. Management can open it anywhere to see leads, bookings and the team's activity as it happens. Staff use it from the office or the field.</p></div>
+<div class="card" style="margin-top:6mm"><h3>The journey of a lead, automated</h3>
+ <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:3mm;text-align:center">
+ <div><div style="width:12mm;height:12mm;margin:0 auto 2mm;border-radius:50%;background:#1F6F6B;color:#fff;display:grid;place-items:center;font-weight:800;font-size:12pt">1</div><b style="font-size:9.5pt;color:#1F6F6B">Captured</b><div style="font-size:8.3pt;color:#6B756F">Website, expo, WhatsApp, call</div></div><div><div style="width:12mm;height:12mm;margin:0 auto 2mm;border-radius:50%;background:#2A8580;color:#fff;display:grid;place-items:center;font-weight:800;font-size:12pt">2</div><b style="font-size:9.5pt;color:#1F6F6B">Assigned</b><div style="font-size:8.3pt;color:#6B756F">Instantly, by rules</div></div><div><div style="width:12mm;height:12mm;margin:0 auto 2mm;border-radius:50%;background:#9A5A0C;color:#fff;display:grid;place-items:center;font-weight:800;font-size:12pt">3</div><b style="font-size:9.5pt;color:#1F6F6B">Followed up</b><div style="font-size:8.3pt;color:#6B756F">Reminders by SMS & email</div></div><div><div style="width:12mm;height:12mm;margin:0 auto 2mm;border-radius:50%;background:#D98A22;color:#fff;display:grid;place-items:center;font-weight:800;font-size:12pt">4</div><b style="font-size:9.5pt;color:#1F6F6B">Quoted</b><div style="font-size:8.3pt;color:#6B756F">Package built in seconds</div></div><div><div style="width:12mm;height:12mm;margin:0 auto 2mm;border-radius:50%;background:#14B8A6;color:#fff;display:grid;place-items:center;font-weight:800;font-size:12pt">5</div><b style="font-size:9.5pt;color:#1F6F6B">Booked</b><div style="font-size:8.3pt;color:#6B756F">Deposit tracked, revenue seen</div></div>
+ </div></div>
+ <div class="foot"><span>Pocket of Paradise Travel Company · System proposal</span><span>2</span></div></section>
+
+<section class="page"><div class="eyebrow">Already built <span class="tag">LIVE NOW</span></div><h2>Sales CRM &amp; pipeline: working today</h2>
+ <p class="lead">The sales module is finished and running with demo data. Managers see everything; each agent sees only their own work.</p>
+ <img class="shot" style="margin-top:6mm" src="assets/dashboard.png"><div class="cap">Sales Manager dashboard: pipeline value, revenue won, conversion, agent leaderboard and live team activity. <span class="demo">(Demo data)</span></div>
+ <div class="grid g2" style="margin-top:6mm">
+  <div class="card"><h3>Lead-to-booking funnel</h3><svg viewBox="0 0 520 200" width="100%"><text x="0" y="22" font-size="15" font-weight="700" fill="#1F2A26">Enquiries</text><rect x="108" y="6" width="320" height="22" rx="5" fill="#1F6F6B"/><text x="436" y="22" font-size="15" font-weight="800" fill="#1F2A26">277 <tspan fill="#6B756F" font-weight="500">· 100%</tspan></text><text x="0" y="62" font-size="15" font-weight="700" fill="#1F2A26">Contacted</text><rect x="108" y="46" width="256" height="22" rx="5" fill="#2A8580"/><text x="372" y="62" font-size="15" font-weight="800" fill="#1F2A26">222 <tspan fill="#6B756F" font-weight="500">· 80%</tspan></text><text x="0" y="102" font-size="15" font-weight="700" fill="#1F2A26">Quoted</text><rect x="108" y="86" width="221" height="22" rx="5" fill="#9A5A0C"/><text x="337" y="102" font-size="15" font-weight="800" fill="#1F2A26">191 <tspan fill="#6B756F" font-weight="500">· 69%</tspan></text><text x="0" y="142" font-size="15" font-weight="700" fill="#1F2A26">Booked</text><rect x="108" y="126" width="45" height="22" rx="5" fill="#D98A22"/><text x="161" y="142" font-size="15" font-weight="800" fill="#1F2A26">39 <tspan fill="#6B756F" font-weight="500">· 14%</tspan></text><text x="0" y="182" font-size="15" font-weight="700" fill="#1F2A26">Confirmed</text><rect x="108" y="166" width="29" height="22" rx="5" fill="#EEB63F"/><text x="145" y="182" font-size="15" font-weight="800" fill="#1F2A26">25 <tspan fill="#6B756F" font-weight="500">· 9%</tspan></text></svg><div class="demo">Sample of 277 demo enquiries</div></div>
+  <div class="card"><h3>Where leads come from</h3><div style="display:flex;align-items:center;gap:4mm"><div style="flex:none;width:36mm"><svg viewBox="0 0 150 150" width="150"><path d="M75.0,14.0 A61.0,61.0 0 0 1 130.3,49.2" fill="none" stroke="#1F6F6B" stroke-width="26"/><path d="M130.3,49.2 A61.0,61.0 0 0 1 125.1,109.8" fill="none" stroke="#2A8580" stroke-width="26"/><path d="M125.1,109.8 A61.0,61.0 0 0 1 92.1,133.6" fill="none" stroke="#9A5A0C" stroke-width="26"/><path d="M92.1,133.6 A61.0,61.0 0 0 1 52.7,131.8" fill="none" stroke="#D98A22" stroke-width="26"/><path d="M52.7,131.8 A61.0,61.0 0 0 1 25.7,110.9" fill="none" stroke="#EEB63F" stroke-width="26"/><path d="M25.7,110.9 A61.0,61.0 0 0 1 75.0,14.0" fill="none" stroke="#D9CBB5" stroke-width="26"/><text x="75.0" y="77.0" text-anchor="middle" font-size="26" font-weight="800" fill="#1F6F6B">277</text><text x="75.0" y="95.0" text-anchor="middle" font-size="10.5" fill="#6B756F">leads sampled</text></svg></div><ul class="lg" style="flex:1"><li><i style="background:#1F6F6B;flex:none"></i><span>Facebook</span> <b>50</b></li><li><i style="background:#2A8580;flex:none"></i><span>Instagram</span> <b>46</b></li><li><i style="background:#9A5A0C;flex:none"></i><span>Call</span> <b>30</b></li><li><i style="background:#D98A22;flex:none"></i><span>WhatsApp</span> <b>29</b></li><li><i style="background:#EEB63F;flex:none"></i><span>YouTube</span> <b>25</b></li><li><i style="background:#D9CBB5;flex:none"></i><span>Other</span> <b>97</b></li></ul></div></div></div>
+ <div class="foot"><span>Pocket of Paradise Travel Company · System proposal</span><span>3</span></div></section>
+
+<section class="page"><div class="eyebrow">Management control <span class="tag">LIVE NOW</span></div><h2>See every agent. Move every deal.</h2>
+ <p class="lead">Drag deals across the pipeline, assign leads by rules or round-robin, send versioned quotations, record deposits, and track each agent against monthly targets.</p>
+ <div class="grid" style="grid-template-columns:1.55fr 1fr;margin-top:6mm;align-items:start">
+  <div><img class="shot" src="assets/pipeline.png"><div class="cap">Pipeline board: drag a lead from Enquiry to Quoted to Hot to Itinerary. <span class="demo">(Demo data)</span></div>
+   <img class="shot" style="margin-top:5mm" src="assets/team.png"><div class="cap">Team view: revenue, open leads, conversion, calls, overdue tasks and target progress per agent.</div></div>
+  <div style="display:grid;gap:5mm"><div style="display:flex;gap:4mm;justify-content:center"><img class="mob" src="assets/mobile.png"><img class="mob" src="assets/mobile2.png"></div>
+   <div class="cap" style="text-align:center;margin-top:-2mm">On a phone: the same system, built for the field.</div>
+   <div class="card"><h3>Pipeline by stage</h3><div class="sb"><span>Enquiry</span><div><i style="width:100%;background:#9AA6A0"></i></div><b>86</b></div><div class="sb"><span>Quoted</span><div><i style="width:74%;background:#3B6FD4"></i></div><b>64</b></div><div class="sb"><span>Hot</span><div><i style="width:44%;background:#D98A22"></i></div><b>38</b></div><div class="sb"><span>Itinerary</span><div><i style="width:34%;background:#7B4FD0"></i></div><b>29</b></div><div class="sb"><span>Deposit</span><div><i style="width:16%;background:#D9A300"></i></div><b>14</b></div><div class="sb"><span>Confirmed</span><div><i style="width:10%;background:#14B8A6"></i></div><b>9</b></div></div></div></div>
+ <div class="card" style="margin-top:5mm"><h3>Revenue vs target (KES millions)</h3><svg viewBox="0 0 900 260" width="100%"><line x1="0" x2="900" y1="164" y2="164" stroke="#EADFCE" stroke-width="1"/><line x1="0" x2="900" y1="93" y2="93" stroke="#EADFCE" stroke-width="1"/><line x1="0" x2="900" y1="21" y2="21" stroke="#EADFCE" stroke-width="1"/><rect x="41" y="234" width="83" height="2" rx="5" fill="#1F6F6B"/><text x="82" y="252" text-anchor="middle" font-size="11" fill="#6B756F">Apr</text><rect x="189" y="234" width="83" height="2" rx="5" fill="#1F6F6B"/><text x="231" y="252" text-anchor="middle" font-size="11" fill="#6B756F">May</text><rect x="338" y="231" width="83" height="5" rx="5" fill="#1F6F6B"/><text x="380" y="252" text-anchor="middle" font-size="11" fill="#6B756F">Jun</text><rect x="487" y="234" width="83" height="2" rx="5" fill="#1F6F6B"/><text x="528" y="252" text-anchor="middle" font-size="11" fill="#6B756F">Jul</text><rect x="635" y="143" width="83" height="93" rx="5" fill="#1F6F6B"/><text x="677" y="252" text-anchor="middle" font-size="11" fill="#6B756F">Aug</text><rect x="784" y="29" width="83" height="207" rx="5" fill="#1F6F6B"/><text x="826" y="252" text-anchor="middle" font-size="11" fill="#6B756F">Sep</text><polyline points="82,228 231,113 380,99 528,121 677,92 826,114" fill="none" stroke="#D98A22" stroke-width="3" stroke-linejoin="round"/><circle cx="82" cy="228" r="4" fill="#fff" stroke="#D98A22" stroke-width="2.5"/><circle cx="231" cy="113" r="4" fill="#fff" stroke="#D98A22" stroke-width="2.5"/><circle cx="380" cy="99" r="4" fill="#fff" stroke="#D98A22" stroke-width="2.5"/><circle cx="528" cy="121" r="4" fill="#fff" stroke="#D98A22" stroke-width="2.5"/><circle cx="677" cy="92" r="4" fill="#fff" stroke="#D98A22" stroke-width="2.5"/><circle cx="826" cy="114" r="4" fill="#fff" stroke="#D98A22" stroke-width="2.5"/></svg><div class="demo">Bars: revenue won. Line: monthly target. Demo data.</div></div>
+ <div class="foot"><span>Pocket of Paradise Travel Company · System proposal</span><span>4</span></div></section>
+
+<section class="page"><div class="eyebrow">What we build next <span class="tag n">PROPOSED</span></div><h2>Built around how your office actually works</h2>
+ <p class="lead">Based on today's meeting, these modules extend the CRM into a full operating system connected to the Pocket of Paradise website.</p>
+ <div class="grid g2" style="margin-top:6mm"><div><div class="rm"><span class="ri"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 7v5l3 2M12 3a9 9 0 100 18 9 9 0 000-18z"/></svg></span><div><h4>Clock-in / clock-out</h4><p>Staff can only clock in from inside the office (office network and location check). Hours feed monthly performance.</p></div></div><div class="rm"><span class="ri"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20V10M10 20V4M16 20v-7M21 20H3"/></svg></span><div><h4>Monthly employee performance</h4><p>Calls, quotes, bookings, revenue and attendance per person, with a ranked scorecard at month end.</p></div></div><div class="rm"><span class="ri"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3h8l4 4v14H6zM14 3v4h4M9 12h6M9 16h6"/></svg></span><div><h4>End-of-day (EOD) reports</h4><p>Every employee files a short EOD report on their phone. You read them all in one place, wherever you are.</p></div></div><div class="rm"><span class="ri"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8l9-5 9 5v8l-9 5-9-5zM3 8l9 5 9-5M12 13v8"/></svg></span><div><h4>Instant package builder</h4><p>Enter hotel prices and number of days: a polished, priced package and itinerary is generated in seconds. No more manual pricing errors.</p></div></div></div>
+ <div><div class="rm"><span class="ri"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18v12H3zM3 7l9 7 9-7"/></svg></span><div><h4>Automatic emails & SMS</h4><p>Bulk emails to collected leads, plus automatic SMS and email reminders for follow-ups, payments and travel dates.</p></div></div><div class="rm"><span class="ri"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20l1.4-4.2A8 8 0 1112 20a8 8 0 01-3.8-1zM9 9c0 3 3 6 6 6l1-2-2-1-1 .8c-1-.5-2-1.5-2.4-2.5L11 9.5l-1-2z"/></svg></span><div><h4>WhatsApp chatbot</h4><p>Replies to new WhatsApp leads instantly, captures their details and assigns an agent straight away.</p></div></div><div class="rm"><span class="ri"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3a9 9 0 100 18 9 9 0 000-18zM3 12h18M12 3c3 3 3 15 0 18M12 3c-3 3-3 15 0 18"/></svg></span><div><h4>Website & expo lead capture</h4><p>Connected to the Pocket of Paradise website. Leads from the site and from expos flow straight into the pipeline.</p></div></div><div class="rm"><span class="ri"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 6c0-1.7 3.1-3 7-3s7 1.3 7 3-3.1 3-7 3-7-1.3-7-3zM5 6v12c0 1.7 3.1 3 7 3s7-1.3 7-3V6M5 12c0 1.7 3.1 3 7 3s7-1.3 7-3"/></svg></span><div><h4>One central database</h4><p>Every lead, booking, payment and employee action in one place that you fully own and control.</p></div></div></div></div>
+ <div class="band" style="margin-top:3mm"><div class="eyebrow" style="color:#EEB63F">The result</div><h2>Accountability you can see</h2>
+  <p>Know how much the company is making, how much each employee is contributing, and which channels and packages work best, from one dashboard, any time.</p></div>
+ <div class="foot"><span>Pocket of Paradise Travel Company · System proposal</span><span>5</span></div></section>
+
+<section class="page"><div class="eyebrow">Next steps</div><h2>Ready to start immediately</h2>
+ <p class="lead">The foundation is already built, so new modules can be added without starting from scratch.</p>
+ <div class="grid g2" style="margin-top:7mm;align-items:start"><div>
+  <div class="step"><b class="n">1</b><div><h4>Live walkthrough</h4><p>See the working Sales CRM with your team and confirm priorities.</p></div></div>
+  <div class="step"><b class="n">2</b><div><h4>Connect the website &amp; WhatsApp</h4><p>Leads from the site, expos and WhatsApp start flowing into the pipeline, with the chatbot assigning agents instantly.</p></div></div>
+  <div class="step"><b class="n">3</b><div><h4>Staff accountability</h4><p>Clock-in, EOD reports and monthly performance scorecards go live for the team.</p></div></div>
+  <div class="step"><b class="n">4</b><div><h4>Automation &amp; packages</h4><p>Email/SMS reminders, bulk campaigns and the instant package builder.</p></div></div>
+  <div class="step"><b class="n">5</b><div><h4>Training &amp; handover</h4><p>Staff install the app on their phones; you get full control of the data.</p></div></div></div>
+ <div><img class="shot" src="assets/quote.png"><div class="cap">A quotation generated by the system: priced lines, VAT, versions, PDF and WhatsApp-ready.</div></div></div>
+ <div class="price" style="margin-top:8mm"><div class="eyebrow">Investment</div><b>Pricing is available upon request</b><p style="font-size:9.6pt;color:#44524C;margin-top:2mm">We will tailor a quotation to the modules you want first. Let's talk this week.</p></div>
+ <div class="foot"><span>Pocket of Paradise Travel Company · Travel Company</span><span>6</span></div></section>
+</body></html>

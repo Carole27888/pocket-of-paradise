@@ -1,0 +1,8 @@
+{% extends "base.html" %}
+{% block title %}Sent emails{% endblock %}
+{% block content %}
+<div class="page-header"><div><h1>Emails sent from the system</h1></div><a class="btn btn-secondary" href="{% url 'mailbox:inbox' %}">Back to my email</a></div>
+<div class="card card-flush"><div class="table-wrap"><table class="table stack-phone"><thead><tr><th>To</th><th>Subject</th><th>Enquiry</th><th>Sent</th><th>Status</th></tr></thead><tbody>
+{% for m in items %}<tr><td data-label="To">{{ m.to }}{% if m.cc %}<div class="cell-sub">cc {{ m.cc }}</div>{% endif %}</td><td class="cell-first">{{ m.subject }}</td><td data-label="Enquiry">{% if m.enquiry %}<a class="row-link" href="{{ m.enquiry.get_absolute_url }}">{{ m.enquiry.reference }}</a>{% else %}—{% endif %}</td><td data-label="Sent">{{ m.sent_at|date:"d M H:i" }}</td><td data-label="Status">{% if m.status == "sent" %}{% status_pill "Sent" "success" %}{% else %}{% status_pill "Failed" "danger" %}{% endif %}</td></tr>
+{% empty %}<tr><td colspan="5" class="text-muted">Nothing sent yet.</td></tr>{% endfor %}</tbody></table></div></div>
+{% endblock %}

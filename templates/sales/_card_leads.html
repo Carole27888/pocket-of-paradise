@@ -1,0 +1,5 @@
+<div class="table-wrap"><table class="table stack-phone"><thead><tr><th>When</th><th>Client</th><th>Wants</th><th>Stage</th></tr></thead><tbody>
+{% for e in leads %}{% if e.enquiry %}<tr><td class="cell-first">{{ e.created_at|ds_datetime }}</td><td data-label="Client"><a href="{{ e.enquiry.get_absolute_url }}">{{ e.enquiry.client.full_name }}</a><div class="text-xs text-muted">{{ e.enquiry.reference }}</div></td>
+  <td data-label="Wants" class="text-sm">{{ e.enquiry.destination_text|default:"-" }}{% if e.enquiry.travel_date_from %}<div class="text-xs text-muted">{{ e.enquiry.travel_date_from|date:"d M Y" }}</div>{% endif %}</td>
+  <td data-label="Stage">{% status_pill e.enquiry.get_stage_display "neutral" %}</td></tr>{% endif %}
+{% empty %}<tr><td colspan="4" class="text-muted">No leads from the card yet. Share it: every scan is counted.</td></tr>{% endfor %}</tbody></table></div>

@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% block title %}Message log{% endblock %}
+{% block content %}
+<div class="page-header"><div><h1>Message log</h1><p>Every WhatsApp, SMS and e-mail the system sent, with its delivery status from the provider (sent → delivered → read). Failed WhatsApp messages are retried automatically; you can also retry them here.</p></div>
+  <div class="actions"><a class="btn btn-secondary" href="{% url 'ict:whatsapp' %}">WhatsApp settings</a>
+    <form method="post">{% csrf_token %}<input type="hidden" name="action" value="retry_all"><button class="btn btn-primary" type="submit">{% include "components/icon.html" with name="refresh" %} Retry failed (3 days)</button></form></div></div>
+<form method="get" class="inline-form mb-4">
+  <div class="field"><label for="f-c">Channel</label><select class="input" id="f-c" name="channel"><option value="">All</option>{% for c, l in channels %}<option value="{{ c }}" {% if c == channel %}selected{% endif %}>{{ l }}</option>{% endfor %}</select></div>
+  <div class="field"><label for="f-s">Status</label><select class="input" id="f-s" name="status"><option value="">All</option>{% for c, l in statuses %}<option value="{{ c }}" {% if c == status %}selected{% endif %}>{{ l }}</option>{% endfor %}</select></div>
+  <div class="field grow"><label for="f-q">Search</label><input class="input" id="f-q" name="q" value="{{ q }}" placeholder="Number, name, text or purpose"></div>
+  <button class="btn btn-secondary" type="submit">Filter</button></form>
+<div class="card card-flush"><div class="table-wrap"><table class="table stack-phone"><thead><tr><th>When</th><th>To</th><th>What</th><th>Status</th><th>Tries</th><th></th></tr></thead><tbody>
+{% for m in page %}<tr><td class="cell-first">{{ m.created_at|ds_datetime }}<div class="text-xs text-muted">{{ m.get_channel_display }} · {{ m.provider }}</div></td>
+  <td data-label="To">{% if m.user %}<b>{{ m.user.full_name }}</b><div class="text-xs text-muted">{{ m.to }}</div>{% else %}{{ m.to }}{% endif %}</td>
+  <td data-label="What" class="text-sm" style="max-width:420px"><span class="text-xs text-muted">{{ m.purpose|default:"message" }}{% if m.template %} · template {{ m.template }}{% endif %}</span><div>{{ m.body|truncatechars:150 }}</div>{% if m.error %}<div class="text-xs text-danger">{{ m.error }}</div>{% endif %}</td>
+  <td data-label="Status">{% if m.status == "read" %}{% status_pill "Read" "success" %}{% elif m.status == "delivered" %}{% status_pill "Delivered" "success" %}{% elif m.status == "sent" %}{% status_pill "Sent" "info" %}{% elif m.status == "failed" %}{% status_pill "Failed" "danger" %}{% else %}{% status_pill m.get_status_display "neutral" %}{% endif %}
+    {% if m.status == "failed" and m.next_retry_at %}<div class="text-xs text-muted">Retry {{ m.next_retry_at|timeuntil }}</div>{% endif %}{% if m.read_at %}<div class="text-xs text-muted">Read {{ m.read_at|ds_datetime }}</div>{% elif m.delivered_at %}<div class="text-xs text-muted">Delivered {{ m.delivered_at|ds_datetime }}</div>{% endif %}</td>
+  <td data-label="Tries">{{ m.attempts }}</td>
+  <td data-label="">{% if m.status == "failed" %}<form method="post">{% csrf_token %}<input type="hidden" name="pk" value="{{ m.pk }}"><button class="btn btn-ghost btn-sm" type="submit">Retry</button></form>{% endif %}</td></tr>
+{% empty %}<tr><td colspan="6" class="text-muted">Nothing here yet.</td></tr>{% endfor %}</tbody></table></div></div>
+{% include "components/pagination.html" with page_obj=page %}
+{% endblock %}

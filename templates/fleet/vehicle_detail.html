@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+{% block title %}{{ object.registration_no }}{% endblock %}
+{% block content %}
+<div class="page-header">
+  <div><div class="crumbs"><a href="{% url 'fleet:list' %}">Fleet</a><span>/</span><span>{{ object.registration_no }}</span></div>
+    <h1>{{ object.registration_no }}{% if object.nickname %} <span class="text-muted" style="font-weight:600">· {{ object.nickname }}</span>{% endif %}</h1>
+    <p>{{ object.get_vehicle_type_display }}{% if object.make_model %} · {{ object.make_model }}{% endif %}{% if object.year %} ({{ object.year }}){% endif %} · {{ object.seats }} seats</p></div>
+  {% if request.user.can_edit_operations %}<div class="actions"><a class="btn btn-secondary" href="{% url 'fleet:edit' object.pk %}">{% include "components/icon.html" with name="edit" %} Edit</a></div>{% endif %}
+</div>
+{% for f in flags %}
+<div class="alert {% if f.overdue %}alert-danger{% else %}alert-warning{% endif %} mb-2">{% include "components/icon.html" with name="alert" %}
+  <span class="grow"><strong>{{ f.label }}</strong> {% if f.overdue %}expired {{ f.date|ds_date }} ({{ f.days|stringformat:"d"|slice:"1:" }} days ago){% else %}due {{ f.date|ds_date }} (in {{ f.days }} days){% endif %}</span></div>
+{% endfor %}
+<div class="grid grid-4 mb-4 mt-4">
+  <div class="card kpi"><span class="kpi-label">Status</span><span class="mt-1">{% include "fleet/partials/vehicle_status.html" with v=object %}</span></div>
+  {% include "components/kpi_card.html" with label="Odometer" value=object.odometer_km|floatformat:"0g"|add:" km" %}
+  {% include "components/kpi_card.html" with label="Fuel logged" value=fuel_total.l|default:0|floatformat:"0g"|add:" L" note=fuel_total.a|money %}
+  {% include "components/kpi_card.html" with label="Driver" value=object.current_driver.short_name|default:"—" %}
+</div>
+<div class="grid grid-main-side">
+  <div class="card card-flush">
+    <div class="card-head"><h2>Fuel log</h2><span class="sub">Latest 20 entries</span></div>
+    <div class="table-wrap mt-3"><table class="table stack-phone">
+      <thead><tr><th>Date</th><th class="num">Litres</th><th class="num">Amount</th><th class="num">Odometer</th><th>Station</th><th>Filled by</th></tr></thead>
+      <tbody>
+      {% for f in fuel_logs %}
+        <tr><td class="cell-first">{{ f.date|ds_date }}</td><td data-label="Litres" class="num">{{ f.litres }}</td><td data-label="Amount" class="num fw-700">{{ f.amount|money:f.currency }}</td>
+          <td data-label="Odometer" class="num">{{ f.odometer_km|default:"—" }}</td><td data-label="Station">{{ f.station|default:"—" }}</td><td data-label="By">{{ f.filled_by.short_name|default:"—" }}</td></tr>
+      {% empty %}<tr><td colspan="6"><p class="p-4 text-muted mb-0">No fuel entries yet.</p></td></tr>{% endfor %}
+      </tbody></table></div>
+    {% if request.user.can_edit_operations %}
+    <form method="post" action="{% url 'fleet:add_fuel' object.pk %}" style="padding:16px 20px;border-top:1px solid var(--border)">
+      {% csrf_token %}<p class="section-title">Add fuel entry</p>
+      {% include "components/form_fields.html" with form=fuel_form %}
+      <div class="form-actions" style="margin-top:12px"><button class="btn btn-primary" type="submit">{% include "components/icon.html" with name="fuel" %} Record fuel</button></div>
+    </form>
+    <div class="card-head" style="padding:16px 20px 0"><h2>Maintenance log</h2><span class="sub">Posted to Finance as an expense</span></div>
+    <div class="table-wrap"><table class="table"><thead><tr><th>Date</th><th>Type</th><th>Work done</th><th>Garage</th><th class="num">Cost</th></tr></thead><tbody>{% for m in maintenance_logs %}<tr><td>{{ m.date|ds_date }}</td><td>{{ m.get_kind_display }}</td><td>{{ m.description }}</td><td>{{ m.garage|default:"—" }}</td><td class="num">{{ m.cost|money }}</td></tr>{% empty %}<tr><td colspan="5"><p class="p-4 text-muted mb-0">No maintenance recorded yet.</p></td></tr>{% endfor %}</tbody></table></div>
+    {% if request.user.can_edit_operations %}<form method="post" action="{% url 'fleet:add_maintenance' object.pk %}" style="padding:16px 20px;border-top:1px solid var(--border)">{% csrf_token %}<p class="section-title">Add maintenance entry</p>{% include "components/form_fields.html" with form=maintenance_form %}<div class="form-actions" style="margin-top:12px"><button class="btn btn-primary" type="submit">Record maintenance</button></div></form>{% endif %}{% endif %}
+  </div>
+  <div class="stack">
+    {% if request.user.can_edit_operations %}
+    <div class="card"><div class="card-head"><h2>Change status</h2></div>
+      <form method="post" action="{% url 'fleet:set_status' object.pk %}" class="flex gap-2">{% csrf_token %}
+        <label class="visually-hidden" for="v-status">Status</label>
+        <select id="v-status" name="status" class="input select">{% for val, label in object.STATUS_CHOICES %}<option value="{{ val }}" {% if val == object.status %}selected{% endif %}>{{ label }}</option>{% endfor %}</select>
+        <button class="btn btn-secondary" type="submit">Save</button></form>
+      <p class="text-xs text-muted mt-2">From Phase 2, check-out/check-in at the Front Desk sets “Out on trip” automatically.</p></div>
+    {% endif %}
+    <div class="card"><div class="card-head"><h2>Documents & service</h2></div>
+      <dl class="dl">
+        <dt>Insurance expiry</dt><dd>{{ object.insurance_expiry|ds_date }}</dd>
+        <dt>Inspection expiry</dt><dd>{{ object.inspection_expiry|ds_date }}</dd>
+        <dt>Last service</dt><dd>{{ object.last_service_date|ds_date }}</dd>
+        <dt>Next service</dt><dd>{{ object.next_service_due|ds_date }}{% if object.next_service_km %} or {{ object.next_service_km }} km{% endif %}</dd>
+      </dl>
+      {% if object.notes %}<p class="text-sm mt-3">{{ object.notes|linebreaksbr }}</p>{% endif %}</div>
+  </div>
+</div>
+{% endblock %}

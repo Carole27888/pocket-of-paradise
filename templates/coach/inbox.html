@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+{% block title %}My Assistant{% endblock %}
+{% block content %}
+<div class="page-header"><div><h1>My Assistant</h1><p>Your day in one place: who to call, what is due and what needs chasing. It reminds and reports; it never changes anything on its own.</p></div>
+  {% if can_configure %}<div class="actions"><a class="btn btn-secondary" href="{% url 'coach:settings' %}">Settings</a></div>{% endif %}</div>
+{% if not emp %}<div class="card"><p class="text-muted mb-0">Your login isn't linked to an employee record yet, so there is nothing to show. Ask Admin to link it under People.</p></div>
+{% else %}
+{% if brief %}
+<div class="grid grid-4 mb-4">
+  {% include "components/kpi_card.html" with label="Leads to call first" value=stats.call note="Waiting for a first call" accent=True %}
+  {% include "components/kpi_card.html" with label="Follow-ups due" value=stats.followups note=stats.late|stringformat:"d"|add:" of them late" %}
+  {% include "components/kpi_card.html" with label="Quotes with no reply" value=stats.quotes note="Chase these" %}
+  {% include "components/kpi_card.html" with label="Payments to chase" value=stats.pay note="Deposits and balances" %}
+</div>
+{% endif %}
+<div class="grid grid-6-4">
+  <div class="stack" style="gap:16px">
+  {% if brief %}
+    <section class="card as-hello"><div><h2>Good {% now "G" as hr %}{% if hr|add:0 < 12 %}morning{% elif hr|add:0 < 17 %}afternoon{% else %}evening{% endif %}, {{ first_name }}</h2><p>{{ today|date:"l, j F" }}{% if brief.month.pct is not None %} · you are at <b>{{ brief.month.pct }}%</b> of this month's target{% if brief.month.rank %} · rank {{ brief.month.rank }} of {{ brief.month.of }}{% endif %}{% endif %}</p></div>
+      {% if brief.month.pct is not None %}<div class="as-month"><div class="bar {% if brief.month.pct >= 80 %}ok{% elif brief.month.pct >= 40 %}warn{% else %}bad{% endif %}"><span style="width:{% if brief.month.pct > 100 %}100{% else %}{{ brief.month.pct }}{% endif %}%"></span></div></div>{% endif %}</section>
+    {% for sec in sections %}{% if sec.items or sec.empty %}
+    <section class="card as-sec tone-{{ sec.tone }}">
+      <div class="card-head"><h2><span class="as-ico">{% include "components/icon.html" with name=sec.icon size="16" %}</span>{{ sec.title }}</h2><span class="sub">{{ sec.items|length }}</span></div>
+      {% for r in sec.shown %}<a class="as-row" {% if r.url %}href="{{ r.url }}"{% endif %}><div class="grow"><b>{{ r.title }}</b><small>{{ r.sub }}</small></div><span class="as-meta {% if r.late %}late{% endif %}">{{ r.meta }}{% if r.late %} · late{% endif %}</span>{% if r.url %}{% include "components/icon.html" with name="chevron-right" size="14" %}{% endif %}</a>
+      {% empty %}<p class="text-muted text-sm" style="margin:0">{{ sec.empty }}</p>{% endfor %}
+      {% if sec.more %}<details class="as-more"><summary>Show {{ sec.more|length }} more</summary>
+        {% for r in sec.more %}<a class="as-row" {% if r.url %}href="{{ r.url }}"{% endif %}><div class="grow"><b>{{ r.title }}</b><small>{{ r.sub }}</small></div><span class="as-meta {% if r.late %}late{% endif %}">{{ r.meta }}{% if r.late %} · late{% endif %}</span></a>{% endfor %}</details>{% endif %}
+    </section>{% endif %}{% endfor %}
+  {% else %}
+    <div class="card"><p class="text-muted mb-0">The daily briefing is for sales agents. Your reports and reminders appear on the right.</p></div>
+  {% endif %}
+  </div>
+  <aside class="stack" style="gap:16px">
+    {% if brief and brief.todos %}<section class="card"><div class="card-head"><h2>My to-dos</h2><a href="{% url 'system:todo' %}">Open →</a></div>{% for t in brief.todos %}<div class="as-todo">{% include "components/icon.html" with name="check-square" size="15" %}<span>{{ t }}</span></div>{% endfor %}</section>{% endif %}
+    <section class="card card-flush"><div class="card-head" style="padding:16px 18px 0"><h2>Reports &amp; reminders</h2><span class="sub">{{ msgs|length }}</span></div>
+      <div class="as-msgs">
+      {% for m in msgs %}<details class="as-msg" {% if m.pk in unread_ids %}open{% endif %}>
+        <summary><span class="as-dot {% if m.pk in unread_ids %}on{% endif %}"></span><span class="grow"><b>{{ m.title }}</b><small>{{ m.get_kind_display }} · {{ m.sent_at|ds_datetime }}</small></span></summary>
+        <div class="as-body">{{ m.body }}</div>
+        {% if m.enquiry %}<p style="margin:8px 0 0"><a class="btn btn-secondary btn-sm" href="{{ m.enquiry.get_absolute_url }}">Open {{ m.enquiry.reference }}</a></p>{% endif %}
+        {% if m.kind == "nudge" or m.kind == "alert" %}{% if m.reply %}<p class="text-sm text-muted" style="margin:8px 0 0">Your reason: “{{ m.reply }}”</p>{% else %}<form method="post" action="{% url 'coach:reply' m.pk %}" class="inline-form" style="margin-top:10px">{% csrf_token %}<div class="field grow"><label for="r{{ m.pk }}">Reply with a reason (saved on the lead)</label><input class="input" id="r{{ m.pk }}" name="reply" maxlength="500" placeholder="e.g. Client asked me to call after 4pm"></div><button class="btn btn-secondary" type="submit">Send</button></form>{% endif %}{% endif %}
+      </details>{% empty %}<p class="text-muted text-sm" style="padding:0 18px 18px;margin:0">Nothing yet. End-of-day and weekly reports, and nudges about leads, will appear here.</p>{% endfor %}
+      </div></section>
+  </aside>
+</div>
+{% endif %}
+{% endblock %}

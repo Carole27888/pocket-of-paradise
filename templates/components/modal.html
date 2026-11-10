@@ -1,0 +1,8 @@
+{# Usage: wrap in x-data="{ modal: false }" and include with id/title; put content in the caller via {% include %} of body_template #}
+<div class="modal-backdrop" x-show="{{ flag|default:'modal' }}" x-cloak @keydown.escape.window="{{ flag|default:'modal' }} = false" @click.self="{{ flag|default:'modal' }} = false">
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="{{ id }}-title">
+    <div class="modal-head"><h2 id="{{ id }}-title">{{ title }}</h2>
+      <button type="button" class="icon-btn" @click="{{ flag|default:'modal' }} = false" aria-label="Close">{% include "components/icon.html" with name="x" %}</button></div>
+    {% include body_template %}
+  </div>
+</div>

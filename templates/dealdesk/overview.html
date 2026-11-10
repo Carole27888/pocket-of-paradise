@@ -1,0 +1,11 @@
+{% extends "base.html" %}
+{% block title %}Deal Desk{% endblock %}
+{% block content %}
+<div class="page-header"><div><h1>Deal Desk</h1><p>Identity checks, signatures and instalment plans in one place.</p></div></div>
+<div class="grid grid-4 mb-4">{% include "components/kpi_card.html" with label="KYC to verify" value=kyc_pending accent=True %}{% include "components/kpi_card.html" with label="Awaiting signature" value=sig_pending %}{% include "components/kpi_card.html" with label="Overdue instalments" value=overdue|length %}{% include "components/kpi_card.html" with label="Budget requests pending" value=pending_budgets %}</div>
+<div class="grid grid-2">
+<div class="card"><div class="card-head"><h2>Overdue instalments</h2></div>{% for i in overdue %}<a class="list-item" href="{% url 'deals:plan' i.plan.booking_id %}"><span class="grow">{{ i.plan.booking.client.full_name }} · {{ i.plan.booking.reference }}</span><span class="text-late">{{ i.due_date|ds_date }} · {{ i.outstanding|floatformat:0 }}</span></a>{% empty %}<p class="text-muted text-sm">Nothing overdue.</p>{% endfor %}</div>
+<div class="card"><div class="card-head"><h2>Rules</h2></div>
+{% if can_manage %}<form method="post" class="stack" style="gap:10px">{% csrf_token %}<label class="check-label"><input type="checkbox" name="require_kyc" {% if st.require_kyc_for_deposit %}checked{% endif %}> Require KYC before a deposit is taken</label><p class="text-xs text-muted">When on, the first payment on a booking is refused until the client's identity is verified. Off by default.</p><button class="btn btn-primary btn-sm" type="submit">Save</button></form>
+{% else %}<p class="text-sm">KYC before deposit is <b>{{ st.require_kyc_for_deposit|yesno:"on,off" }}</b>.</p>{% endif %}</div></div>
+{% endblock %}

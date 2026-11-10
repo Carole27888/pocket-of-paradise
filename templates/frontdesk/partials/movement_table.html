@@ -1,0 +1,18 @@
+<div class="table-wrap"><table class="table stack-phone">
+  <thead><tr><th>{% sort_link "vehicle__registration_no" "Vehicle / crew" %}</th><th>Going to</th><th>{% sort_link "checked_out_at" "Out" %}</th>
+    <th>{% sort_link "expected_return_at" "Expected back" %}</th><th>{% sort_link "checked_in_at" "Back" %}</th><th class="num">Km</th></tr></thead>
+  <tbody>
+  {% for m in object_list %}
+    <tr>
+      <td class="cell-first"><a class="row-link cell-main" href="{{ m.get_absolute_url }}">{{ m.subject_label }}</a>
+        <div class="cell-sub">{{ m.reference }}{% for p in m.crew %} · {{ p.short_name }}{% endfor %}</div></td>
+      <td data-label="Going to">{{ m.destination_label }}<div class="cell-sub">{{ m.get_purpose_display }}{% if m.enquiry %} · {{ m.enquiry.reference }}{% endif %}</div></td>
+      <td data-label="Out">{{ m.checked_out_at|ds_datetime }}</td>
+      <td data-label="Expected back" class="{% if m.is_late %}text-late{% endif %}">{{ m.expected_return_at|ds_datetime }}</td>
+      <td data-label="Back">{% if m.is_open %}{% if m.is_late %}{% status_pill m.late_label|add:" late" "danger" %}{% else %}{% status_pill "Out" "warning" %}{% endif %}{% else %}<span class="{% if m.returned_late %}text-late{% endif %}">{{ m.checked_in_at|ds_datetime }}</span>{% endif %}</td>
+      <td data-label="Km" class="num">{{ m.distance_km|default_if_none:"—" }}</td>
+    </tr>
+  {% empty %}<tr><td colspan="6">{% include "components/empty_state.html" with icon="route" title="No movements match" text="Check-outs and check-ins from the desk appear here." %}</td></tr>{% endfor %}
+  </tbody>
+</table></div>
+{% include "components/pagination.html" %}

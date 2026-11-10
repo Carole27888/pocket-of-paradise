@@ -1,0 +1,25 @@
+{% extends "base.html" %}{% load static %}
+{% block title %}Calls{% endblock %}
+{% block extra_css %}<link rel="stylesheet" href="{% static 'css/sales.css' %}">{% endblock %}
+{% block extra_vendor %}<script src="{% static 'vendor/chartjs/chart.umd.min.js' %}" defer></script>{% endblock %}
+{% block extra_js %}<script src="{% static 'js/charts.js' %}" defer></script>{% endblock %}
+{% block content %}
+<div class="page-header"><div><h1>{{ title }}</h1><p>{{ subtitle }}{% if scoped %} Only your own calls are shown.{% endif %}</p></div>
+  {% if request.user.can_work_sales %}<div class="actions"><a class="btn btn-accent" href="{% url 'sales:call_new' %}" data-modal-form="{% url 'sales:call_new' %}" data-modal-title="Log a call">{% include "components/icon.html" with name="phone" %} Log a call</a></div>{% endif %}</div>
+<div class="grid grid-4 mb-4">
+  {% include "components/kpi_card.html" with label="Calls today" value=kpis.today note=kpis.connected_today|stringformat:"d"|add:" connected" accent=True %}
+  {% include "components/kpi_card.html" with label="Last 7 days" value=kpis.week %}
+  {% include "components/kpi_card.html" with label="Talk time (7 days)" value=kpis.minutes_week|stringformat:"d"|add:" min" %}
+  {% include "components/kpi_card.html" with label="Matching filters" value=total %}
+</div>
+{{ charts|json_script:"call-charts" }}
+<div class="grid grid-3 mb-4">
+  <div class="card"><div class="card-head"><h2>Calls by hour</h2><span class="sub">Last 30 days</span></div><div class="chart-box sm"><canvas data-chart="bar" data-chart-source="call-charts" data-chart-key="hours" aria-label="Calls by hour" role="img"></canvas></div></div>
+  <div class="card"><div class="card-head"><h2>Outcomes</h2><span class="sub">{{ answer_rate }}% answered</span></div><div class="chart-box sm"><canvas data-chart="doughnut" data-chart-source="call-charts" data-chart-key="outcomes" aria-label="Call outcomes" role="img"></canvas></div></div>
+  <div class="card"><div class="card-head"><h2>By consultant</h2></div>{% for a in by_agent %}<div class="progress-row mb-2"><div class="top"><span>{{ a.name }}</span><span>{{ a.calls }} · {{ a.answered }}% answered</span></div><div class="progress accent"><span style="width:{% widthratio a.calls by_agent.0.calls 100 %}%"></span></div></div>{% empty %}<p class="text-muted text-sm">No calls yet.</p>{% endfor %}</div>
+</div>
+<div class="card card-flush">
+  {% include "components/filter_bar.html" with placeholder="Search client, phone, notes…" %}
+  <div id="list-region">{% include "sales/partials/call_table.html" %}</div>
+</div>
+{% endblock %}

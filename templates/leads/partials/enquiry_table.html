@@ -1,0 +1,27 @@
+{% load l10n %}<div class="table-wrap"><table class="table stack-phone enq-table">
+  <thead><tr>
+    {% if not request.user.is_read_only %}<th style="width:36px"><label class="visually-hidden" for="check-all">Select all on this page</label><input type="checkbox" id="check-all" class="check" @change="toggleAll($event.target.checked)" :checked="allChecked"></th>{% endif %}
+    <th>{% sort_link "client__full_name" "Client" %}</th><th>Source</th><th>Interest · party</th><th>{% sort_link "stage" "Stage" %}</th>
+    <th>Travel dates</th><th>Who's that</th><th>Remark</th><th>Agent</th><th>{% sort_link "last_contact_at" "Last contact" %}</th><th class="num">{% sort_link "stage_changed_at" "Days in stage" %}</th>
+  </tr></thead>
+  <tbody>
+  {% for e in object_list %}
+    <tr :class="{ 'row-selected': selected.includes({{ e.pk|unlocalize }}) }">
+      {% if not request.user.is_read_only %}<td data-label=""><label class="visually-hidden" for="chk-{{ e.pk|unlocalize }}">Select {{ e.reference }}</label>
+        <input type="checkbox" id="chk-{{ e.pk|unlocalize }}" class="check row-check" value="{{ e.pk|unlocalize }}" :checked="selected.includes({{ e.pk|unlocalize }})" @change="toggle({{ e.pk|unlocalize }}, $event.target.checked)"></td>{% endif %}
+      <td class="cell-first"><a class="row-link cell-main" href="{{ e.get_absolute_url }}">{{ e.client.full_name }}</a>
+        <div class="cell-sub">{{ e.reference }} · {{ e.client.phone|phone }}{% if e.is_returning_client %} · <span class="text-accent fw-700">Returning</span>{% endif %}</div></td>
+      <td data-label="Source">{% source_badge e True %}</td>
+      <td data-label="Interest">{{ e.interest_label }}<div class="cell-sub">{{ e.party_label }}{% if e.budget_text %} · {{ e.budget_text }}{% endif %}</div></td>
+      <td data-label="Stage">{% stage_pill e %}</td>
+      <td data-label="Travel dates" class="nw">{{ e.travel_dates_label }}</td>
+      <td data-label="Who's that" class="nw">{{ e.brought_by_label|default:"—" }}</td>
+      <td data-label="Remark" title="{{ e.remark }}">{{ e.remark|default:"—"|truncatechars:30 }}</td>
+      <td data-label="Agent">{% if e.assigned_agent %}{{ e.assigned_agent.short_name }}{% else %}<span class="pill pill-danger">Unassigned</span>{% endif %}</td>
+      <td data-label="Last contact">{{ e.last_contact_at|ds_date }}</td>
+      <td data-label="Days in stage" class="num {% if e.days_in_stage > 7 and e.stage != 'completed' and e.stage != 'lost' %}text-late{% endif %}">{{ e.days_in_stage }}</td>
+    </tr>
+  {% empty %}<tr><td colspan="11">{% include "components/empty_state.html" with icon="inbox" title="No enquiries match" text="Change the filters or capture a new enquiry." %}</td></tr>{% endfor %}
+  </tbody>
+</table></div>
+{% include "components/pagination.html" %}

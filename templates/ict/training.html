@@ -1,0 +1,40 @@
+{% extends "base.html" %}{% load l10n %}
+{% block title %}Bot Training{% endblock %}
+{% block content %}
+<div class="page-header"><div><h1>Bot Training</h1><p>Teach the WhatsApp bot your real answers. It uses what you write here word for word, and only guesses on the rest.</p></div>
+  {% if can_configure %}<div class="actions"><form method="post" action="{% url 'ict:training_seed' %}">{% csrf_token %}<button class="btn btn-secondary" type="submit">{% include "components/icon.html" with name="sparkles" %} Learn from the package catalogue</button></form></div>{% endif %}</div>
+<div class="stat-grid cols-4 mb-4"><div class="stat"><span class="stat-label">Things taught</span><b class="stat-num">{{ total }}</b></div><div class="stat"><span class="stat-label">In use</span><b class="stat-num">{{ active }}</b></div>
+  <div class="stat"><span class="stat-label">Customers asked, not covered</span><b class="stat-num">{{ suggested|length }}</b></div><div class="stat"><span class="stat-label">AI behind it</span><b class="stat-num" style="font-size:18px">{% if ai_ready %}Connected{% else %}Not connected{% endif %}</b></div></div>
+<div class="grid grid-main-side">
+  <div class="stack">
+    <div class="card"><div class="card-head"><h2>Try it</h2><span class="sub">Ask as a customer would. See what the bot would answer.</span></div>
+      <form class="flex gap-2 wrap" id="try-form"><input class="input grow" id="try-q" placeholder="e.g. What is included in the Mara package?" style="min-width:200px"><button class="btn btn-primary" type="submit">Ask</button></form>
+      <div id="try-out" class="mt-3" hidden></div></div>
+    <div class="card card-flush"><div class="card-head" style="padding:16px 18px 0"><h2>What the bot knows</h2></div>
+      <form method="get" class="flex gap-2 wrap" style="padding:12px 18px"><input class="input grow" name="q" value="{{ q }}" placeholder="Search questions and answers…" style="min-width:180px">{% if cats %}<select class="input" name="cat" onchange="this.form.submit()"><option value="">All topics</option>{% for c in cats %}<option value="{{ c }}" {% if c == cat %}selected{% endif %}>{{ c }}</option>{% endfor %}</select>{% endif %}<button class="btn btn-secondary">Search</button></form>
+      <div class="list">{% for e in entries %}<div class="list-item" style="align-items:flex-start;{% if not e.is_active %}opacity:.55{% endif %}"><div class="grow"><div class="title">{{ e.question }}</div><div class="meta" style="white-space:normal">{{ e.answer|truncatechars:220 }}</div>
+        <div class="meta mt-1">{% if e.category %}{{ e.category }} · {% endif %}{{ e.get_source_display }} · used {{ e.times_used }} time{{ e.times_used|pluralize }}</div></div>
+        {% if can_configure %}<div class="flex gap-1 wrap"><a class="btn btn-ghost btn-sm" href="?edit={{ e.pk|unlocalize }}#teach">Edit</a>
+          <form method="post" action="{% url 'ict:training_action' e.pk|unlocalize %}">{% csrf_token %}<button class="btn btn-ghost btn-sm" type="submit">{% if e.is_active %}Pause{% else %}Resume{% endif %}</button></form>
+          <form method="post" action="{% url 'ict:training_action' e.pk|unlocalize %}" onsubmit="return confirm('Remove this answer?')">{% csrf_token %}<input type="hidden" name="action" value="delete"><button class="btn btn-ghost btn-sm text-danger" type="submit">Remove</button></form></div>{% endif %}</div>
+      {% empty %}{% include "components/empty_state.html" with icon="brain" title="Nothing taught yet" text="Add your first answer, or let the bot learn from the package catalogue." %}{% endfor %}</div></div>
+  </div>
+  <div class="stack">
+    {% if can_configure %}<div class="card" id="teach"><div class="card-head"><h2>{% if edit %}Edit this answer{% else %}Teach something new{% endif %}</h2></div>
+      <form method="post" class="stack" style="gap:12px">{% csrf_token %}{% if edit %}<input type="hidden" name="id" value="{{ edit.pk|unlocalize }}">{% endif %}
+        <div class="field"><label for="t-q">Customer asks</label><input class="input" id="t-q" name="question" maxlength="240" required value="{{ edit.question|default:prefill }}" placeholder="What time is check-in at the lodges?"></div>
+        <div class="field"><label for="t-a">Bot answers</label><textarea class="input textarea" id="t-a" name="answer" rows="4" maxlength="900" required placeholder="Write it exactly as you want the customer to read it.">{{ edit.answer }}</textarea></div>
+        <div class="field"><label for="t-k">Other words customers use</label><input class="input" id="t-k" name="keywords" maxlength="240" value="{{ edit.keywords }}" placeholder="arrival, check in, early arrival"></div>
+        <div class="field"><label for="t-c">Topic</label><input class="input" id="t-c" name="category" maxlength="40" value="{{ edit.category }}" placeholder="Payments, Visas, Packing…"></div>
+        <div class="flex gap-2"><button class="btn btn-primary" type="submit">{% if edit %}Save changes{% else %}Teach the bot{% endif %}</button>{% if edit %}<a class="btn btn-secondary" href="{% url 'ict:training' %}">Cancel</a>{% endif %}</div></form></div>{% endif %}
+    <div class="card"><div class="card-head"><h2>Customers asked, bot can't answer</h2><span class="sub">Last 45 days, most asked first</span></div>
+      <div class="list">{% for s in suggested %}<div class="list-item"><div class="grow"><div class="title" style="white-space:normal">{{ s.question|truncatechars:110 }}</div><div class="meta">asked {{ s.count }} time{{ s.count|pluralize }}</div></div>{% if can_configure %}<a class="btn btn-secondary btn-sm" href="?teach={{ s.question|urlencode }}#teach">Teach</a>{% endif %}</div>
+      {% empty %}<p class="text-muted text-sm mb-0">Nothing new. Every question customers asked is already covered.</p>{% endfor %}</div></div>
+  </div>
+</div>
+<script>(function(){var f=document.getElementById("try-form"),o=document.getElementById("try-out");f.addEventListener("submit",function(e){e.preventDefault();var q=document.getElementById("try-q").value.trim();if(!q)return;o.hidden=false;o.textContent="Thinking…";
+fetch("{% url 'ict:training_try' %}?q="+encodeURIComponent(q)).then(function(r){return r.json()}).then(function(j){o.innerHTML="";function t(tag,txt,st){var n=document.createElement(tag);n.textContent=txt;if(st)n.style.cssText=st;o.appendChild(n);return n}
+if(j.error){t("p",j.error);return}var mode={taught:"Answered from what you taught",ai:"Answered by the AI, using your taught answers as facts",error:"AI not available",none:"No taught answer matches, and no AI is connected. The customer would get the fallback message."}[j.mode];
+t("b",mode);if(j.reply)t("p",j.reply,"background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:10px 12px;margin:8px 0;white-space:pre-line");
+if(j.matches.length){t("small","Closest taught answers: "+j.matches.map(function(m){return m.question+" ("+Math.round(m.score*100)+"%)"}).join(" · "),"color:var(--text-muted)")}})})})();</script>
+{% endblock %}

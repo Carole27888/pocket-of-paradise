@@ -1,0 +1,12 @@
+{% extends "catalog/public_base.html" %}
+{% block title %}{{ pkg.title }}{% endblock %}
+{% block desc %}{{ pkg.summary|default:pkg.title }}{% endblock %}
+{% block body %}
+<div class="crumbs mt-4"><a href="{% url 'public_catalogue' %}">All packages</a><span>/</span><span>{{ pkg.title }}</span></div>
+<div class="grid grid-main-side mt-4"><div class="stack">
+<div class="card" style="padding:0;overflow:hidden">{% if pkg.cover_photo %}<img src="{{ pkg.cover_photo.url }}" alt="{{ pkg.title }}" style="width:100%;max-height:340px;object-fit:cover">{% endif %}<div style="padding:18px"><h1 style="margin:0 0 4px">{{ pkg.title }}</h1><p class="text-muted">{{ pkg.days }} days / {{ pkg.nights }} nights · {% for d in pkg.destinations.all %}{{ d.name }}{% if not forloop.last %}, {% endif %}{% endfor %} · groups of {{ pkg.min_group }}–{{ pkg.max_group }}</p><p>{{ pkg.summary }}</p><p><b>From {{ pkg.currency }} {{ pkg.price_per_person|floatformat:0 }}</b> per person sharing. A consultant confirms the exact price for your dates.</p></div></div>
+{% if days %}<div class="card"><h2>Day by day</h2>{% for d in days %}<div class="dayc"><b>Day {{ d.day_number }} · {{ d.title }}</b><div class="text-sm">{{ d.description }}</div>{% if d.accommodation %}<div class="text-xs text-muted">Stay: {{ d.accommodation.name }}</div>{% endif %}</div>{% endfor %}</div>{% endif %}
+<div class="grid grid-2">{% if inclusions %}<div class="card"><h2>Included</h2><ul>{% for i in inclusions %}<li>{{ i }}</li>{% endfor %}</ul></div>{% endif %}{% if exclusions %}<div class="card"><h2>Not included</h2><ul>{% for i in exclusions %}<li>{{ i }}</li>{% endfor %}</ul></div>{% endif %}</div></div>
+<aside class="card" style="align-self:start"><h2>Ask about this trip</h2>{% if done %}<div class="alert alert-success">Thank you! A travel consultant will contact you shortly.</div>{% endif %}
+<form method="post" class="stack" style="gap:10px">{% csrf_token %}{{ form.website }}{% for f in form.visible_fields %}<div class="field"><label for="{{ f.id_for_label }}">{{ f.label }}</label>{{ f }}{{ f.errors }}</div>{% endfor %}<button class="btn btn-primary" type="submit">Send enquiry</button><p class="text-xs text-muted">We use your details only to answer this enquiry. See our <a href="{% url 'public_privacy' %}">privacy notice</a>.</p></form></aside></div>
+{% endblock %}

@@ -1,0 +1,20 @@
+<div class="table-wrap"><table class="table stack-phone">
+  <thead><tr><th>{% sort_link "registration_no" "Vehicle" %}</th><th>{% sort_link "vehicle_type" "Type" %}</th><th class="num">{% sort_link "seats" "Seats" %}</th><th>{% sort_link "status" "Status" %}</th><th>Driver</th>
+    <th>{% sort_link "insurance_expiry" "Insurance" %}</th><th>{% sort_link "inspection_expiry" "Inspection" %}</th><th>{% sort_link "next_service_due" "Next service" %}</th></tr></thead>
+  <tbody>
+  {% now "Y-m-d" as today %}
+  {% for v in object_list %}
+    <tr>
+      <td class="cell-first"><a class="row-link cell-main" href="{{ v.get_absolute_url }}">{{ v.registration_no }}</a><div class="cell-sub">{{ v.nickname }}{% if v.make_model %} · {{ v.make_model }}{% endif %}</div></td>
+      <td data-label="Type">{{ v.get_vehicle_type_display }}</td>
+      <td data-label="Seats" class="num">{{ v.seats }}</td>
+      <td data-label="Status">{% include "fleet/partials/vehicle_status.html" %}</td>
+      <td data-label="Driver">{{ v.current_driver.short_name|default:"—" }}</td>
+      <td data-label="Insurance" class="{% if v.insurance_expiry and v.insurance_expiry|date:'Y-m-d' < today %}text-late{% endif %}">{{ v.insurance_expiry|ds_date }}</td>
+      <td data-label="Inspection" class="{% if v.inspection_expiry and v.inspection_expiry|date:'Y-m-d' < today %}text-late{% endif %}">{{ v.inspection_expiry|ds_date }}</td>
+      <td data-label="Next service" class="{% if v.next_service_due and v.next_service_due|date:'Y-m-d' < today %}text-late{% endif %}">{{ v.next_service_due|ds_date }}</td>
+    </tr>
+  {% empty %}<tr><td colspan="8">{% include "components/empty_state.html" with icon="truck" title="No vehicles match" %}</td></tr>{% endfor %}
+  </tbody>
+</table></div>
+{% include "components/pagination.html" %}

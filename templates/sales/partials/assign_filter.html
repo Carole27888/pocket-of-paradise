@@ -1,0 +1,11 @@
+{% load l10n %}
+<form method="get" style="display:contents">
+  <div class="field"><label>Status</label><select class="input" name="status" onchange="this.form.submit()"><option value="unassigned" {% if status == "unassigned" %}selected{% endif %}>Unassigned</option><option value="assigned" {% if status == "assigned" %}selected{% endif %}>Assigned</option><option value="all" {% if status == "all" %}selected{% endif %}>All open</option></select></div>
+  <div class="field"><label>Stage</label><select class="input" name="stage" onchange="this.form.submit()"><option value="">Any stage</option>{% for v, l in stages %}<option value="{{ v }}" {% if f.stage == v %}selected{% endif %}>{{ l }}</option>{% endfor %}</select></div>
+  <div class="field"><label>Source</label><select class="input" name="source" onchange="this.form.submit()"><option value="">All sources</option>{% for v, l in sources %}<option value="{{ v }}" {% if f.source == v %}selected{% endif %}>{{ l }}</option>{% endfor %}</select></div>
+  <div class="field"><label>Destination</label><select class="input" name="destination" onchange="this.form.submit()"><option value="">All destinations</option>{% for d in destinations %}<option value="{{ d.pk|unlocalize }}" {% if f.destination == d.pk|unlocalize|stringformat:"s" %}selected{% endif %}>{{ d.name }}</option>{% endfor %}</select></div>
+  <div class="field"><label>Region</label><select class="input" name="region" onchange="this.form.submit()"><option value="">All regions</option>{% for v, l in regions %}<option value="{{ v }}" {% if f.region == v %}selected{% endif %}>{{ l }}</option>{% endfor %}</select></div>
+  <div class="field"><label>Budget</label><select class="input" name="budget" onchange="this.form.submit()"><option value="">Any budget</option>{% for v, l in bands %}<option value="{{ v }}" {% if f.budget == v %}selected{% endif %}>{{ l }}</option>{% endfor %}</select></div>
+  <div class="field"><label>Date added</label><select class="input" name="added" onchange="this.form.submit()"><option value="">Any time</option>{% for v, l in added_choices %}<option value="{{ v }}" {% if f.added == v %}selected{% endif %}>{{ l }}</option>{% endfor %}</select></div>
+  <div class="field"><label>&nbsp;</label><a class="btn btn-ghost" href="{% url 'sales:assign_leads' %}">Clear filters</a></div>
+</form>

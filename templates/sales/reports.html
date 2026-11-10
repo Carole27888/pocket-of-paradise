@@ -1,0 +1,44 @@
+{% extends "base.html" %}{% load static %}
+{% block title %}Sales Reports{% endblock %}
+{% block extra_css %}<link rel="stylesheet" href="{% static 'css/sales.css' %}">{% endblock %}
+{% block extra_vendor %}<script src="{% static 'vendor/chartjs/chart.umd.min.js' %}" defer></script>{% endblock %}
+{% block extra_js %}<script src="{% static 'js/charts.js' %}" defer></script>{% endblock %}
+{% block content %}
+<div class="page-header"><div><h1>Sales Reports</h1><p>Funnel, channels, lost reasons and agent comparison · {{ start|ds_date }} – {{ end|ds_date }}</p></div>
+  <div class="actions">{% include "sales/partials/range_bar.html" %}</div></div>
+<div class="grid grid-4 mb-4">
+  {% include "components/kpi_card.html" with label="Revenue" value=totals.revenue|money_compact note=totals.won|stringformat:"d"|add:" bookings" accent=True %}
+  {% include "components/kpi_card.html" with label="Conversion" value=totals.conversion|stringformat:"d"|add:"%" note="Assigned → booked" %}
+  {% include "components/kpi_card.html" with label="Quotes sent" value=totals.quotes %}
+  {% include "components/kpi_card.html" with label="Leads lost" value=totals.lost %}
+</div>
+{{ charts|json_script:"sales-charts" }}
+<div class="grid grid-6-4 mb-4">
+  <div class="card card-flush"><div class="card-head" style="padding:16px 18px 0"><h2>Best-selling packages</h2><span class="sub">Booked in the period</span></div>
+    <div class="table-wrap mt-3"><table class="table stack-phone"><thead><tr><th>#</th><th>Package</th><th class="num">Enquiries</th><th class="num">Bookings</th><th class="num">Travellers</th><th class="num">Revenue</th><th class="num">Share</th></tr></thead>
+      <tbody>{% for p in top_packages %}<tr><td data-label="Rank"><span class="rank {% if forloop.counter <= 3 %}r{{ forloop.counter }}{% endif %}">{{ forloop.counter }}</span></td>
+        <td class="cell-first">{% if p.slug %}<a class="row-link cell-main" href="{% url 'catalog:package_detail' p.slug %}">{{ p.name }}</a>{% else %}<span class="cell-main">{{ p.name }}</span>{% endif %}</td>
+        <td data-label="Enquiries" class="num">{{ p.enquiries }}</td><td data-label="Bookings" class="num fw-700">{{ p.bookings }}</td><td data-label="Travellers" class="num">{{ p.travellers }}</td>
+        <td data-label="Revenue" class="num">{{ p.revenue|money_compact }}</td><td data-label="Share" class="num">{{ p.share }}%</td></tr>
+      {% empty %}<tr><td colspan="7">{% include "components/empty_state.html" with icon="map" title="No bookings in this period" text="Pick a longer range to see which packages sell most." %}</td></tr>{% endfor %}</tbody></table></div></div>
+  {% include "components/chart_card.html" with title="Top packages by bookings" sub="Top 8" kind="bar" source="sales-charts" key="packages" %}
+</div>
+<div class="grid grid-2 mb-4">
+  <div class="card"><div class="card-head"><h2>Conversion funnel</h2><span class="sub">Leads created in the period</span></div>
+    {% for f in funnel %}<div class="funnel-row"><span>{{ f.label }}</span><div class="bar"><span style="width:{{ f.pct }}%"></span></div><span class="text-right fw-700">{{ f.count }} <span class="text-muted text-xs">{{ f.pct }}%</span></span></div>{% endfor %}</div>
+  {% include "components/chart_card.html" with title="Where enquiries come from" sub="By channel" kind="doughnut" source="sales-charts" key="sources" %}
+</div>
+<div class="card card-flush mb-4"><div class="card-head"><h2>Channel performance</h2><a href="?range={{ range_key }}&export=sources">{% include "components/icon.html" with name="download" size="14" %} CSV</a></div>
+  <div class="table-wrap mt-3"><table class="table stack-phone"><thead><tr><th>Source</th><th class="num">Enquiries</th><th class="num">Booked</th><th class="num">Conversion</th><th class="num">Revenue</th></tr></thead>
+    <tbody>{% for s in sources %}<tr><td class="cell-first">{% source_badge s.code True %}</td><td data-label="Enquiries" class="num">{{ s.enquiries }}</td><td data-label="Booked" class="num">{{ s.won }}</td><td data-label="Conversion" class="num">{{ s.conversion }}%</td><td data-label="Revenue" class="num fw-700">{{ s.revenue|money_compact }}</td></tr>
+      {% empty %}<tr><td colspan="5" class="text-muted">No enquiries in this period.</td></tr>{% endfor %}</tbody></table></div></div>
+<div class="grid grid-main-side mb-4">
+  {% include "components/chart_card.html" with title="Revenue vs target" sub="Last 6 months, KES" kind="revenue" source="sales-charts" key="revenue" %}
+  <div class="card"><div class="card-head"><h2>Why we lose deals</h2></div>
+    {% for l in lost %}<div class="progress-row mb-3"><div class="top"><span>{{ l.lost_reason|truncatechars:40 }}</span><span>{{ l.n }}</span></div><div class="progress accent"><span style="width:{% widthratio l.n lost.0.n 100 %}%"></span></div></div>
+    {% empty %}<p class="text-muted text-sm">No lost leads in this period.</p>{% endfor %}</div>
+</div>
+<div class="card card-flush"><div class="card-head"><h2>Agent comparison</h2><a href="{% url 'sales:team' %}?range={{ range_key }}">Team view →</a></div>
+  <div class="table-wrap mt-3"><table class="table stack-phone"><thead><tr><th>Agent</th><th class="num">Assigned</th><th class="num">Quotes</th><th class="num">Won</th><th class="num">Conversion</th><th class="num">Revenue</th><th class="num">First response</th></tr></thead>
+    <tbody>{% for r in rows %}<tr><td class="cell-first"><a class="row-link cell-main" href="{% url 'sales:team_agent' r.agent.pk %}">{{ r.agent.full_name }}</a></td><td data-label="Assigned" class="num">{{ r.assigned }}</td><td data-label="Quotes" class="num">{{ r.quotes }}</td><td data-label="Won" class="num">{{ r.won }}</td><td data-label="Conv." class="num">{{ r.conversion }}%</td><td data-label="Revenue" class="num fw-700">{{ r.revenue|money_compact }}</td><td data-label="Response" class="num">{% if r.response_min is None %}—{% else %}{{ r.response_min }}m{% endif %}</td></tr>{% endfor %}</tbody></table></div></div>
+{% endblock %}

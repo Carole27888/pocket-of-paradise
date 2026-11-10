@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+{% block title %}Reports{% endblock %}
+{% block content %}
+<div class="page-header"><div><h1>Reports</h1><p>Generate any report you can see, download it as PDF, Excel or CSV, or have it e-mailed to you on a schedule.</p></div></div>
+{% if available %}
+<div class="rep-layout">
+  <aside class="card rep-build">
+    <h2>Build a report</h2>
+    <form method="get" id="rep-form" class="stack" style="gap:12px" target="_blank">
+      <div class="field"><label for="rb-k">Report type <span class="req">*</span></label>
+        <select class="input select" id="rb-k" required>{% for module, items in groups.items %}<optgroup label="{{ module|capfirst }}">{% for r, s in items %}<option value="{{ r.key }}" data-ranged="{{ r.ranged|yesno:'1,0' }}">{{ r.title }}</option>{% endfor %}</optgroup>{% endfor %}</select></div>
+      <div class="field" data-range><label for="rb-f">From <span class="req">*</span></label><input class="input" id="rb-f" type="date" name="from" value="{{ start|date:'Y-m-d' }}"></div>
+      <div class="field" data-range><label for="rb-t">To <span class="req">*</span></label><input class="input" id="rb-t" type="date" name="to" value="{{ end|date:'Y-m-d' }}"></div>
+      <div class="field"><label for="rb-fmt">Format <span class="req">*</span></label>
+        <select class="input select" id="rb-fmt" name="format"><option value="pdf">PDF</option><option value="xlsx">Excel</option><option value="csv">CSV</option><option value="">View on screen</option></select></div>
+      <button class="btn btn-primary btn-block" type="submit">{% include "components/icon.html" with name="download" %} Generate report</button>
+    </form>
+    <hr class="rep-sep">
+    <form method="post" id="sched-form" class="stack" style="gap:12px">{% csrf_token %}<input type="hidden" name="from_hub" value="1">
+      <div class="rep-sub">Send automatically</div>
+      <div class="field"><label for="rs-f">How often</label><select class="input select" id="rs-f" name="frequency">{% for v, l in freqs %}<option value="{{ v }}" {% if v == "weekly" %}selected{% endif %}>{{ l }}</option>{% endfor %}</select></div>
+      <div class="field"><label for="rs-d">Covers the last</label><select class="input select" id="rs-d" name="range_days"><option value="7">7 days</option><option value="30" selected>30 days</option><option value="90">90 days</option></select></div>
+      <p class="text-xs text-muted" style="margin:0">Sent to your own e-mail address as an Excel file.</p>
+      <button class="btn btn-secondary btn-block" type="submit">{% include "components/icon.html" with name="calendar" %} Schedule</button>
+    </form>
+  </aside>
+  <div class="rep-main">
+    {% for module, items in groups.items %}
+      <h2 class="rep-group">{{ module|capfirst }}</h2>
+      <div class="rep-grid">
+        {% for r, s in items %}<article class="card rep-card">
+          <h3>{{ r.title }}{% if s %} <span class="pill {% if s.active %}pill-info{% else %}pill-neutral{% endif %}">{{ s.get_frequency_display }}</span>{% endif %}</h3>
+          <p>{{ r.description }}</p>
+          <div class="rep-actions"><a class="btn btn-primary btn-sm" href="{% url 'reports:view' r.key %}">Generate</a><a class="btn btn-secondary btn-sm" href="{% url 'reports:view' r.key %}?format=xlsx">Excel</a></div>
+        </article>{% endfor %}
+      </div>
+    {% endfor %}
+    <div class="card card-flush rep-sched"><div class="card-head" style="padding:16px 18px 0"><h2>Scheduled reports</h2><span class="sub">{{ scheduled|length }} running</span></div>
+      <div class="table-wrap mt-3"><table class="table stack-phone">
+        <thead><tr><th>Report</th><th>Frequency</th><th>Covers</th><th>Last sent</th><th></th></tr></thead>
+        <tbody>{% for x in scheduled %}<tr>
+          <td class="cell-first"><a class="row-link cell-main" href="{% url 'reports:view' x.rep.key %}">{{ x.rep.title }}</a></td>
+          <td data-label="Frequency">{{ x.s.get_frequency_display }} {% if not x.s.active %}{% status_pill "Paused" "neutral" %}{% endif %}</td>
+          <td data-label="Covers">Last {{ x.s.range_days }} days</td>
+          <td data-label="Last sent">{% if x.s.last_run_at %}{{ x.s.last_run_at|ds_datetime }}{% else %}Not yet{% endif %}{% if x.s.last_status %}<div class="cell-sub">{{ x.s.last_status }}</div>{% endif %}</td>
+          <td><form method="post" action="{% url 'reports:schedule' x.rep.key %}" class="flex gap-2" style="justify-content:flex-end">{% csrf_token %}<input type="hidden" name="from_hub" value="1">
+            <button class="btn btn-ghost btn-sm" name="action" value="{% if x.s.active %}pause{% else %}resume{% endif %}" type="submit">{% if x.s.active %}Pause{% else %}Resume{% endif %}</button>
+            <button class="btn btn-ghost btn-sm text-danger" name="action" value="remove" type="submit">Remove</button></form></td></tr>
+        {% empty %}<tr><td colspan="5">{% include "components/empty_state.html" with icon="calendar" title="Nothing scheduled" text="Pick a report on the left and press Schedule to have it e-mailed to you." %}</td></tr>{% endfor %}</tbody></table></div></div>
+  </div>
+</div>
+<script>
+(function () {
+  var sel = document.getElementById("rb-k"), form = document.getElementById("rep-form"), sched = document.getElementById("sched-form");
+  function sync() {
+    var key = sel.value, opt = sel.options[sel.selectedIndex];
+    form.action = "/reports/" + encodeURIComponent(key) + "/";
+    sched.action = "/reports/" + encodeURIComponent(key) + "/schedule/";
+    form.querySelectorAll("[data-range]").forEach(function (f) { f.hidden = opt.dataset.ranged === "0"; });
+  }
+  sel.addEventListener("change", sync); sync();
+  form.addEventListener("submit", function () { if (!form.format.value) form.target = "_self"; else form.target = "_blank"; });
+})();
+</script>
+{% else %}<div class="card"><p class="text-muted">No reports are available for your role.</p></div>{% endif %}
+{% endblock %}

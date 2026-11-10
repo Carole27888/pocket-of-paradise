@@ -1,0 +1,24 @@
+{% extends "base.html" %}{% load static %}
+{% block title %}Front Desk Reports{% endblock %}
+{% block extra_vendor %}<script src="{% static 'vendor/chartjs/chart.umd.min.js' %}" defer></script>{% endblock %}
+{% block content %}
+<div class="page-header"><div><h1>Front Desk Reports</h1><p>{{ r.start|date:"j M Y" }} – {{ r.end|date:"j M Y" }}{% if r.delta_pct is not None %} · compared with the previous {{ r.period|slice:":-2" }}{% endif %}</p></div>
+  <div class="actions"><div class="seg"><a class="btn btn-sm {% if r.period == 'daily' %}btn-primary{% else %}btn-secondary{% endif %}" href="?period=daily">Daily</a> <a class="btn btn-sm {% if r.period == 'weekly' %}btn-primary{% else %}btn-secondary{% endif %}" href="?period=weekly">Weekly</a> <a class="btn btn-sm {% if r.period == 'monthly' %}btn-primary{% else %}btn-secondary{% endif %}" href="?period=monthly">Monthly</a></div>
+  <a class="btn btn-secondary" href="?period={{ r.period }}&export=xlsx">Excel</a> <a class="btn btn-accent" href="?period={{ r.period }}&export=pdf">{% include "components/icon.html" with name="download-file" %} Export PDF</a></div></div>
+<div class="grid grid-4 mb-4">
+  <div class="card kpi kpi-accent"><span class="kpi-label">Leads captured</span><span class="kpi-value">{{ r.total }}</span>{% if r.delta_pct is not None %}<span class="kpi-delta {% if r.delta_pct >= 0 %}up{% else %}down{% endif %}">{{ r.delta_pct }}% vs previous</span>{% endif %}</div>
+  {% include "components/kpi_card.html" with label="Contacted" value=r.contact_rate|stringformat:"d%%" note=r.contacted|stringformat:"d" %}
+  {% include "components/kpi_card.html" with label="Avg time to assign" value=r.avg_assign_minutes note="minutes (target 15)" %}
+  {% include "components/kpi_card.html" with label="Not contacted" value=r.not_contacted note="see Leads Log" %}
+</div>
+<div class="grid grid-2 mb-4">
+  <div class="card"><div class="card-head"><h2>Leads by source</h2><span class="sub">Contacted vs not yet</span></div><div style="height:260px"><canvas id="c-source"></canvas></div></div>
+  <div class="card"><div class="card-head"><h2>Leads per week</h2><span class="sub">Last 8 weeks</span></div><div style="height:260px"><canvas id="c-weeks"></canvas></div></div>
+</div>
+<div class="card card-flush"><div class="card-head"><h2>Agent follow-through</h2></div><div class="table-wrap mt-3"><table class="table"><thead><tr><th>Agent</th><th>Assigned</th><th>Contacted</th><th>Not contacted</th><th>Contact rate</th></tr></thead><tbody>
+{% for a in r.agents %}<tr><td class="cell-first"><span class="cell-main">{{ a.name }}</span></td><td>{{ a.assigned }}</td><td>{{ a.contacted }}</td><td>{{ a.waiting }}</td><td>{{ a.rate }}%</td></tr>{% empty %}<tr><td colspan="5" class="text-muted">No agents.</td></tr>{% endfor %}</tbody></table></div></div>
+{{ charts|json_script:"chart-data" }}
+<script>document.addEventListener("DOMContentLoaded",function(){var d=JSON.parse(document.getElementById("chart-data").textContent),g="#1F6F6B",o="#D98A22";
+new Chart(document.getElementById("c-source"),{type:"bar",data:{labels:d.source.labels,datasets:[{label:"Contacted",data:d.source.contacted,backgroundColor:g},{label:"Not yet",data:d.source.waiting,backgroundColor:o}]},options:{maintainAspectRatio:false,scales:{x:{stacked:true},y:{stacked:true,ticks:{precision:0}}}}});
+new Chart(document.getElementById("c-weeks"),{type:"bar",data:{labels:d.weeks.labels,datasets:[{label:"Leads",data:d.weeks.values,backgroundColor:g}]},options:{maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{ticks:{precision:0}}}}});});</script>
+{% endblock %}

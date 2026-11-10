@@ -1,0 +1,20 @@
+<form class="filter-bar" method="get" role="search"
+      hx-get="" hx-target="#list-region" hx-push-url="true"
+      hx-trigger="change, submit, input changed delay:350ms from:find input[name=q]">
+  {% for k, v in request.GET.items %}{% if k == "stage" or k == keep %}<input type="hidden" name="{{ k }}" value="{{ v }}">{% endif %}{% endfor %}
+  <div class="search-field">
+    <label class="visually-hidden" for="list-q">Search</label>
+    <input id="list-q" type="search" name="q" value="{{ q }}" placeholder="{{ placeholder|default:'Search…' }}" class="input">
+  </div>
+  {% if filter %}
+    {% for f in filter.form %}{% if f.name != "stage" or not hide_stage %}
+      <label class="visually-hidden" for="{{ f.id_for_label }}">{{ f.label }}</label>{{ f }}
+    {% endif %}{% endfor %}
+  {% endif %}
+  <noscript><button class="btn btn-secondary btn-sm" type="submit">Filter</button></noscript>
+  <span class="spacer"></span>
+  <span class="fb-exports">
+  <a class="btn btn-secondary btn-sm" href="{% qs export='csv' page=None %}">{% include "components/icon.html" with name="download" %} CSV</a>
+  <a class="btn btn-secondary btn-sm" href="{% qs export='xlsx' page=None %}">{% include "components/icon.html" with name="download" %} Excel</a>
+  </span>
+</form>

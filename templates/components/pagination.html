@@ -1,0 +1,17 @@
+{% if page_obj.paginator.count %}
+<div class="pagination">
+  <span>Showing {{ page_obj.start_index }}–{{ page_obj.end_index }} of {{ page_obj.paginator.count }}</span>
+  {% if page_obj.has_other_pages %}
+  <div class="pages">
+    {% if page_obj.has_previous %}<a href="{% qs page=page_obj.previous_page_number %}" hx-get="{% qs page=page_obj.previous_page_number %}" hx-target="#list-region" hx-push-url="true" aria-label="Previous page">‹</a>{% endif %}
+    {% for n in page_obj.paginator.page_range %}
+      {% if n == page_obj.number %}<span class="cur" aria-current="page">{{ n }}</span>
+      {% elif n > page_obj.number|add:-3 and n < page_obj.number|add:3 or n == 1 or n == page_obj.paginator.num_pages %}
+        <a href="{% qs page=n %}" hx-get="{% qs page=n %}" hx-target="#list-region" hx-push-url="true">{{ n }}</a>
+      {% endif %}
+    {% endfor %}
+    {% if page_obj.has_next %}<a href="{% qs page=page_obj.next_page_number %}" hx-get="{% qs page=page_obj.next_page_number %}" hx-target="#list-region" hx-push-url="true" aria-label="Next page">›</a>{% endif %}
+  </div>
+  {% endif %}
+</div>
+{% endif %}

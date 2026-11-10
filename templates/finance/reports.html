@@ -1,0 +1,8 @@
+{% extends "base.html" %}{% load static %}
+{% block title %}Finance Reports{% endblock %}
+{% block extra_css %}<link rel="stylesheet" href="{% static 'css/sales.css' %}">{% endblock %}
+{% block content %}
+<div class="page-header"><div><h1>Reports</h1><p>Open any report, then export to CSV or Excel. Choose the period first.</p></div><div class="actions">{% include "sales/partials/range_bar.html" %}</div></div>
+<div class="grid grid-3">{% for slug, name, desc in reports %}<a class="card" href="{% url 'finance:report' slug %}?range={{ range_key }}" style="color:inherit"><div class="card-head"><h2>{{ name }}</h2>{% include "components/icon.html" with name="file-text" %}</div><p class="text-sm text-muted mb-0">{{ desc }}</p></a>{% endfor %}</div>
+<p class="text-sm text-muted mt-4">A monthly management pack is e-mailed to the Directors on the 1st (see Scheduled jobs on the Admin status page).</p>
+{% endblock %}

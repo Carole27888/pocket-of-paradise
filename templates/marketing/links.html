@@ -1,0 +1,7 @@
+{% extends "base.html" %}
+{% block title %}Link Tracking{% endblock %}
+{% block content %}
+<div class="page-header"><div><h1>Link Tracking</h1><p>Short links with UTM tags. Every click is logged and enquiries are attributed to the link.</p></div></div>
+<div class="grid grid-main-side"><div class="card card-flush"><div class="table-wrap"><table class="table stack-phone"><thead><tr><th>Link</th><th>Campaign</th><th>Channel</th><th class="num">Clicks</th><th class="num">Enquiries</th><th class="num">Click → enquiry</th></tr></thead><tbody>{% for r in rows %}<tr><td class="cell-first"><a class="row-link cell-main" href="{% url 'marketing:link' r.l.pk %}">{{ r.l.name }}</a><div class="cell-sub">{{ r.l.short_path }}</div></td><td data-label="Campaign">{{ r.l.campaign|default:"—" }}</td><td data-label="Channel">{{ r.l.channel|default:"—" }}</td><td data-label="Clicks" class="num">{{ r.clicks }}</td><td data-label="Enquiries" class="num">{{ r.enquiries }}</td><td data-label="Rate" class="num">{{ r.rate }}%</td></tr>{% empty %}<tr><td colspan="6">{% include "components/empty_state.html" with icon="external" title="No links yet" text="Create one with the builder." %}</td></tr>{% endfor %}</tbody></table></div></div>
+  {% if can_manage %}<div class="card"><div class="card-head"><h2>Link builder</h2></div><form method="post" class="stack" style="gap:10px">{% csrf_token %}{% include "components/form_fields.html" %}<button class="btn btn-primary" type="submit">Create short link</button></form></div>{% endif %}</div>
+{% endblock %}

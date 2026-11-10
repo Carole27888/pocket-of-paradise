@@ -1,0 +1,11 @@
+<div class="table-wrap"><table class="table stack-phone">
+  <thead><tr>
+    <th>{% sort_link "client__full_name" "Client" %}</th><th>Channel</th><th>Interest · party</th><th>{% sort_link "created_at" "Captured" %}</th>
+    <th>Status</th><th>Agent</th><th class="text-right">Action</th>
+  </tr></thead>
+  <tbody>
+  {% for e in object_list %}{% include "frontdesk/partials/queue_row.html" %}
+  {% empty %}<tr><td colspan="7">{% include "components/empty_state.html" with icon="inbox" title="No leads here" text="Nothing matches this channel and period. New captures appear here straight away." %}</td></tr>{% endfor %}
+  </tbody>
+</table></div>
+{% include "components/pagination.html" %}

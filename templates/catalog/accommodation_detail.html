@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% block title %}{{ object.name }}{% endblock %}
+{% block content %}
+<div class="page-header">
+  <div><div class="crumbs"><a href="{% url 'catalog:accommodations' %}">Accommodations</a><span>/</span><span>{{ object.name }}</span></div>
+    <h1>{{ object.name }}</h1>
+    <p>{{ object.get_accommodation_type_display }}{% if object.star_rating %} · {{ object.star_rating }}★{% endif %} · <a href="{{ object.destination.get_absolute_url }}">{{ object.destination.name }}</a></p></div>
+  {% if request.user.can_edit_operations %}<div class="actions">
+    <a class="btn btn-secondary" href="{% url 'catalog:accommodation_edit' object.pk %}">{% include "components/icon.html" with name="edit" %} Edit</a>
+    <a class="btn btn-primary" href="{% url 'catalog:accommodation_rates' object.pk %}">{% include "components/icon.html" with name="wallet" %} Edit rates</a></div>{% endif %}
+</div>
+<div class="grid grid-main-side">
+  <div class="card card-flush">
+    <div class="card-head"><h2>Room rates by season</h2></div>
+    <div class="table-wrap mt-3"><table class="table stack-phone">
+      <thead><tr><th>Room type</th><th>Season</th><th>Board</th><th>Valid</th><th class="num">Rate pp</th></tr></thead>
+      <tbody>
+      {% for r in object.rates.all %}
+        <tr><td class="cell-first cell-main">{{ r.room_type }}</td><td data-label="Season">{% if r.season == "high" or r.season == "peak" %}{% status_pill r.get_season_display "accent" %}{% else %}{% status_pill r.get_season_display "neutral" %}{% endif %}</td>
+          <td data-label="Board">{{ r.board_basis }}</td><td data-label="Valid">{{ r.valid_from|ds_date }} – {{ r.valid_to|ds_date }}</td>
+          <td data-label="Rate pp" class="num fw-700">{{ r.rate_per_person|money:r.currency }}</td></tr>
+      {% empty %}<tr><td colspan="5"><p class="p-4 text-muted mb-0">No rates recorded yet.</p></td></tr>{% endfor %}
+      </tbody></table></div>
+  </div>
+  <div class="card">
+    <div class="card-head"><h2>Contact & contract</h2></div>
+    <dl class="dl">
+      <dt>Contact</dt><dd>{{ object.contact_name|default:"—" }}</dd>
+      <dt>Phone</dt><dd>{% if object.contact_phone %}<a href="tel:{{ object.contact_phone }}">{{ object.contact_phone|phone }}</a>{% else %}—{% endif %}</dd>
+      <dt>Email</dt><dd>{% if object.contact_email %}<a href="mailto:{{ object.contact_email }}">{{ object.contact_email }}</a>{% else %}—{% endif %}</dd>
+    </dl>
+    {% if object.contract_notes %}<p class="section-title mt-4">Contract notes</p><p class="text-sm">{{ object.contract_notes|linebreaksbr }}</p>{% endif %}
+  </div>
+</div>
+{% endblock %}

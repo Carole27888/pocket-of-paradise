@@ -1,0 +1,3 @@
+<nav class="range-bar" aria-label="Period">
+  {% for k, label in ranges %}<a href="?range={{ k }}" class="{% if k == range_key %}active{% endif %}">{{ label }}</a>{% endfor %}
+</nav>

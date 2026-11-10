@@ -1,0 +1,32 @@
+{% extends "base.html" %}{% load l10n %}
+{% block title %}Leads Log{% endblock %}
+{% block content %}
+<div class="page-header">
+  <div><h1>{{ title }}</h1><p>{{ subtitle }}</p></div>
+  {% if can_run_desk %}<div class="actions"><a class="btn btn-accent" href="{% url 'frontdesk:new_lead' %}?source={{ channel|default:'whatsapp' }}">{% include "components/icon.html" with name="plus" %} New Lead</a></div>{% endif %}
+</div>
+
+<div class="card card-flush">
+  <nav class="tabs" aria-label="Channels">
+    {% for t in tabs %}
+      <a href="?{% if t.key %}channel={{ t.key }}{% endif %}" class="{% if t.key == channel %}active{% endif %}">
+        {% if t.icon %}{% include "components/icon.html" with name=t.icon size="16" %} {% elif t.key %}{% source_badge t.key %}{% endif %}{{ t.label }} <span class="n">{{ t.count }}</span>{% if t.waiting %}<span class="pill pill-danger" title="Waiting for an agent">{{ t.waiting }}</span>{% endif %}</a>
+    {% endfor %}
+  </nav>
+  <nav class="tabs" aria-label="Status">{% for key, label, n in state_tabs %}<a href="?{% if channel %}channel={{ channel }}&{% endif %}state={{ key }}&period={{ request.GET.period|default:'today' }}" class="{% if key == state %}active{% endif %}">{{ label }} <span class="n">{{ n }}</span></a>{% endfor %}</nav>
+  {% include "components/filter_bar.html" with placeholder="Search ref, client, phone, interest…" keep="channel" %}
+  <div id="list-region">{% include "frontdesk/partials/queue_table.html" %}</div>
+</div>
+
+{% if can_distribute %}<style>.pick-card{display:block;border:1px solid var(--border);border-radius:var(--radius-card);padding:10px 12px;cursor:pointer;position:relative;margin-bottom:10px}.pick-card.sel{border-color:var(--primary);background:var(--primary-soft);box-shadow:0 0 0 2px var(--primary-soft)}.pick-card.off{opacity:.5;cursor:not-allowed}.pick-card input{position:absolute;opacity:0}.pick-tag{position:absolute;top:-9px;right:12px;background:var(--card);padding:0 6px;font-size:.72rem;font-weight:700;color:var(--primary)}</style>
+<div x-data="{open:false, leadId:0, who:'', sub:'', why:'', sug:null, pick:null}" @click.window="const b=$event.target.closest('.assign-btn'); if(b){leadId=b.dataset.lead;who=b.dataset.name;sub=b.dataset.sub;why='';sug=null;pick=null;open=true;fetch('/frontdesk/leads/'+leadId+'/suggest/').then(r=>r.json()).then(j=>{sug=j.agent;pick=j.agent;why=j.agent?('Suggested: '+j.name+' ('+j.why+')'):'No agent is available right now.'})}" @keydown.escape.window="open=false">
+  <div class="modal-backdrop" x-show="open" x-cloak @click.self="open=false"><div class="modal" role="dialog" aria-modal="true" aria-labelledby="as-t">
+    <div class="modal-head"><div><h2 id="as-t">Assign lead</h2><div class="text-sm text-muted"><span x-text="who"></span> · <span x-text="sub"></span></div></div><button type="button" class="icon-btn" @click="open=false" aria-label="Close">{% include "components/icon.html" with name="x" %}</button></div>
+    <form method="post" :action="'/frontdesk/leads/' + leadId + '/assign/'">{% csrf_token %}<input type="hidden" name="next" value="/frontdesk/queues/">
+      <div class="alert alert-success mb-3" x-show="why" x-text="why"></div>
+      {% for r in board %}<label class="pick-card {% if not r.available %}off{% endif %}" :class="{'sel': pick === {{ r.agent.pk|unlocalize }}}">{% if r.available %}<input type="radio" name="agent" value="{{ r.agent.pk|unlocalize }}" @change="pick = {{ r.agent.pk|unlocalize }}">{% endif %}
+        <span class="pick-tag" x-show="sug === {{ r.agent.pk|unlocalize }}">Suggested</span>
+        <span class="flex items-center gap-2"><span class="avatar avatar-sm">{{ r.agent.initials }}</span><span><span class="fw-700" style="display:block">{{ r.agent.full_name }}</span><span class="text-xs text-muted">{{ r.status }} · {{ r.today }}/{{ r.limit }} today · {{ r.open }} open</span></span></span></label>{% endfor %}
+      <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:6px"><button type="button" class="btn btn-secondary" @click="open=false">Cancel</button><button type="submit" class="btn btn-primary" :disabled="!pick">Assign</button></div>
+    </form></div></div></div>{% endif %}
+{% endblock %}

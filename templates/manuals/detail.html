@@ -1,0 +1,26 @@
+{% extends "base.html" %}{% load static %}
+{% block title %}{{ m.title }}{% endblock %}
+{% block content %}
+<div class="page-header"><div><div class="crumbs"><a href="{% url 'manuals:index' %}">User Manuals</a><span>/</span><span>{{ m.title }}</span></div><h1>User Manual</h1><p>{{ m.summary }} <span class="pill pill-success" style="margin-left:6px">{{ role }}</span> edition.</p></div>
+  <div class="actions"><a class="btn btn-accent" href="?format=pdf">{% include "components/icon.html" with name="download-file" %} Download PDF</a></div></div>
+<div class="grid grid-4 mb-4">
+  {% include "components/kpi_card.html" with label="Sections in this manual" value=sections|length %}
+  {% include "components/kpi_card.html" with label="Real screenshots" value=shots %}
+  {% include "components/kpi_card.html" with label="Tailored for" value=role %}
+  {% include "components/kpi_card.html" with label="Source" value="Live system" %}
+</div>
+<style>
+.manual-grid{display:grid;grid-template-columns:270px minmax(0,1fr);gap:16px;align-items:start}@media(max-width:900px){.manual-grid{grid-template-columns:1fr}}
+.manual-nav{position:sticky;top:16px;display:flex;flex-direction:column;gap:2px}.manual-nav button{display:flex;gap:10px;align-items:center;text-align:left;padding:9px 10px;border:0;background:transparent;border-radius:8px;cursor:pointer;color:var(--text);font:inherit}
+.manual-nav button.on{background:var(--primary-soft);font-weight:700}.manual-nav .num{width:22px;height:22px;border-radius:6px;background:var(--border);display:grid;place-items:center;font-size:.72rem;font-weight:700}.manual-nav button.on .num{background:var(--primary);color:#fff}
+.manual-kicker{font-size:.72rem;letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted)}.manual-h{margin:2px 0 12px;font-size:1.35rem}
+.manual-facts{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:12px}.manual-facts div{background:var(--primary-soft);border-radius:8px;padding:6px 12px;display:flex;flex-direction:column}.manual-facts span{font-size:.68rem;text-transform:uppercase;color:var(--text-muted)}
+.manual-list{padding-left:20px}.manual-list li,.manual-steps li{margin:6px 0}.manual-steps{counter-reset:s;list-style:none;padding:0}.manual-steps li{counter-increment:s;display:flex;gap:10px}.manual-steps li:before{content:counter(s);flex:0 0 24px;height:24px;border-radius:50%;background:var(--primary);color:#fff;display:grid;place-items:center;font-size:.78rem;font-weight:700}
+.manual-tip{display:flex;gap:10px;background:#FFF6E6;border-left:4px solid var(--accent);padding:10px 14px;border-radius:8px;margin:14px 0}.manual-tip span{font-weight:800;color:var(--accent-strong)}.manual-tip p{margin:0}
+.manual-figure{width:100%;border:1px solid var(--border);border-radius:10px;margin-top:12px;box-shadow:var(--shadow-sm)}.manual-caption{font-size:.8rem;color:var(--text-muted);text-align:center;margin:6px 0 0}
+</style>
+<div class="manual-grid" x-data="{active: '{{ sections.0.slug }}'}">
+  <nav class="card manual-nav" aria-label="Sections">{% for sec in sections %}<button type="button" :class="{'on': active === '{{ sec.slug }}'}" @click="active = '{{ sec.slug }}'; window.scrollTo({top: 0})"><span class="num">{{ sec.number }}</span>{{ sec.title }}</button>{% endfor %}</nav>
+  <div>{% for sec in sections %}<section class="card" x-show="active === '{{ sec.slug }}'" {% if not forloop.first %}style="display:none"{% endif %}>{% include "manuals/_section.html" %}</section>{% endfor %}</div>
+</div>
+{% endblock %}

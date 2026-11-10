@@ -1,0 +1,22 @@
+{% extends "base.html" %}{% load static %}
+{% block title %}Trip Reports{% endblock %}
+{% block extra_vendor %}<script src="{% static 'vendor/chartjs/chart.umd.min.js' %}" defer></script>{% endblock %}
+{% block extra_js %}<script src="{% static 'js/charts.js' %}" defer></script>{% endblock %}
+{% block content %}
+<div class="page-header"><div><h1>Trip Reports</h1><p>Weekly output, stage timings, on-time departures and incidents</p></div></div>
+<div class="grid grid-4 mb-4">
+  {% include "components/kpi_card.html" with label="Departures" value=total note=completed|stringformat:"d"|add:" completed" accent=True %}
+  {% include "components/kpi_card.html" with label="On-time departures" value=on_time_pct|default:"—" note="Left on or before the planned date" %}
+  {% include "components/kpi_card.html" with label="Incidents per 100 trips" value=incidents_per_100 %}
+  {% include "components/kpi_card.html" with label="Fleet on the road" value=fleet_util|stringformat:"d"|add:"%" %}
+</div>
+{{ charts|json_script:"trip-charts" }}
+<div class="grid grid-main-side mb-4">
+  <div class="card"><div class="card-head"><h2>Weekly output</h2><span class="sub">Last 8 weeks by departure date</span></div><div class="chart-box"><canvas data-chart="weekly" data-chart-source="trip-charts" data-chart-key="weekly" aria-label="Weekly output" role="img"></canvas></div></div>
+  <div class="card"><div class="card-head"><h2>Average time per stage</h2></div>{% for k, v in stage_time.items %}<div class="list-item"><span class="grow">{{ k }}</span><b>{{ v }} days</b></div>{% empty %}<p class="text-muted text-sm">Not enough data yet.</p>{% endfor %}</div>
+</div>
+<div class="grid grid-2">
+  <div class="card"><div class="card-head"><h2>Completion by tour type</h2></div>{% for k, n, c in by_type %}<div class="progress-row mb-3"><div class="top"><span>{{ k }}</span><span>{{ c }}/{{ n }} completed</span></div><div class="progress accent"><span style="width:{% widthratio c n 100 %}%"></span></div></div>{% endfor %}</div>
+  <div class="card"><div class="card-head"><h2>Team output</h2><span class="sub">Guides by trips</span></div>{% for t in team %}<div class="list-item"><span class="grow">{{ t.guide__full_name }}</span><span>{{ t.done }}/{{ t.trips }} completed</span></div>{% empty %}<p class="text-muted text-sm">No guides assigned yet.</p>{% endfor %}</div>
+</div>
+{% endblock %}

@@ -1,0 +1,15 @@
+<div class="modal-head"><h2 id="card-modal-title">{{ emp.full_name }}</h2><button type="button" class="icon-btn" data-close aria-label="Close">{% include "components/icon.html" with name="x" %}</button></div>
+<div style="display:flex;gap:16px;flex-wrap:wrap;align-items:center" class="mb-3">
+  <img src="data:image/svg+xml;base64,{{ qr }}" alt="QR code" width="110" height="110" style="border:1px solid var(--border);border-radius:10px">
+  <div class="grow text-sm"><b>{{ card.headline|default:"Travel consultant" }}</b><div class="text-muted">{{ emp.phone|default:"No phone" }}</div>
+    <div class="btn-row mt-2"><a class="btn btn-secondary btn-sm" href="{% url 'public_card_image' card.token %}?download=1">Download card</a><a class="btn btn-ghost btn-sm" href="{{ card.public_path }}" target="_blank" rel="noopener">Open card</a></div></div></div>
+{% include "sales/_card_stats.html" %}
+{% if perf %}<p class="rep-sub" style="margin:18px 0 8px">Performance, last 90 days</p>
+<div class="grid grid-4">
+  {% include "components/kpi_card.html" with label="Leads assigned" value=perf.assigned %}
+  {% include "components/kpi_card.html" with label="Bookings won" value=perf.won %}
+  {% with r=perf.revenue|floatformat:0 %}{% include "components/kpi_card.html" with label="Revenue (KES)" value=r %}{% endwith %}
+  {% with c=perf.conversion|stringformat:"d" %}{% include "components/kpi_card.html" with label="Conversion" value=c|add:"%" %}{% endwith %}</div>
+<p class="text-xs text-muted mt-2">{{ perf.open }} open lead{{ perf.open|pluralize }} · {{ perf.overdue }} overdue follow-up{{ perf.overdue|pluralize }}{% if perf.response_min is not None %} · first reply in {{ perf.response_min }} min on average{% endif %}</p>{% endif %}
+<p class="rep-sub" style="margin:18px 0 8px">Leads from the QR card</p>
+{% include "sales/_card_leads.html" %}

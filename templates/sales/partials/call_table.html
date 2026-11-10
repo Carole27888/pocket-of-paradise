@@ -1,0 +1,15 @@
+<div class="table-wrap"><table class="table stack-phone">
+  <thead><tr><th>{% sort_link "called_at" "When" %}</th><th>Lead</th><th>Agent</th><th>Direction</th><th>{% sort_link "outcome" "Outcome" %}</th><th class="num">{% sort_link "duration_seconds" "Duration" %}</th><th>Notes</th><th></th></tr></thead>
+  <tbody>{% for c in object_list %}
+    <tr>
+      <td class="cell-first nowrap">{{ c.called_at|ds_datetime }}</td>
+      <td data-label="Lead"><a class="row-link cell-main" href="{{ c.enquiry.get_absolute_url }}">{{ c.enquiry.client.full_name }}</a><div class="cell-sub">{{ c.enquiry.reference }}</div></td>
+      <td data-label="Agent">{{ c.agent.short_name|default:"—" }}</td>
+      <td data-label="Direction">{{ c.get_direction_display }}</td>
+      <td data-label="Outcome">{% if c.connected %}{% status_pill c.get_outcome_display "success" %}{% else %}{% status_pill c.get_outcome_display "neutral" %}{% endif %}</td>
+      <td data-label="Duration" class="num">{{ c.duration_seconds|duration_hm }}</td>
+      <td data-label="Notes" class="text-sm">{{ c.notes|truncatechars:90|default:"—" }}</td>
+      <td class="nowrap">{% if request.user.can_work_sales %}<a class="btn btn-ghost btn-sm" href="{% url 'sales:call_edit' c.pk %}?next={{ request.get_full_path|urlencode }}" data-modal-form="{% url 'sales:call_edit' c.pk %}" data-modal-title="Edit call">{% include "components/icon.html" with name="edit" size="14" %} Edit</a>{% endif %}</td>
+    </tr>{% empty %}<tr><td colspan="8">{% include "components/empty_state.html" with icon="phone" title="No calls logged" text="Log a call from a lead to start tracking conversations." %}</td></tr>{% endfor %}
+  </tbody></table></div>
+{% include "components/pagination.html" %}

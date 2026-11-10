@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+{% block title %}Lead Sources{% endblock %}
+{% block content %}
+<div class="page-header"><div><h1>Lead Sources</h1><p>Where leads come from. Add an expo, a roadshow or a radio ad and it shows wherever a source is picked, in filters, reports and the Lead Log.</p></div></div>
+<div class="grid grid-6-4">
+  <div class="card card-flush">
+    <div class="card-head" style="padding:16px 18px 0"><h2>Your sources</h2></div>
+    <div class="table-wrap mt-3"><table class="table stack-phone">
+      <thead><tr><th>Source</th><th class="num">Leads</th><th>Status</th>{% if can %}<th></th>{% endif %}</tr></thead>
+      <tbody>
+      {% for r in rows %}<tr><td class="cell-first">{% source_badge r.code True %}</td><td data-label="Leads" class="num">{{ r.lead_count }}</td>
+        <td data-label="Status">{% if r.is_active %}{% status_pill "In use" "success" %}{% else %}{% status_pill "Hidden" "neutral" %}{% endif %}</td>
+        {% if can %}<td><form method="post" class="flex gap-2" style="justify-content:flex-end">{% csrf_token %}<input type="hidden" name="pk" value="{{ r.pk }}">
+          <button class="btn btn-ghost btn-sm" name="action" value="toggle" type="submit">{% if r.is_active %}Hide{% else %}Show{% endif %}</button>
+          {% if not r.lead_count %}<button class="btn btn-ghost btn-sm text-danger" name="action" value="delete" type="submit" onclick="return confirm('Delete this source?')">Delete</button>{% endif %}</form></td>{% endif %}</tr>
+      {% empty %}<tr><td colspan="4">{% include "components/empty_state.html" with icon="share" title="No added sources yet" text="Built-in sources are listed below. Add your own with the form." %}</td></tr>{% endfor %}
+      </tbody></table></div>
+    <div class="card-head" style="padding:16px 18px 0"><h2>Built in</h2></div>
+    <div class="flex gap-2 wrap" style="padding:12px 18px 18px">{% for b in built_in %}<span class="pill pill-muted">{{ b.label }} · {{ b.count }}</span>{% endfor %}</div>
+  </div>
+  <div class="card">
+    <div class="card-head"><h2>Add a source</h2></div>
+    {% if can %}
+    <form method="post" class="stack" style="gap:12px">{% csrf_token %}<input type="hidden" name="action" value="add">
+      <div class="field"><label for="s-l">Name</label><input class="input" id="s-l" name="label" maxlength="60" placeholder="Nairobi Travel Expo" required></div>
+      <div class="field"><label for="s-b">Short badge (optional)</label><input class="input" id="s-b" name="badge" maxlength="3" placeholder="EX"><div class="hint">Two or three letters shown on lead badges.</div></div>
+      <button class="btn btn-primary" type="submit">{% include "components/icon.html" with name="plus" %} Add source</button>
+    </form>
+    {% else %}<p class="text-muted text-sm">Only the COO or an administrator can add sources.</p>{% endif %}
+  </div>
+</div>
+{% endblock %}

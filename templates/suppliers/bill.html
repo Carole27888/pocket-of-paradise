@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+{% block title %}{{ b.number }}{% endblock %}
+{% block content %}
+<div class="page-header"><div><div class="crumbs"><a href="{% url 'suppliers:bills' %}">Bills</a><span>/</span><span>{{ b.number }}</span></div>
+  <h1>{{ b.supplier.name }}</h1><p>{{ b.number }} · {{ b.get_category_display }}{% if b.prepayment %} · prepayment{% endif %} · {% if b.is_overdue %}{% status_pill "Overdue" "danger" %}{% elif b.status == "paid" %}{% status_pill "Paid" "success" %}{% else %}{% status_pill b.get_status_display "info" %}{% endif %}</p></div>
+  <div class="actions"><a class="btn btn-secondary" href="{{ b.supplier.get_absolute_url }}">Supplier</a></div></div>
+<div class="grid grid-4 mb-4">
+  {% include "components/kpi_card.html" with label="Amount" value=b.amount|money:b.currency accent=True %}
+  {% include "components/kpi_card.html" with label="VAT / withheld" value=b.vat_amount|money:b.currency note="WHT "|add:b.wht_amount|stringformat:"s" %}
+  {% include "components/kpi_card.html" with label="Paid" value=b.paid_amount|money:b.currency %}
+  {% include "components/kpi_card.html" with label="Balance" value=b.balance|money:b.currency note="Due "|add:b.due_date|date:"j M Y" %}
+</div>
+<div class="grid grid-main-side">
+  <div class="stack">
+    <div class="card"><div class="card-head"><h2>Details</h2></div><dl class="dl">
+      <dt>Supplier invoice</dt><dd>{{ b.supplier_ref|default:"—" }}</dd><dt>Bill date</dt><dd>{{ b.bill_date|ds_date }}</dd><dt>Due</dt><dd>{{ b.due_date|ds_date }}</dd>
+      <dt>Departure</dt><dd>{% if b.departure %}<a href="{{ b.departure.get_absolute_url }}">{{ b.departure }}</a>{% else %}—{% endif %}</dd>
+      <dt>Approved</dt><dd>{% if b.approved_at %}{{ b.approved_at|ds_datetime }} by {{ b.approved_by.full_name }}{% else %}Not yet{% endif %}</dd>
+      {% if b.scheduled_for %}<dt>Scheduled</dt><dd>{{ b.scheduled_for|ds_date }}</dd>{% endif %}</dl>
+      {% if b.description %}<p class="text-sm mt-3">{{ b.description }}</p>{% endif %}</div>
+    <div class="card card-flush"><div class="card-head"><h2>Payments</h2></div><div class="table-wrap mt-3"><table class="table"><thead><tr><th>Paid</th><th>Method</th><th>Reference</th><th class="num">Amount</th></tr></thead>
+      <tbody>{% for p in payments %}<tr><td>{{ p.paid_at|ds_datetime }}</td><td>{{ p.get_method_display }}</td><td>{{ p.reference|default:"—" }}</td><td class="num">{{ p.amount|money:b.currency }}</td></tr>{% empty %}<tr><td colspan="4" class="text-muted">No payments yet.</td></tr>{% endfor %}</tbody></table></div></div>
+  </div>
+  <div class="stack">
+    {% if can_finance %}
+    {% if b.status == "awaiting" %}<div class="card"><div class="card-head"><h2>Approval</h2></div>
+      <form method="post" action="{% url 'finance:bill_action' b.pk %}" class="btn-row">{% csrf_token %}<button class="btn btn-accent" name="action" value="approve" type="submit">Approve & post</button><button class="btn btn-secondary" name="action" value="void" type="submit">Void</button></form></div>{% endif %}
+    {% if b.status == "approved" or b.status == "scheduled" %}
+    <div class="card"><div class="card-head"><h2>Pay</h2></div>
+      <form method="post" action="{% url 'finance:bill_action' b.pk %}" class="stack" style="gap:10px">{% csrf_token %}<input type="hidden" name="action" value="pay">
+        <div class="field"><label for="{{ pay_form.amount.id_for_label }}">Amount ({{ b.currency }})</label>{{ pay_form.amount }}</div>
+        <div class="field"><label for="{{ pay_form.method.id_for_label }}">Method</label>{{ pay_form.method }}</div>
+        <div class="field"><label for="{{ pay_form.reference.id_for_label }}">Reference</label>{{ pay_form.reference }}</div>
+        <button class="btn btn-primary" type="submit">Record payment</button></form>
+      <form method="post" action="{% url 'finance:bill_action' b.pk %}" class="inline-form mt-4">{% csrf_token %}<input type="hidden" name="action" value="schedule"><div class="field"><label for="sd">Schedule for</label><input class="input" type="date" id="sd" name="date" required></div><button class="btn btn-secondary" type="submit">Schedule</button></form></div>{% endif %}
+    {% else %}<div class="card"><p class="text-muted text-sm">Approval and payment are done by Finance.</p></div>{% endif %}
+  </div>
+</div>
+{% endblock %}

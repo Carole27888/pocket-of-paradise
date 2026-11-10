@@ -1,0 +1,20 @@
+{% extends "base.html" %}{% load static %}
+{% block title %}Command Centre{% endblock %}
+{% block content %}
+<div class="page-header"><div><h1>Command Centre</h1><p>The business at a glance for the CEO, COO and Admin. Every figure is live; nothing is estimated.</p></div></div>
+<div class="grid grid-4 mb-4">
+  {% include "components/kpi_card.html" with label="Revenue this month (KES)" value=c.revenue|floatformat:0 sub=c.revenue_pct|default_if_none:"no target set" accent=True %}
+  {% include "components/kpi_card.html" with label="Open pipeline (KES)" value=c.pipeline|floatformat:0 sub=c.open_leads %}
+  {% include "components/kpi_card.html" with label="Waiting for an agent" value=c.waiting %}
+  {% include "components/kpi_card.html" with label="Overdue follow-ups" value=c.overdue_followups %}</div>
+<div class="grid grid-main-side">
+  <div class="card"><div class="card-head"><h2>Needs attention</h2><span class="sub">Most urgent first</span></div>
+    {% for i in items %}<a class="list-item" href="{{ i.url }}"><span class="pill pill-{{ i.level }}" style="min-width:36px;text-align:center">{{ i.n }}</span><span class="grow">{{ i.text }}</span><span class="text-muted">→</span></a>{% empty %}<p class="text-muted mb-0">Nothing needs attention right now.</p>{% endfor %}</div>
+  <div class="card"><div class="card-head"><h2>Ask the business</h2></div>
+    <form id="ask-form" class="stack" style="gap:8px"><input class="input" id="ask-q" placeholder="e.g. How are we doing against target this month?" maxlength="300" aria-label="Question"><button class="btn btn-primary" type="submit">Ask</button></form>
+    <div id="ask-a" class="mt-3 text-sm" style="white-space:pre-wrap" aria-live="polite"></div><p class="text-xs text-muted mt-2 mb-0">Answers use only the live figures above. Nothing is changed.</p></div></div>
+{% csrf_token %}
+<script>(function(){var f=document.getElementById("ask-form"),a=document.getElementById("ask-a");
+f.addEventListener("submit",function(e){e.preventDefault();var q=document.getElementById("ask-q").value.trim();if(!q)return;a.textContent="Thinking…";
+fetch("{% url 'insights:ask' %}",{method:"POST",headers:{"Content-Type":"application/json","X-CSRFToken":document.querySelector("[name=csrfmiddlewaretoken]").value},body:JSON.stringify({question:q}),credentials:"same-origin"}).then(function(r){return r.json()}).then(function(j){a.textContent=j.answer||j.error||"No answer."}).catch(function(){a.textContent="Couldn't reach the server."})})})();</script>
+{% endblock %}

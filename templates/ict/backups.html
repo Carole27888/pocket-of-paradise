@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% load l10n %}
+{% block title %}Data Backup{% endblock %}
+{% block content %}
+<div class="page-header"><div><h1>Data Backup</h1><p>A plain JSON copy of all business data that you download and keep somewhere safe (another computer or drive). Saved integration keys and sessions are never included. User passwords are included as hashes so the file can restore sign-ins.</p></div>
+{% if can %}<form method="post">{% csrf_token %}<input type="hidden" name="action" value="now"><button class="btn btn-primary" type="submit">Create a backup now</button></form>{% endif %}</div>
+{% if due %}<div class="card mb-4"><p class="text-sm">A backup is due. One is prepared automatically within a few hours, or press “Create a backup now”.</p></div>{% endif %}
+{% if can %}<form method="post" class="card mb-4" style="max-width:640px">{% csrf_token %}<div class="card-head"><h2>Schedule</h2></div><div class="grid grid-3">
+<div class="field"><label>How often</label><select class="input" name="frequency">{% for v, l in cfg.Frequency.choices %}<option value="{{ v }}" {% if cfg.frequency == v %}selected{% endif %}>{{ l }}</option>{% endfor %}</select></div>
+<div class="field"><label>Keep on server</label><input class="input" type="number" name="keep" value="{{ cfg.keep }}"></div>
+<div class="field"><label>&nbsp;</label><button class="btn btn-secondary" type="submit">Save</button></div></div></form>{% endif %}
+<div class="card card-flush"><div class="table-wrap"><table class="table stack-phone"><thead><tr><th>Period</th><th>Prepared</th><th>Records</th><th>Size</th><th>Downloaded</th><th></th></tr></thead><tbody>
+{% for r in runs %}<tr><td data-label="Period">{{ r.period_label }}</td><td data-label="Prepared">{{ r.created_at|date:"d M Y H:i" }}</td><td data-label="Records">{{ r.object_count }}</td><td data-label="Size">{{ r.size|filesizeformat }}</td>
+<td data-label="Downloaded">{% if r.downloaded_at %}{{ r.downloaded_by|default:"—" }} · {{ r.downloaded_at|date:"d M H:i" }}{% else %}<span class="text-muted">Waiting for download</span>{% endif %}</td>
+<td><a class="btn btn-secondary btn-sm" href="{% url 'ict:backup_download' r.pk|unlocalize %}">Download</a></td></tr>
+{% empty %}<tr><td colspan="6">{% include "components/empty_state.html" with icon="download" title="No backups yet" text="Create the first one with the button above." %}</td></tr>{% endfor %}</tbody></table></div></div>
+{% endblock %}

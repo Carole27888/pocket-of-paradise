@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+{% block title %}Lead journey · {{ e.reference }}{% endblock %}
+{% block content %}
+<div class="page-header"><div><div class="crumbs"><a href="{% url 'marketing:enquiries' %}">Social Leads</a><span>/</span><span>{{ e.reference }}</span></div><h1>{{ e.client.full_name }}</h1><p>{% source_badge e %} came in {{ e.created_at|ds_datetime }} · {{ e.interest_label }} · {{ e.party_label }}</p></div>
+  <div class="actions"><a class="btn btn-secondary" href="{% url 'marketing:lead_quality' %}">Lead Quality</a></div></div>
+<div class="grid grid-4 mb-4">{% include "components/kpi_card.html" with label="Lead lifetime" value=life.days|floatformat:1 sub="days so far" accent=True %}{% include "components/kpi_card.html" with label="Now at" value=e.get_stage_display %}
+  {% include "components/kpi_card.html" with label="Furthest step" value=life.reached_label|default:"—" %}{% include "components/kpi_card.html" with label="Deal value (KES)" value=e.deal_value|floatformat:0 %}</div>
+<div class="grid grid-main-side"><div class="card"><div class="card-head"><h2>Journey through the pipeline</h2>{% if life.ended %}<span class="sub">Ended</span>{% else %}<span class="sub">Still open</span>{% endif %}</div>
+  {% for s in life.steps %}<div class="list-item" style="align-items:flex-start"><span class="avatar avatar-sm" style="background:{% if s.stage == 'lost' %}#B3261E{% elif s.stage == 'completed' or s.stage == 'confirmed' %}#2EA043{% else %}var(--primary){% endif %};color:#fff">{{ forloop.counter }}</span>
+    <div class="grow"><div class="fw-700">{{ s.label }}</div><div class="text-sm text-muted">Entered {{ s.entered|ds_datetime }}{% if s.days is not None %} · {% if forloop.last %}here for {% else %}stayed {% endif %}{{ s.days|floatformat:1 }} day{{ s.days|pluralize }}{% endif %}</div></div></div>{% endfor %}
+  {% if e.stage == "lost" and e.lost_reason %}<div class="alert alert-danger mt-3"><span class="grow">Lost: {{ e.lost_reason }}</span></div>{% endif %}</div>
+  <div class="stack">
+    <div class="card"><div class="card-head"><h2>Speed</h2></div><dl class="dl"><dt>Handed to an agent</dt><dd>{% if life.assigned_after_h is not None %}{{ life.assigned_after_h }} h after it came in{% else %}Not yet{% endif %}</dd><dt>First contact</dt><dd>{% if life.first_contact_after_h is not None %}{{ life.first_contact_after_h }} h after it came in{% else %}Not yet{% endif %}</dd><dt>Agent</dt><dd>{{ e.assigned_agent.full_name|default:"Waiting at the Front Desk" }}</dd></dl></div>
+    <div class="card"><div class="card-head"><h2>Outcome</h2></div><dl class="dl"><dt>Quotation</dt><dd>{{ e.get_quotation_status_display }}</dd><dt>Booking</dt><dd>{% if booking %}{{ booking.reference }} · {{ booking.get_status_display }} · {{ booking.currency }} {{ booking.total_amount|floatformat:0 }}{% else %}None yet{% endif %}</dd>{% if e.campaign %}<dt>Campaign</dt><dd>{{ e.campaign.name }}</dd>{% endif %}</dl></div>
+    <div class="card"><div class="card-head"><h2>Activity</h2></div>{% for a in activities %}<div class="list-item"><div class="grow"><div class="text-sm">{{ a.get_activity_type_display }}{% if a.details %}: {{ a.details|truncatechars:70 }}{% endif %}</div><div class="text-xs text-muted">{{ a.timestamp|ds_datetime }}</div></div></div>{% empty %}<p class="text-muted text-sm">No activity yet.</p>{% endfor %}</div>
+    <p class="text-xs text-muted">Contact details stay with Sales and the Front Desk.</p>
+  </div></div>
+{% endblock %}

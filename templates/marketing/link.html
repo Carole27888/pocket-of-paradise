@@ -1,0 +1,14 @@
+{% extends "base.html" %}{% load static %}
+{% block title %}{{ l.name }}{% endblock %}
+{% block extra_css %}<link rel="stylesheet" href="{% static 'css/sales.css' %}">{% endblock %}
+{% block extra_vendor %}<script src="{% static 'vendor/chartjs/chart.umd.min.js' %}" defer></script>{% endblock %}
+{% block extra_js %}<script src="{% static 'js/charts.js' %}" defer></script>{% endblock %}
+{% block content %}
+<div class="page-header"><div><div class="crumbs"><a href="{% url 'marketing:links' %}">Links</a><span>/</span><span>{{ l.name }}</span></div><h1>{{ l.name }}</h1><p>{{ full }}</p></div></div>
+<div class="grid grid-4 mb-4">{% include "components/kpi_card.html" with label="Clicks" value=clicks accent=True %}{% include "components/kpi_card.html" with label="Enquiries" value=enquiries %}{% include "components/kpi_card.html" with label="Campaign" value=l.campaign|default:"—" %}{% include "components/kpi_card.html" with label="Channel" value=l.channel|default:"—" %}</div>
+{{ charts|json_script:"lk-charts" }}
+<div class="grid grid-main-side"><div class="stack"><div class="card"><div class="card-head"><h2>Clicks per day</h2></div><div class="chart-box sm"><canvas data-chart="line" data-chart-source="lk-charts" data-chart-key="clicks" aria-label="Clicks" role="img"></canvas></div></div>
+  <div class="card"><div class="card-head"><h2>Destination with UTM</h2></div><code class="text-sm" style="word-break:break-all">{{ l.utm }}</code></div>
+  <div class="card"><div class="card-head"><h2>Recent enquiries</h2></div>{% for e in recent %}<a class="list-item row-link" href="{{ e.get_absolute_url }}"><div class="grow"><div class="title">{{ e.client.full_name }}</div><div class="meta">{{ e.created_at|ds_date }}</div></div></a>{% empty %}<p class="text-muted text-sm">None yet.</p>{% endfor %}</div></div>
+  <div class="card" style="text-align:center"><div class="card-head"><h2>QR code</h2></div>{% if qr %}<img alt="QR code for {{ full }}" src="data:image/svg+xml;base64,{{ qr }}" width="220" height="220">{% endif %}<p class="text-sm text-muted">Print it on flyers and expo banners.</p></div></div>
+{% endblock %}

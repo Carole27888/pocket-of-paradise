@@ -1,0 +1,8 @@
+{% extends "base.html" %}
+{% block title %}{{ b.reference }}{% endblock %}
+{% block content %}
+<div class="page-header"><div><div class="crumbs"><a href="{% url 'compliance:breaches' %}">Breach register</a><span>/</span><span>{{ b.reference }}</span></div><h1>{{ b.title }}</h1><p>{{ b.get_severity_display }} severity · {{ b.people_affected }} people · {{ b.status }}</p></div><div class="actions">{% if can_manage %}<a class="btn btn-primary" href="{% url 'compliance:breach_edit' b.pk %}">Update</a>{% endif %}</div></div>
+{% if b.report_overdue %}<div class="alert alert-danger mb-4">{% include "components/icon.html" with name="alert" %}<span class="grow">The 72-hour window to report this to the Data Protection Commissioner ended {{ b.report_deadline|ds_datetime }}.</span></div>{% endif %}
+<div class="grid grid-2"><div class="card"><div class="card-head"><h2>What happened</h2></div><p>{{ b.what_happened|linebreaksbr }}</p><p class="text-sm"><b>Data affected:</b> {{ b.data_affected }}</p>{% if b.actions_taken %}<p class="section-title mt-4">Actions taken</p><p>{{ b.actions_taken|linebreaksbr }}</p>{% endif %}</div>
+  <div class="card"><div class="card-head"><h2>Timeline</h2></div><ul class="timeline"><li><div class="t-head">Detected</div><div class="t-meta">{{ b.detected_at|ds_datetime }}</div></li><li><div class="t-head">Contained</div><div class="t-meta">{{ b.contained_at|ds_datetime }}</div></li><li><div class="t-head">Reported to the regulator</div><div class="t-meta">{{ b.reported_at|ds_datetime }}</div></li><li><div class="t-head">Affected people notified</div><div class="t-meta">{{ b.notified_at|ds_datetime }}</div></li></ul></div></div>
+{% endblock %}

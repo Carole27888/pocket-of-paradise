@@ -1,0 +1,77 @@
+{% extends "base.html" %}
+{% block title %}WhatsApp{% endblock %}
+{% block content %}
+<div class="page-header"><div><h1>WhatsApp</h1><p>Connect the company WhatsApp Business number once. From then on every alert, lead hand-out, travel reminder, bot reply and the director's business assistant use it, with no other set-up. Everything entered here is stored encrypted.</p></div>
+  <div class="actions"><a class="btn btn-secondary" href="{% url 'ict:message_log' %}">{% include "components/icon.html" with name="list" %} Message log</a><a class="btn btn-secondary" href="{% url 'ict:ai' %}">{% include "components/icon.html" with name="sparkles" %} AI settings</a></div></div>
+
+<div class="alert {% if live %}alert-success{% else %}alert-warn{% endif %} mb-4" style="display:flex;gap:12px;align-items:center;flex-wrap:wrap">
+  <span class="grow">{% if live %}<b>WhatsApp is live.</b> Messages go out through the Cloud API.{% else %}<b>Not connected yet (mock mode).</b> Messages are recorded in the log but nothing leaves the system. Fill in step 1 to go live.{% endif %}</span>
+  <span class="pill pill-neutral">7 days: {{ week_total }} sent{% if counts.failed %} · {{ counts.failed }} failed{% endif %}{% if counts.read %} · {{ counts.read }} read{% endif %}</span></div>
+
+<div class="grid grid-main-side" style="align-items:start">
+<div class="stack" style="gap:16px">
+  <div class="card"><div class="card-head"><h2>1 · Business Cloud API details</h2>{% if row and row.last_test_ok %}<span class="pill pill-success">Tested OK</span>{% elif row and row.last_test_ok is False %}<span class="pill pill-danger">Test failed</span>{% endif %}</div>
+    <p class="text-sm text-muted">From <b>developers.facebook.com → your app → WhatsApp → API Setup</b>, and <b>App settings → Basic</b> for the app secret. Use a permanent token from a System User in Meta Business Settings: the 24-hour test token stops working the next day.</p>
+    <form method="post" class="stack" style="gap:10px">{% csrf_token %}<input type="hidden" name="action" value="keys">
+      <div class="form-grid">{% for f in fields %}<div class="field{% if f.name == 'access_token' %} full{% endif %}"><label for="wa-{{ f.name }}">{{ f.label }}</label>
+        <input class="input" id="wa-{{ f.name }}" name="{{ f.name }}" {% if f.secret %}type="password" autocomplete="new-password" placeholder="{% if f.has %}Saved ({{ f.display }}), leave blank to keep{% else %}Not set{% endif %}"{% else %}value="{{ f.display }}" placeholder="{% if f.name == 'api_version' %}v21.0{% else %}Not set{% endif %}"{% endif %}></div>{% endfor %}</div>
+      <div><button class="btn btn-primary" type="submit">Save</button></div></form>
+    <div class="btn-row mt-3">
+      <form method="post">{% csrf_token %}<input type="hidden" name="action" value="test"><button class="btn btn-secondary btn-sm" type="submit">{% include "components/icon.html" with name="check" %} Test connection</button></form>
+      <form method="post">{% csrf_token %}<input type="hidden" name="action" value="subscribe"><button class="btn btn-secondary btn-sm" type="submit">{% include "components/icon.html" with name="refresh" %} Subscribe to messages</button></form></div>
+    {% if checks %}<ul class="stack mt-3" style="gap:6px;list-style:none;padding:0">{% for c in checks %}<li class="alert {% if c.ok %}alert-success{% else %}alert-warn{% endif %}" style="margin:0"><span class="grow"><b>{% if c.ok %}✔{% else %}✗{% endif %} {{ c.label }}</b> · {{ c.detail }}</span></li>{% endfor %}</ul>
+    {% elif row and row.last_test_at %}<p class="text-xs {% if row.last_test_ok %}text-success{% else %}text-danger{% endif %} mt-2 mb-0">{{ row.last_test_at|ds_datetime }} · {{ row.last_test_message }}</p>{% endif %}</div>
+
+  <div class="card"><div class="card-head"><h2>2 · Webhook (so replies and delivery receipts come back)</h2></div>
+    <p class="text-sm text-muted">In Meta: <b>WhatsApp → Configuration → Webhook → Edit</b>. Paste both values, press <b>Verify and save</b>, then subscribe to the <b>messages</b> field.</p>
+    <dl class="dl"><dt>Callback URL</dt><dd><code class="break">{{ webhook_url }}</code> <button type="button" class="btn btn-ghost btn-sm" data-copy="{{ webhook_url }}">Copy</button></dd>
+      <dt>Verify token</dt><dd>{% if verify_token %}<code class="break">{{ verify_token }}</code> <button type="button" class="btn btn-ghost btn-sm" data-copy="{{ verify_token }}">Copy</button>{% else %}<span class="text-muted">Not set</span>{% endif %}
+        <form method="post" class="inline">{% csrf_token %}<input type="hidden" name="action" value="gen_verify"><button class="btn btn-ghost btn-sm" type="submit">{% if verify_token %}New token{% else %}Generate{% endif %}</button></form></dd></dl>
+    {% if local_url %}<p class="alert alert-warn text-sm mb-0">This address only works inside your network. Meta needs a public <b>https://</b> address: open this page from the live domain to see the right URL.</p>{% endif %}</div>
+
+  <div class="card"><div class="card-head"><h2>3 · Message templates</h2><span class="sub">Needed for messages outside the 24-hour window</span></div>
+    <p class="text-sm text-muted">WhatsApp lets a business send free text only within 24 hours of the person's last message. Alerts and reminders usually fall outside that, so Meta requires an <b>approved template</b>. The system picks the template for each kind of message and fills in the details. Create the standard set, submit it, and wait for approval (minutes to a day).</p>
+    <div class="flex gap-2 mb-3" style="flex-wrap:wrap">{% for code, label in purposes %}{% if code != "other" %}<span class="pill {% if code in approved %}pill-success{% else %}pill-warning{% endif %}">{% if code in approved %}✔{% else %}○{% endif %} {{ label }}</span>{% endif %}{% endfor %}</div>
+    <div class="btn-row mb-3">
+      <form method="post">{% csrf_token %}<input type="hidden" name="action" value="defaults"><button class="btn btn-secondary btn-sm" type="submit">{% include "components/icon.html" with name="plus" %} Add the standard templates</button></form>
+      <form method="post">{% csrf_token %}<input type="hidden" name="action" value="submit_all"><button class="btn btn-primary btn-sm" type="submit">{% include "components/icon.html" with name="send" %} Submit all drafts to Meta</button></form>
+      <form method="post">{% csrf_token %}<input type="hidden" name="action" value="sync"><button class="btn btn-secondary btn-sm" type="submit">{% include "components/icon.html" with name="refresh" %} Check status with Meta</button></form>
+      <a class="btn btn-ghost btn-sm" href="{% url 'ict:wa_template_new' %}">New template</a></div>
+    <div class="table-wrap"><table class="table stack-phone"><thead><tr><th>Template</th><th>Used for</th><th>Status</th><th>Text</th><th></th></tr></thead><tbody>
+    {% for t in templates %}<tr><td class="cell-first"><b>{{ t.name }}</b><div class="text-xs text-muted">{{ t.language }} · {{ t.get_category_display }}</div></td>
+      <td data-label="Used for">{{ t.get_purpose_display }}</td>
+      <td data-label="Status">{% if t.status == "approved" %}{% status_pill t.get_status_display "success" %}{% elif t.status == "rejected" %}{% status_pill t.get_status_display "danger" %}{% elif t.status == "pending" %}{% status_pill t.get_status_display "warning" %}{% else %}{% status_pill t.get_status_display "neutral" %}{% endif %}{% if t.rejected_reason %}<div class="text-xs text-danger">{{ t.rejected_reason }}</div>{% endif %}</td>
+      <td data-label="Text" class="text-sm" style="max-width:380px">{{ t.body|truncatechars:160 }}</td>
+      <td data-label=""><div class="btn-row"><a class="btn btn-ghost btn-sm" href="{% url 'ict:wa_template_edit' t.pk %}">Edit</a>
+        {% if t.status == "draft" or t.status == "rejected" %}<form method="post" action="{% url 'ict:wa_template_action' t.pk %}">{% csrf_token %}<input type="hidden" name="action" value="submit"><button class="btn btn-ghost btn-sm" type="submit">Submit</button></form>{% endif %}
+        <form method="post" action="{% url 'ict:wa_template_action' t.pk %}" onsubmit="return confirm('Delete this template here and in Meta?')">{% csrf_token %}<input type="hidden" name="action" value="delete"><button class="btn btn-ghost btn-sm text-danger" type="submit">Delete</button></form></div></td></tr>
+    {% empty %}<tr><td colspan="5" class="text-muted">No templates yet. Press “Add the standard templates”.</td></tr>{% endfor %}</tbody></table></div></div>
+
+  <div class="card"><div class="card-head"><h2>Send a test message</h2></div>
+    <form method="post" class="inline-form">{% csrf_token %}<input type="hidden" name="action" value="send_test">
+      <div class="field"><label for="t-to">To (any format, e.g. 0712 345 678)</label><input class="input" id="t-to" name="to" value="{{ request.user.whatsapp_target }}" required></div>
+      <div class="field grow"><label for="t-tx">Text</label><input class="input" id="t-tx" name="text" placeholder="Test message from the Pocket of Paradise system"></div>
+      <button class="btn btn-primary" type="submit">Send test</button></form>
+    <p class="text-xs text-muted mt-2 mb-0">If that number hasn't written to the WhatsApp number in the last 24 hours and no template is approved yet, Meta's built-in “hello_world” template is sent instead, so the very first test always works.</p></div>
+</div>
+
+<div class="stack" style="gap:16px">
+  <div class="card"><div class="card-head"><h2>Alerts &amp; reminders</h2></div>
+    <form method="post" class="stack" style="gap:10px">{% csrf_token %}<input type="hidden" name="action" value="settings">
+      {% for f in form.visible_fields %}<div class="field">{% if f.field.widget.input_type == "checkbox" %}<label class="check-label">{{ f }} {{ f.label }}</label>{% else %}<label for="{{ f.id_for_label }}">{{ f.label }}</label>{{ f }}{% endif %}{% if f.help_text %}<span class="text-xs text-muted">{{ f.help_text }}</span>{% endif %}</div>{% endfor %}
+      <div><button class="btn btn-primary" type="submit">Save</button></div></form></div>
+
+  <div class="card"><div class="card-head"><h2>Who receives alerts</h2></div>
+    <p class="text-sm">Each person's WhatsApp number and choice (WhatsApp, e-mail or both) is on <b>My Profile</b>; an administrator can set it under Users.</p>
+    {% if missing %}<p class="alert alert-warn text-sm">{{ missing|length }} of {{ staff_count }} active users want WhatsApp alerts but have no number:</p>
+      <ul class="text-sm" style="margin:0;padding-left:18px">{% for u in missing|slice:":12" %}<li><a href="{% url 'accounts:user_edit' u.pk %}">{{ u.full_name }}</a> <span class="text-muted">· {{ u.primary_role }}</span></li>{% endfor %}</ul>{% if missing|length > 12 %}<p class="text-xs text-muted">…and {{ missing|length|add:"-12" }} more.</p>{% endif %}
+    {% else %}<p class="alert alert-success text-sm mb-0">Everyone who wants WhatsApp alerts has a number.</p>{% endif %}</div>
+
+  <div class="card"><div class="card-head"><h2>Recent travel reminders</h2></div>
+    {% for r in reminders %}<div class="text-sm" style="padding:6px 0;border-bottom:1px solid var(--border)"><b>{{ r.booking.client.full_name }}</b> · {{ r.get_audience_display }} · {{ r.days_before }} day{{ r.days_before|pluralize }} before
+      <div class="text-xs {% if r.ok %}text-muted{% else %}text-danger{% endif %}">{{ r.sent_at|ds_datetime }}{% if r.detail %} · {{ r.detail }}{% endif %}</div></div>
+    {% empty %}<p class="text-sm text-muted mb-0">None yet. They go out at {{ cfg.reminder_hour }}:00, {{ cfg.travel_reminder_days }} day(s) before each deposit-paid or confirmed trip.</p>{% endfor %}</div>
+</div>
+</div>
+{% include "ict/_copy_script.html" %}
+{% endblock %}

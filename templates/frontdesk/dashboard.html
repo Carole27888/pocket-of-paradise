@@ -1,0 +1,47 @@
+{% extends "base.html" %}{% load l10n desk %}
+{% block title %}Front Desk Dashboard{% endblock %}
+{% block content %}
+<div class="page-header">
+  <div><h1>Front Desk Dashboard</h1><p>{% now "l, j F Y" %} · Leads from WhatsApp, walk-ins, calls and DMs.</p></div>
+  {% if can_run_desk %}<div class="actions"><a class="btn btn-accent" href="{% url 'frontdesk:new_lead' %}">{% include "components/icon.html" with name="plus" %} New Lead</a></div>{% endif %}
+</div>
+
+<div class="channel-tiles mb-4">
+  {% for c in channels %}<a class="channel-tile" href="{% url 'frontdesk:new_lead' %}?source={{ c.code }}" aria-label="New {{ c.label }} lead">
+    <span class="channel-icon">{% source_badge c.code %}</span><span class="channel-body"><span class="channel-name">{{ c.label }}</span><span class="channel-count">{{ c.count }} today</span></span>
+    <span class="channel-add">{% include "components/icon.html" with name="plus" size="18" %}</span></a>{% endfor %}
+  {% for c in extra_tiles %}<a class="channel-tile" href="{% url 'frontdesk:queue' %}?channel={{ c.code }}&period=7d" aria-label="{{ c.label }} leads"><span class="channel-icon"><span class="chan" style="background:#6B5B95;color:#fff;display:grid;place-items:center">{% include "components/icon.html" with name=c.icon size="18" %}</span></span><span class="channel-body"><span class="channel-name">{{ c.label }}</span><span class="channel-count">{{ c.count }} today</span></span></a>{% endfor %}
+</div>
+
+<div class="grid grid-4 mb-4">
+  {% include "components/kpi_card.html" with label="Leads today" value=kpis.today note="WhatsApp · Walk-in · Call · DM" accent=True %}
+  {% include "components/kpi_card.html" with label="Not yet assigned" value=kpis.waiting note="Waiting in the queue" %}
+  {% include "components/kpi_card.html" with label="Quotes in progress today" value=kpis.quotes note="Quoted, hot or itinerary sent" %}
+  {% include "components/kpi_card.html" with label="Agents available" value=kpis.in_office note="Ready to take leads" %}
+</div>
+
+<div class="grid grid-main-side mb-4">
+  <div class="card"><div class="card-head"><h2>Sales agents today</h2><a href="{% url 'frontdesk:queue' %}">Leads log →</a></div>
+    {% for r in board %}<div class="list-item"><span class="avatar avatar-sm">{{ r.agent.initials }}</span>
+      <div class="grow"><div class="fw-700">{{ r.agent.full_name }}</div><div class="text-xs text-muted">{{ r.status }} · {{ r.today }}/{{ r.limit }} today · {{ r.open }} open{% if r.specialties %} · {{ r.specialties }}{% endif %}</div></div>
+      {% if r.available %}{% status_pill "Available" "success" %}{% else %}{% status_pill "Unavailable" "neutral" %}{% endif %}</div>
+    {% empty %}<p class="text-muted text-sm">No sales agents set up.</p>{% endfor %}</div>
+  <div class="card"><div class="card-head"><h2>Waiting to be assigned</h2><span class="sub">{{ kpis.waiting }}</span></div>
+    {% for w in waiting %}<form method="post" action="{% url 'frontdesk:assign_lead' w.e.pk %}" class="stack" style="gap:6px;padding:10px 0;border-bottom:1px solid var(--border)">{% csrf_token %}
+      <div class="flex items-center gap-2">{% source_badge w.e True %}<div class="grow"><div class="fw-700">{{ w.e.client.full_name }}</div><div class="text-xs text-muted">{{ w.e.interest_label }} · {% waited w.e.created_at %}</div></div></div>
+      {% if can_distribute %}<div class="flex gap-2"><select name="agent" class="input select" aria-label="Agent for {{ w.e.reference }}">{% for a in agents %}<option value="{{ a.pk|unlocalize }}" {% if w.suggested and a.pk == w.suggested.pk %}selected{% endif %}>{{ a.short_name }}{% if w.suggested and a.pk == w.suggested.pk %} (suggested){% endif %}</option>{% endfor %}</select><button class="btn btn-primary btn-sm" type="submit">Assign</button></div>
+      {% if w.suggested %}<div class="text-xs text-muted">Suggested: {{ w.suggested.full_name }} · {{ w.why }}</div>{% endif %}{% endif %}</form>
+    {% empty %}<p class="text-muted text-sm">Nobody is waiting. Every lead has an agent.</p>{% endfor %}
+    {% if kpis.waiting > 6 %}<a class="text-sm" href="{% url 'frontdesk:queue' %}?state=waiting&period=30d">See all {{ kpis.waiting }} →</a>{% endif %}</div>
+</div>
+
+<div class="grid grid-main-side">
+  <div class="card card-flush"><div class="card-head"><h2>Today's leads</h2><a href="{% url 'frontdesk:queue' %}">Leads log →</a></div>
+    <div class="table-wrap mt-3"><table class="table stack-phone"><thead><tr><th>Time</th><th>Client</th><th>Source</th><th>Package</th><th>Agent</th><th>Status</th></tr></thead><tbody>
+      {% for e in todays %}<tr><td data-label="Time">{{ e.created_at|ds_time }}</td><td class="cell-first"><a class="row-link cell-main" href="{{ e.get_absolute_url }}">{{ e.client.full_name }}</a></td><td data-label="Source">{% source_badge e True %}</td><td data-label="Package">{{ e.interest_label }}</td><td data-label="Agent">{{ e.assigned_agent.short_name|default:"—" }}</td><td data-label="Status">{% queue_pill e %}</td></tr>
+      {% empty %}<tr><td colspan="6"><div class="empty-state" style="padding:28px"><b>No leads yet today</b><div class="text-muted text-sm">Use the buttons above to capture the first one.</div></div></td></tr>{% endfor %}</tbody></table></div></div>
+  <div class="card"><div class="card-head"><h2>Shift note</h2></div>
+    {% if can_run_desk %}<form method="post" action="{% url 'frontdesk:shift_note' %}" class="stack" style="gap:8px">{% csrf_token %}<input type="hidden" name="next" value="{% url 'frontdesk:dashboard' %}"><textarea class="input textarea" name="note" rows="2" placeholder="Handover note for the next shift…" required maxlength="1000"></textarea><button class="btn btn-secondary btn-sm" type="submit" style="align-self:flex-end">Add note</button></form>{% endif %}
+    {% for n in notes %}<div class="list-item" style="align-items:flex-start"><span class="avatar avatar-sm">{{ n.author_name|slice:":2"|upper }}</span><div><div class="text-sm">{{ n.note|linebreaksbr }}</div><div class="text-xs text-muted">{{ n.author_name }} · {{ n.created_at|ds_datetime }}</div></div></div>{% endfor %}</div>
+</div>
+{% endblock %}

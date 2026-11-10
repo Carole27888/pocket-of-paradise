@@ -1,0 +1,6 @@
+<div class="grid grid-4">
+  {% include "components/kpi_card.html" with label="Card opened (scans)" value=stats.scans accent=True %}
+  {% include "components/kpi_card.html" with label="Contacts saved" value=stats.saved %}
+  {% include "components/kpi_card.html" with label="Leads captured" value=stats.leads %}
+  {% with n=stats.won|stringformat:"d" c=stats.conversion|stringformat:"d" %}{% include "components/kpi_card.html" with label="Became bookings" value=n note=c|add:"% of card leads" %}{% endwith %}
+</div>

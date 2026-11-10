@@ -1,0 +1,11 @@
+{% extends "base.html" %}
+{% block title %}Incident{% endblock %}
+{% block content %}
+<div class="page-header"><div><div class="crumbs"><a href="{% url 'trips:incidents' %}">Incidents</a><span>/</span><span>{{ inc.departure.reference }}</span></div>
+  <h1>{{ inc.get_kind_display }}</h1><p>{{ inc.departure.package.title }} · reported {{ inc.reported_at|ds_datetime }}{% if inc.guide %} by {{ inc.guide.full_name }}{% endif %}</p></div>
+  <div class="actions"><a class="btn btn-secondary" href="{{ inc.departure.get_absolute_url }}">Departure</a></div></div>
+<div class="card"><dl class="dl"><dt>Severity</dt><dd>{% if inc.severity == "high" %}{% status_pill inc.get_severity_display "danger" %}{% elif inc.severity == "medium" %}{% status_pill inc.get_severity_display "warning" %}{% else %}{% status_pill inc.get_severity_display "neutral" %}{% endif %}</dd><dt>Status</dt><dd>{% if inc.is_open %}{% status_pill "Open" "warning" %}{% else %}{% status_pill "Resolved" "success" %} {{ inc.resolved_at|ds_datetime }}{% endif %}</dd></dl>
+  <p class="section-title mt-4">What happened</p><p>{{ inc.description|linebreaksbr }}</p>
+  {% if inc.action_taken %}<p class="section-title mt-4">Action taken</p><p>{{ inc.action_taken|linebreaksbr }}</p>{% endif %}
+  {% if can_manage and inc.is_open %}<form method="post" class="inline-form mt-4">{% csrf_token %}<div class="field"><label for="note">Resolution note</label><input class="input" id="note" name="note" maxlength="200"></div><button class="btn btn-primary" type="submit">Mark resolved</button></form>{% endif %}</div>
+{% endblock %}

@@ -1,0 +1,6 @@
+{% extends "base.html" %}
+{% block title %}Add to my week{% endblock %}
+{% block content %}
+<div class="page-header"><div><div class="crumbs"><a href="{% url 'system:todo' %}">My To-Do</a></div><h1>Add to my week</h1></div></div>
+<div class="card" style="max-width:640px">{% include "system/plan_modal.html" %}</div>
+{% endblock %}

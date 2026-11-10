@@ -1,0 +1,9 @@
+<div class="item-row">
+  {% for h in form.hidden_fields %}{{ h }}{% endfor %}
+  <div class="field">{{ form.kind }}</div>
+  <div class="field">{{ form.description }}{% for e in form.description.errors %}<span class="error">{{ e }}</span>{% endfor %}</div>
+  <div class="field">{{ form.quantity }}{% for e in form.quantity.errors %}<span class="error">{{ e }}</span>{% endfor %}</div>
+  <div class="field">{{ form.unit_price }}{% for e in form.unit_price.errors %}<span class="error">{{ e }}</span>{% endfor %}</div>
+  <div class="line" data-line>—</div>
+  <div class="del">{% if form.DELETE %}<label class="text-danger" title="Remove line" style="cursor:pointer">{{ form.DELETE }}<span class="visually-hidden">Remove</span></label>{% endif %}</div>
+</div>

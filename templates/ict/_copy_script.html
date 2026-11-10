@@ -1,0 +1,1 @@
+<script>document.addEventListener("click",function(e){var b=e.target.closest("[data-copy]");if(!b)return;var t=b.dataset.copy||"";if(navigator.clipboard)navigator.clipboard.writeText(t);var o=b.dataset.label||b.textContent;b.dataset.label=o;b.textContent="Copied";setTimeout(function(){b.textContent=o},1200)});</script>

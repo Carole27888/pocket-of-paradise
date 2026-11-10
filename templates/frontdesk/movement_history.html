@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+{% block title %}Movement log{% endblock %}
+{% block content %}
+<div class="page-header">
+  <div><div class="crumbs"><a href="{% url 'frontdesk:movement' %}">{% include "components/icon.html" with name="arrow-left" size="14" %} Trip Movement</a></div>
+    <h1>{{ title }}</h1><p>{{ subtitle }}</p></div>
+</div>
+<div class="card card-flush">
+  {% include "components/filter_bar.html" with placeholder="Search ref, vehicle, driver, guide, destination…" %}
+  <div id="list-region">{% include "frontdesk/partials/movement_table.html" %}</div>
+</div>
+{% endblock %}

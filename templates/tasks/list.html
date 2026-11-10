@@ -1,0 +1,15 @@
+{% extends "base.html" %}{% load l10n %}
+{% block title %}Tasks & Complaints{% endblock %}
+{% block content %}
+<div class="page-header"><div><h1>Tasks & Complaints</h1><p>Work with an owner and a deadline. If something runs late, its owner is reminded, then their manager, then the executives. Nobody has to chase.</p></div>
+<div class="flex gap-2"><a class="btn btn-secondary" href="{% url 'tasks:new' %}?kind=complaint" data-modal-form="{% url 'tasks:new' %}?kind=complaint" data-modal-title="Log a complaint">Log a complaint</a>
+<a class="btn btn-primary" href="{% url 'tasks:new' %}" data-modal-form="{% url 'tasks:new' %}" data-modal-title="New task">{% include "components/icon.html" with name="plus" %} New task</a></div></div>
+<div class="flex gap-2 mb-3" style="flex-wrap:wrap">{% for k, l in tabs %}<a class="btn btn-sm {% if view == k %}btn-primary{% else %}btn-secondary{% endif %}" href="?view={{ k }}{% if closed %}&closed=1{% endif %}">{{ l }}</a>{% endfor %}
+<a class="btn btn-sm btn-secondary" href="?view={{ view }}{% if not closed %}&closed=1{% endif %}">{% if closed %}Hide closed{% else %}Show closed{% endif %}</a></div>
+<div class="card card-flush"><div class="table-wrap"><table class="table stack-phone"><thead><tr><th>What</th><th>Who</th><th>Due</th><th>Status</th><th></th></tr></thead><tbody>
+{% for t in tasks %}<tr><td class="cell-first"><span class="cell-main">{{ t.title }}</span><div class="cell-sub">{{ t.get_kind_display }}{% if t.priority == "high" %} · High priority{% endif %}{% if t.enquiry %} · <a class="row-link" href="{{ t.enquiry.get_absolute_url }}">{{ t.enquiry.reference }}</a>{% endif %}{% if t.details %} · {{ t.details|truncatechars:60 }}{% endif %}</div></td>
+<td data-label="Who">{{ t.owner.full_name }}</td><td data-label="Due">{{ t.due_at|date:"D d M H:i" }}</td>
+<td data-label="Status">{% if t.status == "done" %}{% status_pill "Done" "success" %}{% elif t.status == "cancelled" %}{% status_pill "Cancelled" "neutral" %}{% elif t.is_overdue %}{% if t.escalation_level == 2 %}{% status_pill "Overdue · with executives" "danger" %}{% elif t.escalation_level == 1 %}{% status_pill "Overdue · with manager" "danger" %}{% else %}{% status_pill "Overdue" "danger" %}{% endif %}{% else %}{% status_pill "Open" "info" %}{% endif %}</td>
+<td>{% if t.status == "open" and t.owner == emp or t.status == "open" and can_assign or t.status == "open" and t.created_by_id == request.user.pk %}<form method="post" action="{% url 'tasks:done' t.pk|unlocalize %}" class="flex gap-2">{% csrf_token %}<input class="input" name="note" placeholder="Note (optional)" style="min-width:140px"><button class="btn btn-secondary btn-sm" type="submit">Done</button></form>{% endif %}</td></tr>
+{% empty %}<tr><td colspan="5">{% include "components/empty_state.html" with icon="check-square" title="Nothing open" text="Tasks and complaints you own or manage appear here." %}</td></tr>{% endfor %}</tbody></table></div></div>
+{% endblock %}

@@ -1,0 +1,56 @@
+{% extends "base.html" %}{% load l10n static %}
+{% block title %}{{ object.name }}{% endblock %}
+{% block content %}
+<div class="page-header">
+  <div>
+    <div class="crumbs"><a href="{% url 'catalog:destinations' %}">Destinations</a><span>/</span><span>{{ object.name }}</span></div>
+    <h1>{{ object.name }}</h1>
+    <p>{{ object.get_region_display }} · {{ object.get_country_display }}{% if object.is_featured %} · <span class="pill pill-accent">Featured</span>{% endif %}</p>
+  </div>
+  <div class="actions">
+    {% if request.user.can_edit_operations %}<a class="btn btn-secondary" href="{% url 'catalog:destination_edit' object.slug %}">{% include "components/icon.html" with name="edit" %} Edit</a>{% endif %}
+    <a class="btn btn-accent" href="{% url 'leads:create' %}?destination={{ object.pk|unlocalize }}">{% include "components/icon.html" with name="plus" %} New enquiry</a>
+  </div>
+</div>
+<div class="cover-hero">{% if object.cover_photo %}<img src="{{ object.cover_photo.url }}" alt="{{ object.name }}">{% else %}<div class="ph">{% include "components/icon.html" with name="tree" %}</div>{% endif %}</div>
+<div class="grid grid-main-side mb-4">
+  <div class="card">
+    <div class="card-head"><h2>About</h2></div>
+    {% if object.summary %}<p class="fw-600">{{ object.summary }}</p>{% endif %}
+    <div class="text-muted">{{ object.description|linebreaks|default:"No description yet." }}</div>
+    {% if object.activity_list %}<p class="section-title mt-4">Activities</p><div class="chips">{% for a in object.activity_list %}<span class="pill pill-accent">{{ a }}</span>{% endfor %}</div>{% endif %}
+    {% if object.photos.all %}<p class="section-title mt-4">Gallery</p><div class="gallery">{% for p in object.photos.all %}<figure class="media-card" style="margin:0"><div class="media-cover"><img src="{{ p.image.url }}" alt="{{ p.caption }}" loading="lazy"></div>{% if p.caption %}<figcaption class="media-body text-sm">{{ p.caption }}</figcaption>{% endif %}</figure>{% endfor %}</div>{% endif %}
+  </div>
+  <div class="stack">
+    <div class="card"><dl class="dl">
+      <dt>Best time</dt><dd>{{ object.best_time_to_visit|default:"—" }}</dd>
+      <dt>Packages</dt><dd>{{ packages|length }}</dd>
+      <dt>Open enquiries</dt><dd>{{ open_enquiries }}</dd>
+      <dt>Coordinates</dt><dd>{% if object.has_coords %}{{ object.latitude|floatformat:3 }}, {{ object.longitude|floatformat:3 }}{% else %}—{% endif %}</dd>
+    </dl></div>
+  </div>
+</div>
+<div class="grid grid-2">
+  <div class="card card-flush">
+    <div class="card-head"><h2>Packages</h2><a href="{% url 'catalog:packages' %}?destinations={{ object.pk|unlocalize }}">All →</a></div>
+    <div class="list" style="padding:0 20px 8px">
+    {% for p in packages %}
+      <a class="list-item row-link" href="{{ p.get_absolute_url }}"><div class="grow"><div class="title">{{ p.title }}</div><div class="meta">{{ p.code }} · {{ p.duration_label }} · {{ p.get_package_type_display }}</div></div>
+        <span class="fw-800">{{ p.price_per_person|money:p.currency }}</span></a>
+    {% empty %}<p class="text-muted text-sm">No packages include this destination yet.</p>{% endfor %}
+    </div>
+  </div>
+  <div class="card card-flush">
+    <div class="card-head"><h2>Accommodations</h2><a href="{% url 'catalog:accommodations' %}?destination={{ object.pk|unlocalize }}">All →</a></div>
+    <div class="list" style="padding:0 20px 8px">
+    {% for a in accommodations %}
+      <a class="list-item row-link" href="{{ a.get_absolute_url }}"><span class="avatar avatar-sm">{% include "components/icon.html" with name="bed" size="14" %}</span><div class="grow"><div class="title">{{ a.name }}</div><div class="meta">{{ a.get_accommodation_type_display }}{% if a.star_rating %} · {{ a.star_rating }}★{% endif %}</div></div></a>
+    {% empty %}<p class="text-muted text-sm">No accommodations recorded.</p>{% endfor %}
+    </div>
+  </div>
+  <div class="card card-flush span-2">
+    <div class="card-head"><h2>Recent enquiries</h2></div>
+    {% include "leads/partials/mini_table.html" with rows=recent_enquiries %}
+  </div>
+</div>
+{% endblock %}

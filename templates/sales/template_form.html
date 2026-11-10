@@ -1,0 +1,20 @@
+{% extends "base.html" %}{% load static %}
+{% block title %}Edit template{% endblock %}
+{% block extra_css %}<link rel="stylesheet" href="{% static 'css/sales.css' %}"><link rel="stylesheet" href="{% static 'css/itinerary.css' %}">{% endblock %}
+{% block content %}
+<div class="page-header"><div><div class="crumbs"><a href="{% url 'sales:templates' %}">Templates</a><span>/</span><span>{{ t.title|truncatechars:34 }}</span></div><h1>Edit template</h1><p>Build the days once, then reuse them. Drag days from other templates into this one, or drag to reorder.</p></div></div>
+<form method="post" enctype="multipart/form-data" novalidate id="itin-form">{% csrf_token %}
+  <div class="card mb-4">{% include "components/form_fields.html" %}</div>
+  {% include "sales/partials/template_library.html" %}
+  {{ formset.management_form }}{% if formset.non_form_errors %}<div class="alert alert-danger mb-4">{{ formset.non_form_errors|join:" " }}</div>{% endif %}
+  <div id="days-forms">{% for f in formset %}{% include "sales/partials/itinerary_day_form.html" with form=f %}{% endfor %}</div>
+  <template id="days-empty">{% include "sales/partials/itinerary_day_form.html" with form=formset.empty_form %}</template>
+  <div class="card mt-4"><div class="card-head"><h2>Extra priced lines</h2><span class="sub">Copied onto every itinerary built from this template.</span></div>
+    {{ lines.management_form }}<div id="price_lines-forms">{% for f in lines %}{% include "sales/partials/price_line_form.html" with form=f %}{% endfor %}</div>
+    <template id="price_lines-empty">{% include "sales/partials/price_line_form.html" with form=lines.empty_form %}</template>
+    <button type="button" class="btn btn-secondary mt-3" data-add-form="price_lines">{% include "components/icon.html" with name="plus" %} Add line</button></div>
+  <div class="card mt-4"><button type="button" class="btn btn-secondary" data-add-form="days">{% include "components/icon.html" with name="plus" %} Add day</button></div>
+  <div class="form-actions"><a class="btn btn-secondary" href="{% url 'sales:templates' %}">Cancel</a><button class="btn btn-primary" type="submit">{% include "components/icon.html" with name="check" %} Save template</button></div>
+</form>
+<script src="{% static 'js/itinerary-dnd.js' %}"></script>
+{% endblock %}

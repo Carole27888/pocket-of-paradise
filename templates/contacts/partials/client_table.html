@@ -1,0 +1,19 @@
+<div class="table-wrap"><table class="table stack-phone">
+  <thead><tr><th>{% sort_link "full_name" "Client" %}</th><th>Phone</th><th>Nationality</th><th>Owner</th><th class="num">{% sort_link "enquiry_count" "Enquiries" %}</th><th>{% sort_link "last_enquiry" "Last enquiry" %}</th><th>{% sort_link "created_at" "Added" %}</th></tr></thead>
+  <tbody>
+  {% for c in object_list %}
+    <tr>
+      <td class="cell-first"><div class="flex items-center gap-2"><span class="avatar avatar-sm">{{ c.initials }}</span>
+        <div><a class="row-link cell-main" href="{{ c.get_absolute_url }}">{{ c.full_name }}</a>
+          <div class="cell-sub">{{ c.email|default:"" }}{% if c.is_international %} <span class="pill pill-info" style="padding:0 7px">International</span>{% endif %}{% if c.enquiry_count > 1 %} <span class="pill pill-accent" style="padding:0 7px">Returning</span>{% endif %}</div></div></div></td>
+      <td data-label="Phone" class="nowrap">{% if c.phone %}<a href="tel:{{ c.phone }}">{{ c.phone|phone }}</a>{% else %}—{% endif %}</td>
+      <td data-label="Nationality">{{ c.nationality|default:"—" }}</td>
+      <td data-label="Owner">{% if c.owner %}{{ c.owner.short_name }}{% else %}<span class="text-muted">—</span>{% endif %}</td>
+      <td data-label="Enquiries" class="num">{{ c.enquiry_count }}</td>
+      <td data-label="Last enquiry">{{ c.last_enquiry|ds_date }}</td>
+      <td data-label="Added">{{ c.created_at|ds_date }}</td>
+    </tr>
+  {% empty %}<tr><td colspan="7">{% include "components/empty_state.html" with icon="users" title="No clients found" %}</td></tr>{% endfor %}
+  </tbody>
+</table></div>
+{% include "components/pagination.html" %}

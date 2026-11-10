@@ -1,0 +1,23 @@
+{% extends "base.html" %}{% load l10n %}
+{% block title %}{{ s.name }}{% endblock %}
+{% block content %}
+<div class="page-header"><div><div class="crumbs"><a href="{% url 'suppliers:list' %}">Suppliers</a><span>/</span><span>{{ s.name }}</span></div>
+  <h1>{{ s.name }}</h1><p>{{ s.get_kind_display }}{% if s.location %} · {{ s.location }}{% endif %}</p></div>
+  <div class="actions">{% if s.phone %}<a class="btn btn-secondary" href="tel:{{ s.phone }}">{% include "components/icon.html" with name="phone" %} Call</a>{% endif %}
+    {% if can_manage %}<a class="btn btn-secondary" href="{% url 'suppliers:bill_new' %}?supplier={{ s.pk|unlocalize }}">{% include "components/icon.html" with name="plus" %} Bill</a><a class="btn btn-primary" href="{% url 'suppliers:edit' s.pk %}">{% include "components/icon.html" with name="edit" %} Edit</a>{% endif %}</div></div>
+<div class="grid grid-4 mb-4">
+  {% include "components/kpi_card.html" with label="Outstanding" value=s.outstanding|money accent=True %}
+  {% include "components/kpi_card.html" with label="Billed (all time)" value=billed|money_compact %}
+  {% include "components/kpi_card.html" with label="Payment terms" value=s.payment_terms_days|stringformat:"d"|add:" days" %}
+  {% include "components/kpi_card.html" with label="Withholding tax" value=s.withholding_applies|yesno:"Applies,No" %}
+</div>
+<div class="grid grid-main-side">
+  <div class="card card-flush"><div class="card-head"><h2>Bills</h2><a href="{% url 'suppliers:bills' %}?q={{ s.name|urlencode }}">All →</a></div>
+    <div class="table-wrap mt-3"><table class="table stack-phone"><thead><tr><th>Bill</th><th>Departure</th><th>Due</th><th class="num">Amount</th><th>Status</th></tr></thead>
+      <tbody>{% for b in bills %}<tr><td class="cell-first"><a class="row-link cell-main" href="{{ b.get_absolute_url }}">{{ b.number }}</a><div class="cell-sub">{{ b.get_category_display }}</div></td><td data-label="Departure">{{ b.departure|default:"—" }}</td><td data-label="Due">{{ b.due_date|ds_date }}</td><td data-label="Amount" class="num">{{ b.amount|money:b.currency }}</td><td data-label="Status">{% if b.is_overdue %}{% status_pill "Overdue" "danger" %}{% elif b.status == "paid" %}{% status_pill "Paid" "success" %}{% else %}{% status_pill b.get_status_display "info" %}{% endif %}</td></tr>
+        {% empty %}<tr><td colspan="5" class="text-muted">No bills yet.</td></tr>{% endfor %}</tbody></table></div></div>
+  <div class="card"><div class="card-head"><h2>Details</h2></div><dl class="dl">
+    <dt>Contact</dt><dd>{{ s.contact_name|default:"—" }}</dd><dt>Phone</dt><dd>{{ s.phone|phone|default:"—" }}</dd><dt>Email</dt><dd>{{ s.email|default:"—" }}</dd>
+    <dt>KRA PIN</dt><dd>{{ s.kra_pin|default:"—" }}</dd><dt>Pay to</dt><dd>{{ s.bank_details|default:"—" }}</dd></dl>{% if s.notes %}<p class="text-sm mt-3">{{ s.notes|linebreaksbr }}</p>{% endif %}</div>
+</div>
+{% endblock %}

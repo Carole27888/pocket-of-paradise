@@ -1,0 +1,5 @@
+<div class="card kpi{% if accent %} kpi-accent{% endif %}">
+  <span class="kpi-label">{{ label }}</span>
+  <span class="kpi-value">{{ value }}</span>
+  {% if delta or note %}<span class="kpi-delta {{ delta_dir|default:'' }}">{{ delta|default:note }}</span>{% endif %}
+</div>

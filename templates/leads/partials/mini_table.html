@@ -1,0 +1,9 @@
+<div class="table-wrap mt-3"><table class="table stack-phone">
+  <thead><tr><th>Client</th><th>Source</th><th>Stage</th><th>Agent</th><th>Received</th></tr></thead>
+  <tbody>
+  {% for e in rows %}
+    <tr><td class="cell-first"><a class="row-link cell-main" href="{{ e.get_absolute_url }}">{{ e.client.full_name }}</a><div class="cell-sub">{{ e.reference }}</div></td>
+      <td data-label="Source">{% source_badge e True %}</td><td data-label="Stage">{% stage_pill e %}</td>
+      <td data-label="Agent">{{ e.assigned_agent.short_name|default:"—" }}</td><td data-label="Received">{{ e.created_at|ds_date }}</td></tr>
+  {% empty %}<tr><td colspan="5"><p class="p-4 text-muted mb-0">No enquiries yet.</p></td></tr>{% endfor %}
+  </tbody></table></div>

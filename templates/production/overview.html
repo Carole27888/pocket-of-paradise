@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% load l10n %}
+{% block title %}Production Overview{% endblock %}
+{% block content %}
+<div class="page-header"><div><h1>Production Overview</h1><p>Where every piece of content is, what is stuck, and who is carrying what.</p></div></div>
+<div class="stat-grid mb-4">
+  {% for code, label in stages %}<a class="stat" href="{% url 'production:list' %}?stage={{ code }}"><span class="stat-ico">{% include "components/icon.html" with name="camera" %}</span><div><small>{{ label }}</small><b>{{ counts|get_item:code }}</b></div></a>{% endfor %}
+  <div class="stat {% if stuck_n %}alert{% endif %}"><span class="stat-ico">{% include "components/icon.html" with name="clock" %}</span><div><small>Stuck {{ stuck_days }}+ days</small><b>{{ stuck_n }}</b></div></div>
+  <div class="stat {% if overdue %}alert{% endif %}"><span class="stat-ico">{% include "components/icon.html" with name="alert" %}</span><div><small>Shoot date passed</small><b>{{ overdue }}</b></div></div>
+  <div class="stat"><span class="stat-ico">{% include "components/icon.html" with name="check" %}</span><div><small>Posted this month</small><b>{{ posted_month }}</b></div></div>
+</div>
+<div class="grid grid-2">
+  <div class="card card-flush"><div class="card-head" style="padding:16px 18px 0"><h2>Stuck in a stage</h2></div><div class="table-wrap mt-3"><table class="table"><thead><tr><th>Shoot</th><th>Stage</th><th>Days</th><th>Assigned</th></tr></thead><tbody>
+    {% for s in stuck %}<tr><td><a href="{{ s.get_absolute_url }}">{{ s.title|truncatechars:40 }}</a></td><td>{{ s.get_stage_display }}</td><td>{{ s.days_in_stage }}</td><td>{{ s.assigned_to|default:"–" }}</td></tr>
+    {% empty %}<tr><td colspan="4" class="text-muted">Nothing is stuck.</td></tr>{% endfor %}</tbody></table></div></div>
+  <div class="card card-flush"><div class="card-head" style="padding:16px 18px 0"><h2>Workload by person</h2></div><div class="table-wrap mt-3"><table class="table"><thead><tr><th>Person</th><th>Sourced</th><th>Shot</th><th>Posted</th></tr></thead><tbody>
+    {% for e in workload %}<tr><td>{{ e.full_name }}</td><td>{{ e.sourced }}</td><td>{{ e.shot }}</td><td>{{ e.posted }}</td></tr>
+    {% empty %}<tr><td colspan="4" class="text-muted">No shoots are assigned yet.</td></tr>{% endfor %}</tbody></table></div></div>
+</div>
+{% endblock %}

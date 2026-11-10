@@ -1,0 +1,45 @@
+{% extends "base.html" %}{% load static l10n %}
+{% block title %}{{ ch.name }}{% endblock %}
+{% block extra_vendor %}<script src="{% static 'vendor/chartjs/chart.umd.min.js' %}" defer></script>{% endblock %}
+{% block extra_js %}<script src="{% static 'js/charts.js' %}" defer></script>{% endblock %}
+{% block content %}
+<div class="page-header chan-head"><div class="chan-title">{% source_badge ch.key %}<div><h1>{{ ch.name }}</h1>
+  <p>{% if acct %}{% if acct.handle %}{{ acct.handle }} · {% endif %}{% if acct.connected %}<span class="conn on">● Connected</span>{% if acct.last_synced_at %} · synced {{ acct.last_synced_at|timesince }} ago{% endif %}{% else %}<span class="conn">● Not connected</span>{% endif %}{% else %}<span class="conn">● Not connected</span> · <a href="{% url 'marketing:accounts' %}">Connect</a>{% endif %}</p></div></div>
+  {% if can_manage %}<div class="actions"><a class="btn btn-secondary" href="{% url 'marketing:content' %}">Boost a post</a><a class="btn btn-primary" href="{% url 'marketing:post_new' %}">{% include "components/icon.html" with name="plus" %} Create post</a></div>{% endif %}</div>
+
+<nav class="tabs-line" aria-label="{{ ch.name }} sections">{% for k, label in tabs %}<a class="{% if tab == k %}active{% endif %}" href="?tab={{ k }}{% if request.GET.range %}&range={{ request.GET.range }}{% endif %}">{{ label }}{% if k == "inbox" and inbox_open %} <span class="count">{{ inbox_open }}</span>{% endif %}</a>{% endfor %}</nav>
+
+{% if tab == "overview" %}
+<div class="kpi-six">{% for k in kpis %}<div class="kpi-box"><small>{{ k.label }}</small><b>{{ k.value }}</b>
+  {% if k.delta %}<span class="mdelta {% if k.delta.invert %}{% if k.delta.cls == 'up' %}down{% elif k.delta.cls == 'down' %}up{% endif %}{% else %}{{ k.delta.cls }}{% endif %}">{{ k.delta.arrow }} {% if k.delta.text %}{{ k.delta.text }}{% else %}{{ k.delta.pct }}%{% endif %}</span>{% endif %}</div>{% endfor %}</div>
+{{ charts|json_script:"ch-charts" }}
+<div class="grid grid-main-side mb-4">
+  <div class="card"><div class="card-head"><h2>Reach &amp; leads by week</h2><span class="text-xs text-muted">{{ start|ds_date }} – {{ end|ds_date }}</span></div><div class="chart-box"><canvas data-chart="reachweeks" data-chart-source="ch-charts" data-chart-key="weeks" aria-label="Reach and leads by week" role="img"></canvas></div></div>
+  <div class="card"><div class="card-head"><h2>Audience location</h2></div>{% include "marketing/partials/audience_bars.html" with rows=audience %}</div>
+</div>
+{% endif %}
+
+{% if tab == "overview" or tab == "posts" %}
+<div class="{% if tab == 'overview' %}grid grid-main-side{% endif %}">
+  <div class="card card-flush"><div class="card-head" style="padding:16px 18px 0"><h2>{% if tab == "overview" %}Recent posts{% else %}Posts{% endif %}</h2>{% if tab == "overview" %}<a href="?tab=posts{% if request.GET.range %}&range={{ request.GET.range }}{% endif %}">All {{ posts_total }} posts</a>{% endif %}</div>
+    <div class="table-wrap mt-3"><table class="table stack-phone"><thead><tr><th>Post</th><th>Type</th><th>Published</th><th class="text-right">Reach</th><th class="text-right">Engagement</th><th class="text-right">Leads</th><th></th></tr></thead><tbody>
+    {% for p in posts %}<tr><td class="cell-first"><a class="row-link cell-main" href="{{ p.get_absolute_url }}">{{ p.title|truncatechars:40 }}</a></td><td data-label="Type">{{ p.get_format_display }}</td><td data-label="Published">{% if p.published_at %}{{ p.published_at|date:"j M" }}{% else %}{{ p.get_status_display }}{% endif %}</td><td data-label="Reach" class="text-right">{{ p.reach }}</td><td data-label="Engagement" class="text-right">{{ p.engagement }}</td><td data-label="Leads" class="text-right"><b>{{ p.leads }}</b></td>
+      <td>{% if can_manage and p.status == "published" %}<form method="post" action="{% url 'marketing:boost' p.pk|unlocalize %}">{% csrf_token %}<input type="hidden" name="next" value="{{ request.get_full_path }}"><button class="btn btn-secondary btn-sm" type="submit">Boost</button></form>{% endif %}</td></tr>
+    {% empty %}<tr><td colspan="7">{% include "components/empty_state.html" with icon="image" title="No posts yet" text="Posts you publish to this channel appear here." %}</td></tr>{% endfor %}</tbody></table></div></div>
+  {% if tab == "overview" %}{% include "marketing/partials/channel_messages.html" %}{% endif %}
+</div>
+{% endif %}
+
+{% if tab == "ads" %}
+<div class="card card-flush"><div class="card-head" style="padding:16px 18px 0"><h2>Ad spend by campaign</h2><span class="text-xs text-muted">{{ start|ds_date }} – {{ end|ds_date }}</span></div>
+  <div class="table-wrap mt-3"><table class="table stack-phone"><thead><tr><th>Campaign</th><th class="text-right">Spend</th><th class="text-right">Impressions</th><th class="text-right">Clicks</th><th class="text-right">Leads</th></tr></thead><tbody>
+  {% for a in ads %}<tr><td class="cell-first">{{ a.campaign__name }}</td><td data-label="Spend" class="text-right">{{ a.spend|money }}</td><td data-label="Impressions" class="text-right">{{ a.imp }}</td><td data-label="Clicks" class="text-right">{{ a.clicks }}</td><td data-label="Leads" class="text-right">{{ a.leads }}</td></tr>
+  {% empty %}<tr><td colspan="5">{% include "components/empty_state.html" with icon="target" title="No ad spend" text="Campaigns running on this channel show here." %}</td></tr>{% endfor %}</tbody></table></div></div>
+{% endif %}
+
+{% if tab == "inbox" %}{% include "marketing/partials/channel_messages.html" %}{% endif %}
+
+{% if tab == "audience" %}
+<div class="card"><div class="card-head"><h2>Where leads from {{ ch.name }} come from</h2><span class="text-xs text-muted">last 90 days</span></div>{% include "marketing/partials/audience_bars.html" with rows=audience_all %}</div>
+{% endif %}
+{% endblock %}

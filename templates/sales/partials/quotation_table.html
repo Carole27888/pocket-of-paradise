@@ -1,0 +1,14 @@
+<div class="table-wrap"><table class="table stack-phone">
+  <thead><tr><th>{% sort_link "created_at" "Quotation" %}</th><th>Client</th><th>Agent</th><th>{% sort_link "status" "Status" %}</th><th class="num">{% sort_link "total" "Total" %}</th><th>{% sort_link "sent_at" "Sent" %}</th><th>Valid until</th></tr></thead>
+  <tbody>{% for q in object_list %}
+    <tr>
+      <td class="cell-first"><a class="row-link cell-main" href="{{ q.get_absolute_url }}">{{ q.reference }} · v{{ q.version }}</a><div class="cell-sub">{{ q.title|truncatechars:50 }}</div></td>
+      <td data-label="Client">{{ q.enquiry.client.full_name }}<div class="cell-sub">{{ q.enquiry.reference }}</div></td>
+      <td data-label="Agent">{{ q.enquiry.assigned_agent.short_name|default:"—" }}</td>
+      <td data-label="Status">{% if q.status == "accepted" %}{% status_pill q.get_status_display "success" %}{% elif q.status == "sent" %}{% if q.is_expired %}{% status_pill "Expired" "danger" %}{% else %}{% status_pill "Sent" "info" %}{% endif %}{% elif q.status == "draft" %}{% status_pill "Draft" "warning" %}{% elif q.status == "rejected" %}{% status_pill "Declined" "danger" %}{% else %}{% status_pill q.get_status_display "neutral" %}{% endif %}</td>
+      <td data-label="Total" class="num fw-700">{{ q.total|money:q.currency }}</td>
+      <td data-label="Sent">{{ q.sent_at|ds_date }}</td>
+      <td data-label="Valid until" class="{% if q.is_expired %}text-late{% endif %}">{{ q.valid_until|ds_date }}</td>
+    </tr>{% empty %}<tr><td colspan="7">{% include "components/empty_state.html" with icon="file-text" title="No quotations yet" text="Open a lead and choose New quotation." %}</td></tr>{% endfor %}
+  </tbody></table></div>
+{% include "components/pagination.html" %}

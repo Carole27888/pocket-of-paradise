@@ -1,0 +1,49 @@
+{% extends "base.html" %}{% load l10n %}
+{% block title %}{{ object.full_name }}{% endblock %}
+{% block content %}
+<div class="page-header">
+  <div><div class="crumbs"><a href="{% url 'people:list' %}">Staff & Guides</a><span>/</span><span>{{ object.full_name }}</span></div>
+    <div class="flex items-center gap-3"><span class="avatar avatar-lg">{{ object.initials }}</span>
+      <div><h1>{{ object.full_name }}</h1><p>{{ object.title|default:"Staff" }}{% if object.department %} · {{ object.department }}{% endif %} · {{ object.roles_label }}</p></div></div></div>
+  <div class="actions">
+    {% if object.phone %}<a class="btn btn-secondary" href="tel:{{ object.phone }}">{% include "components/icon.html" with name="phone" %} Call</a>
+      <a class="btn btn-secondary" href="{{ object.phone|wa_link }}" target="_blank" rel="noopener">{% include "components/icon.html" with name="whatsapp" %} WhatsApp</a>{% endif %}
+    {% if request.user.can_manage_staff %}<a class="btn btn-primary" href="{% url 'people:edit' object.pk %}">{% include "components/icon.html" with name="edit" %} Edit</a>{% endif %}
+  </div>
+</div>
+<div class="grid grid-side-main">
+  <div class="stack">
+    <div class="card"><div class="card-head"><h2>Duty status</h2>{% include "people/partials/duty_pill.html" with e=object duty_choices=object.DUTY_CHOICES %}</div>
+      <dl class="dl">
+        <dt>Available</dt><dd>{% if object.is_available %}{% status_pill "Yes" "success" %}{% else %}{% status_pill "No" "danger" %}{% endif %}</dd>
+        {% if object.leave_from %}<dt>Leave</dt><dd>{{ object.leave_from|ds_date }} – {{ object.leave_to|ds_date }}</dd>{% endif %}
+        <dt>Phone</dt><dd>{{ object.phone|phone|default:"—" }}</dd>
+        <dt>Email</dt><dd>{{ object.email|default:"—" }}</dd>
+        <dt>Languages</dt><dd>{{ object.languages|default:"—" }}</dd>
+        {% if object.is_sales_agent %}<dt>Daily cap</dt><dd>{{ object.daily_enquiry_limit }} new enquiries</dd>{% endif %}
+      </dl>
+      {% if object.specialties.all %}<p class="section-title mt-4">Specialties</p><div class="chips">{% for s in object.specialties.all %}<span class="pill pill-accent">{{ s.name }}</span>{% endfor %}</div>{% endif %}
+    </div>
+    {% if object.is_guide or object.is_driver %}
+    <div class="card"><div class="card-head"><h2>Licences & certification</h2></div>
+      <dl class="dl">
+        {% if object.is_driver %}<dt>Driving licence</dt><dd>{{ object.driving_license_no|default:"—" }}{% if object.driving_license_expiry %} · exp. {{ object.driving_license_expiry|ds_date }}{% endif %}</dd>
+        <dt>PSV badge</dt><dd>{{ object.psv_badge_no|default:"—" }}{% if object.psv_badge_expiry %} · exp. {{ object.psv_badge_expiry|ds_date }}{% endif %}</dd>{% endif %}
+        {% if object.is_guide %}<dt>Guide cert.</dt><dd>{{ object.guide_certification|default:"—" }}{% if object.guide_certification_expiry %} · exp. {{ object.guide_certification_expiry|ds_date }}{% endif %}</dd>{% endif %}
+      </dl>
+      {% if vehicles %}<p class="section-title mt-4">Current vehicle</p>{% for v in vehicles %}<a class="chip" href="{{ v.get_absolute_url }}">{% include "components/icon.html" with name="truck" size="14" %}{{ v.registration_no }}</a>{% endfor %}{% endif %}
+    </div>{% endif %}
+    {% if show_sensitive %}
+    <div class="card"><div class="card-head"><h2>Payroll & statutory</h2>{% include "components/icon.html" with name="lock" size="16" %}</div>
+      <dl class="dl">
+        <dt>Basic salary</dt><dd>{{ object.basic_salary|money:object.salary_currency }}</dd>
+        <dt>Payout</dt><dd>{{ object.get_payout_method_display }}{% if object.payout_method == "bank" %} · {{ object.bank_name|default:"" }} {{ object.bank_account|default:"" }}{% else %} · {{ object.mpesa_number|phone }}{% endif %}</dd>
+        <dt>KRA PIN</dt><dd>{{ object.kra_pin|default:"—" }}</dd><dt>NSSF</dt><dd>{{ object.nssf_no|default:"—" }}</dd><dt>SHIF</dt><dd>{{ object.shif_no|default:"—" }}</dd>
+      </dl></div>{% endif %}
+  </div>
+  <div class="card card-flush">
+    <div class="card-head"><h2>Open enquiries</h2>{% if object.is_sales_agent %}<a href="{% url 'leads:list' %}?assigned_agent={{ object.pk|unlocalize }}">All →</a>{% endif %}</div>
+    {% include "leads/partials/mini_table.html" with rows=open_enquiries %}
+  </div>
+</div>
+{% endblock %}

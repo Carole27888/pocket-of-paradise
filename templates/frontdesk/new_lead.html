@@ -1,0 +1,39 @@
+{% extends "base.html" %}{% load l10n desk %}
+{% block title %}New Lead{% endblock %}
+{% block content %}
+<div class="page-header"><div><div class="crumbs"><a href="{% url 'frontdesk:dashboard' %}">Front Desk</a><span>/</span><span>New lead</span></div><h1>New Lead</h1><p>Capture the client, pick the package and hand it to an agent.</p></div></div>
+<form method="post" novalidate>{% csrf_token %}
+{% if form.non_field_errors %}<div class="alert alert-danger mb-4">{{ form.non_field_errors|join:" " }}</div>{% endif %}
+<div class="card mb-4"><div class="card-head"><h2>Where did this lead come from?</h2></div>
+  <div class="source-picker" role="radiogroup" aria-label="Channel">{% for val, label in sources %}<label><input type="radio" name="source" value="{{ val }}" {% if form.source.value == val %}checked{% endif %}>{% source_badge val %} {{ label }}</label>{% endfor %}</div></div>
+<div class="grid grid-main-side">
+  <div class="stack">
+    <div class="card"><div class="card-head"><h2>Client</h2></div><div class="form-grid">
+      <div class="field{% if form.full_name.errors %} invalid{% endif %}"><label for="id_full_name">Client name <span class="req">*</span></label>{{ form.full_name }}{% for e in form.full_name.errors %}<span class="error">{{ e }}</span>{% endfor %}</div>
+      <div class="field{% if form.phone.errors %} invalid{% endif %}"><label for="id_phone">Phone number <span class="req">*</span></label>
+        <input type="tel" name="phone" id="id_phone" class="input" value="{{ form.phone.value|default:'' }}" required autocomplete="tel" placeholder="0712 345 678 or +44…" hx-get="{% url 'leads:returning_check' %}" hx-trigger="input changed delay:500ms, blur" hx-target="#returning">{% for e in form.phone.errors %}<span class="error">{{ e }}</span>{% endfor %}</div>
+      <div class="field"><label for="n-email">E-mail (optional)</label><input class="input" id="n-email" type="email" name="email" autocomplete="email"></div>
+      <div class="full" id="returning"></div></div></div>
+    <div class="card"><div class="card-head"><h2>Enquiry</h2></div><div class="form-grid">
+      <div class="field"><label for="id_package">{{ form.package.label }}</label>{{ form.package }}<span class="help">Leave empty if the client has not picked a package yet.</span></div>
+      <div class="field"><label for="id_destination_text">{{ form.destination_text.label }}</label>{{ form.destination_text }}</div>
+      <div class="field"><label for="id_purpose">Purpose</label>{{ form.purpose }}</div>
+      <div class="field"><label for="n-budget">Budget</label><input class="input" id="n-budget" name="budget" placeholder="e.g. KES 300,000 or USD 2,500 pp"></div>
+      <div class="field"><label for="n-date">Preferred travel date</label><input class="input" id="n-date" type="date" name="travel_date"></div>
+      <div class="grid grid-2" style="gap:12px"><div class="field"><label for="id_adults">Adults</label>{{ form.adults }}</div><div class="field"><label for="id_children">Children</label>{{ form.children }}</div></div>
+      <div class="field full"><label for="id_notes">Notes</label>{{ form.notes }}</div></div></div>
+  </div>
+  <div class="stack">
+    {% if not can_distribute %}<div class="card"><div class="card-head"><h2>Assignment</h2></div><p class="text-sm text-muted mb-0">The lead goes to the waiting list. Front Desk, the Sales Manager, COO or CEO hand it to an agent.</p></div>{% else %}<div class="card"><div class="card-head"><h2>Assign to agent</h2><span class="sub">Leave empty to auto-assign</span></div>
+      <div class="agent-pick">{% for r in board %}<label class="{% if not r.available %}off{% endif %}"><input type="radio" name="assigned_agent" value="{{ r.agent.pk|unlocalize }}" {% if not r.available %}disabled{% endif %}>
+        <div class="flex items-center gap-2"><span class="avatar avatar-sm">{{ r.agent.initials }}</span><div><div class="fw-700">{{ r.agent.full_name }}</div><div class="text-xs text-muted">{{ r.status }} · {{ r.today }}/{{ r.limit }} today · {{ r.open }} open{% if r.specialties %}<br>{{ r.specialties }}{% endif %}</div></div></div></label>{% endfor %}</div></div>{% endif %}
+    <div class="card"><div class="card-head"><h2>Notify</h2></div>
+      <label style="display:flex;gap:8px;align-items:center"><input type="checkbox" name="sms_agent" checked> Alert the agent (in-app and SMS)</label>
+      <label style="display:flex;gap:8px;align-items:center;margin-top:8px"><input type="checkbox" name="wa_client" checked> WhatsApp confirmation to the client</label></div>
+    <div class="card stack" style="gap:10px"><button class="btn btn-primary btn-block" type="submit" name="submit" value="assign">{% include "components/icon.html" with name="user-plus" %} Save &amp; Assign</button>
+      <button class="btn btn-secondary btn-block" type="submit" name="submit" value="later">Save, assign later</button>
+      <label style="display:flex;gap:8px;align-items:center"><input type="checkbox" name="another"> Add another lead after saving</label></div>
+  </div>
+</div>
+</form>
+{% endblock %}

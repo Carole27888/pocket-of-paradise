@@ -1,0 +1,15 @@
+{% load l10n %}<div class="dz" data-dz>
+  <input type="file" class="dz-input" name="{{ w.name }}" id="{{ w.attrs.id|unlocalize }}" accept="{{ w.attrs.accept|default:'image/*' }}">
+  {% if w.is_initial %}<input type="checkbox" class="dz-clear" name="{{ w.checkbox_name }}" id="{{ w.checkbox_id }}" hidden>{% endif %}
+  <div class="dz-empty" {% if w.current_url %}hidden{% endif %}>
+    <svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="4.5" width="17" height="15" rx="2.5"/><circle cx="9" cy="10" r="1.6"/><path d="m4 17 5-5 4 4 3-3 4 4"/></svg>
+    <span class="dz-text"><b>{{ w.dz_label }}</b><small>JPG, PNG or WebP · up to 5 MB</small></span>
+  </div>
+  <div class="dz-preview" {% if not w.current_url %}hidden{% endif %}>
+    <img src="{{ w.current_url }}" alt="">
+    <span class="dz-name text-sm"></span>
+    <button type="button" class="btn btn-secondary btn-sm dz-replace">Replace</button>
+    <button type="button" class="btn btn-ghost btn-sm text-danger dz-remove">Remove</button>
+  </div>
+  <div class="dz-error error" role="alert" hidden></div>
+</div>

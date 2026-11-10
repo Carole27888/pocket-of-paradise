@@ -1,0 +1,19 @@
+<form method="post" action="{% if mark %}{% url 'system:plan_mark' item.pk %}{% else %}{% url 'system:plan_edit' item.pk %}{% endif %}" data-modal-form-body novalidate>
+  {% csrf_token %}
+  {% if error %}<div class="alert alert-danger mb-3">{{ error }}</div>{% endif %}
+  {% if mark %}
+    <input type="hidden" name="status" value="{{ mark }}">
+    <p class="mb-3"><b>{{ item.title }}</b><br><span class="text-sm text-muted">{{ item.day|date:"l j M" }}{% if item.start_time %} · {{ item.start_time|time:"H:i" }}{% endif %}</span></p>
+    <div class="field"><label for="pm-n">{% if mark == "partial" %}How far did you get, and what is left?{% else %}What got in the way?{% endif %}</label>
+      <textarea class="input textarea" id="pm-n" name="note" rows="3" maxlength="300" autofocus>{{ item.note }}</textarea></div>
+    <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:14px"><button type="button" class="btn btn-secondary" data-modal-close>Cancel</button>
+      <button type="submit" class="btn btn-primary">{% if mark == "partial" %}Mark partly done{% else %}Mark not done{% endif %}</button></div>
+  {% else %}
+    <div class="stack" style="gap:12px">
+      <div class="field"><label for="pe-t">What will you do?</label><input class="input" id="pe-t" name="title" maxlength="200" value="{{ item.title }}" required></div>
+      <div class="flex gap-2 wrap"><div class="field grow"><label for="pe-d">Day</label><input class="input" id="pe-d" type="date" name="day" value="{{ item.day|date:'Y-m-d' }}"></div>
+        <div class="field grow"><label for="pe-s">Start time</label><input class="input" id="pe-s" type="time" name="start_time" value="{{ item.start_time|time:'H:i' }}"></div></div>
+    </div>
+    <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:14px"><button type="button" class="btn btn-secondary" data-modal-close>Cancel</button><button type="submit" class="btn btn-primary">{% include "components/icon.html" with name="check" %} Save</button></div>
+  {% endif %}
+</form>

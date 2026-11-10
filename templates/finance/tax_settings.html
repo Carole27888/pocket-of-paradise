@@ -1,0 +1,10 @@
+{% extends "base.html" %}{% load l10n %}
+{% block title %}Tax settings{% endblock %}
+{% block content %}
+<div class="page-header"><div><div class="crumbs"><a href="{% url 'finance:kra' %}">KRA</a><span>/</span><span>Tax settings</span></div><h1>Tax settings</h1><p>Seeded with current Kenyan values. <b>Your accountant must confirm these before filing.</b> Changes apply to the next payroll run and obligation refresh.</p></div></div>
+<div class="card card-flush"><div class="table-wrap"><table class="table stack-phone"><thead><tr><th>Setting</th><th>Value</th><th>Note</th><th></th></tr></thead>
+  <tbody>{% for t in items %}<tr><td class="cell-first"><span class="cell-main">{{ t.label }}</span><div class="cell-sub">{{ t.key }}</div></td>
+    {% if t.data %}<td colspan="3" data-label="Bands"><code class="text-sm">{{ t.data }}</code><div class="cell-sub">{{ t.note }} Edit via Django admin.</div></td>
+    {% else %}<td data-label="Value"><form method="post" class="flex gap-2" id="f{{ t.pk|unlocalize }}">{% csrf_token %}<input type="hidden" name="id" value="{{ t.pk|unlocalize }}"><input class="input" name="value" value="{{ t.value|default_if_none:'' }}" style="max-width:130px" {% if not can_manage %}disabled{% endif %}></form></td>
+      <td data-label="Note"><input class="input" form="f{{ t.pk|unlocalize }}" name="note" value="{{ t.note }}" {% if not can_manage %}disabled{% endif %}></td><td>{% if can_manage %}<button class="btn btn-secondary btn-sm" form="f{{ t.pk|unlocalize }}" type="submit">Save</button>{% endif %}</td>{% endif %}</tr>{% endfor %}</tbody></table></div></div>
+{% endblock %}

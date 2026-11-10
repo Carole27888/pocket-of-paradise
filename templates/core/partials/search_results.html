@@ -1,0 +1,9 @@
+{% if term|length >= 2 %}
+  {% regroup results by group as groups %}
+  {% for g in groups %}
+    <div class="sr-group">{{ g.grouper }}</div>
+    {% for r in g.list %}<a class="sr-item" href="{{ r.url }}"><b>{{ r.title }}</b><small>{{ r.sub }}</small></a>{% endfor %}
+  {% empty %}
+    <p class="p-4 text-muted text-sm mb-0">No matches for “{{ term }}”.</p>
+  {% endfor %}
+{% endif %}

@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+{% block title %}Staff & Guides{% endblock %}
+{% block content %}
+<div class="page-header">
+  <div><h1>{{ title }}</h1><p>{{ subtitle }}</p></div>
+  {% if request.user.can_manage_staff %}
+  <div class="actions"><a class="btn btn-primary" href="{% url 'people:create' %}">{% include "components/icon.html" with name="plus" %} Add staff</a></div>{% endif %}
+</div>
+<div class="grid grid-4 mb-4">
+  {% include "components/kpi_card.html" with label="Active staff" value=kpis.staff accent=True %}
+  {% include "components/kpi_card.html" with label="Travel consultants" value=kpis.agents %}
+  {% include "components/kpi_card.html" with label="Guides & drivers" value=kpis.guides note=kpis.out|stringformat:"d"|add:" out on trip now" %}
+  {% include "components/kpi_card.html" with label="Off or on leave" value=kpis.leave %}
+</div>
+<div class="card card-flush">
+  {% include "components/filter_bar.html" with placeholder="Search name, phone, title or language…" %}
+  <div id="list-region">{% include "people/partials/employee_table.html" %}</div>
+</div>
+{% endblock %}

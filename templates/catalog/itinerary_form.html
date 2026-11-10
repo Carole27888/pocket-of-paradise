@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% block title %}Itinerary · {{ package.title }}{% endblock %}
+{% block content %}
+<div class="page-header">
+  <div><div class="crumbs"><a href="{{ package.get_absolute_url }}">{% include "components/icon.html" with name="arrow-left" size="14" %} {{ package.code }}</a></div>
+    <h1>Itinerary: {{ package.title }}</h1><p>{{ package.duration_label }}. One card per day; tick meals included (B/L/D).</p></div>
+</div>
+<form method="post" novalidate>
+  {% csrf_token %}
+  {{ formset.management_form }}
+  {% if formset.non_form_errors %}<div class="alert alert-danger mb-4">{{ formset.non_form_errors|join:" " }}</div>{% endif %}
+  <div id="days-forms">
+    {% for form in formset %}{% include "catalog/partials/itinerary_day_form.html" %}{% endfor %}
+  </div>
+  <template id="days-empty">{% with form=formset.empty_form %}{% include "catalog/partials/itinerary_day_form.html" %}{% endwith %}</template>
+  <div class="form-actions" style="justify-content:space-between">
+    <button type="button" class="btn btn-secondary" data-add-form="days">{% include "components/icon.html" with name="plus" %} Add day</button>
+    <div class="flex gap-2"><a class="btn btn-secondary" href="{{ package.get_absolute_url }}">Cancel</a>
+      <button class="btn btn-primary" type="submit">{% include "components/icon.html" with name="check" %} Save itinerary</button></div>
+  </div>
+</form>
+{% endblock %}

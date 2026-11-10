@@ -1,0 +1,9 @@
+{% extends "base.html" %}
+{% block title %}{{ r.number }}{% endblock %}
+{% block content %}
+<div class="page-header"><div><div class="crumbs"><a href="{% url 'finance:receipts' %}">Receipts</a><span>/</span><span>{{ r.number }}</span></div><h1>{{ r.amount|money:r.currency }}</h1>
+  <p>{{ r.number }} · {{ r.get_method_display }}{% if r.reference %} · {{ r.reference }}{% endif %} · {% if r.invoice %}{% status_pill "Matched" "success" %}{% else %}{% status_pill "Unmatched" "warning" %}{% endif %}</p></div>
+  <div class="actions"><a class="btn btn-secondary" href="{% url 'finance:receipt_print' r.pk %}" target="_blank" rel="noopener">{% include "components/icon.html" with name="printer" %} Print</a><a class="btn btn-secondary" href="{% url 'finance:receipt_pdf' r.pk %}">{% include "components/icon.html" with name="download-file" %} PDF</a></div></div>
+<div class="grid grid-2"><div class="card"><dl class="dl"><dt>Received</dt><dd>{{ r.received_at|ds_datetime }}</dd><dt>Amount in words</dt><dd>{{ words }}</dd><dt>Client</dt><dd>{{ r.client.full_name|default:"—" }}</dd><dt>Invoice</dt><dd>{% if r.invoice %}<a href="{{ r.invoice.get_absolute_url }}">{{ r.invoice.number }}</a> · balance after: {{ r.invoice.balance|money:r.invoice.currency }}{% else %}—{% endif %}</dd>{% if r.account_ref %}<dt>Paid under ref.</dt><dd>{{ r.account_ref }}</dd>{% endif %}{% if r.note %}<dt>Note</dt><dd>{{ r.note }}</dd>{% endif %}</dl></div>
+  {% if match_form and can_manage %}<div class="card"><div class="card-head"><h2>Match to an invoice</h2></div><form method="post" action="{% url 'finance:receipt_match' r.pk %}" class="stack" style="gap:10px">{% csrf_token %}{{ match_form.invoice }}<button class="btn btn-primary" type="submit">Match</button></form></div>{% endif %}</div>
+{% endblock %}

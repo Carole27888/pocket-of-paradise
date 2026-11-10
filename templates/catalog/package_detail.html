@@ -1,0 +1,47 @@
+{% extends "base.html" %}{% load l10n static %}
+{% block title %}{{ object.title }}{% endblock %}
+{% block content %}
+<div class="page-header">
+  <div>
+    <div class="crumbs"><a href="{% url 'catalog:packages' %}">Tour Packages</a><span>/</span><span>{{ object.code }}</span></div>
+    <h1>{{ object.title }}</h1>
+    <p>{{ object.code }} · {{ object.get_package_type_display }} · {{ object.duration_label }} · {{ object.get_difficulty_display }}</p>
+  </div>
+  <div class="actions">
+    {% if request.user.can_edit_packages %}
+      <a class="btn btn-secondary" href="{% url 'catalog:package_edit' object.slug %}">{% include "components/icon.html" with name="edit" %} Edit</a>
+      <a class="btn btn-secondary" href="{% url 'catalog:package_itinerary' object.slug %}">{% include "components/icon.html" with name="route" %} Itinerary</a>
+    {% endif %}
+    <a class="btn btn-accent" href="{% url 'leads:create' %}?package={{ object.pk|unlocalize }}">{% include "components/icon.html" with name="plus" %} New enquiry</a>
+  </div>
+</div>
+<div class="cover-hero">{% if object.cover_photo %}<img src="{{ object.cover_photo.url }}" alt="{{ object.title }}">{% else %}<div class="ph">{% include "components/icon.html" with name="tree" %}</div>{% endif %}</div>
+<div class="grid grid-4 mb-4">
+  <div class="card kpi kpi-accent"><span class="kpi-label">Price per person</span><span class="kpi-value">{{ object.price_per_person|money:object.currency }}</span></div>
+  {% include "components/kpi_card.html" with label="Single supplement" value=object.single_supplement|money:object.currency %}
+  {% include "components/kpi_card.html" with label="Child rate" value=object.child_rate|money:object.currency %}
+  <div class="card kpi"><span class="kpi-label">Group size</span><span class="kpi-value">{{ object.min_group }}–{{ object.max_group }}</span><span class="kpi-delta">{{ open_enquiries }} open enquir{{ open_enquiries|pluralize:"y,ies" }}</span></div>
+</div>
+<div class="grid grid-main-side">
+  <div class="stack">
+    <div class="card">
+      <div class="card-head"><h2>Day-by-day itinerary</h2>{% if request.user.can_edit_packages %}<a href="{% url 'catalog:package_itinerary' object.slug %}">Edit days →</a>{% endif %}</div>
+      {% if object.summary %}<p class="text-muted">{{ object.summary }}</p>{% endif %}
+      {% if days %}<ol class="itinerary mt-4">{% for day in days %}{% include "components/itinerary_day_card.html" %}{% endfor %}</ol>
+      {% else %}{% include "components/empty_state.html" with icon="route" title="No itinerary yet" text="Add the day-by-day plan so consultants can quote it." %}{% endif %}
+    </div>
+    <div class="card card-flush"><div class="card-head"><h2>Recent enquiries</h2></div>{% include "leads/partials/mini_table.html" with rows=enquiries %}</div>
+  </div>
+  <div class="stack">
+    <div class="card">
+      <div class="card-head"><h2>Status</h2>{% if object.status == "published" %}{% status_pill "Published" "success" %}{% elif object.status == "seasonal" %}{% status_pill "Seasonal" "warning" %}{% elif object.status == "draft" %}{% status_pill "Draft" "neutral" %}{% else %}{% status_pill "Retired" "danger" %}{% endif %}</div>
+      <p class="section-title">Destinations</p>
+      <div class="chips mb-4">{% for d in object.destinations.all %}<a class="chip" href="{{ d.get_absolute_url }}">{% include "components/icon.html" with name="map-pin" size="14" %}{{ d.name }}</a>{% endfor %}</div>
+      <p class="section-title">Included</p>
+      <ul class="tick-list mb-4">{% for i in object.inclusion_list %}<li>{% include "components/icon.html" with name="check" %}{{ i }}</li>{% empty %}<li class="text-muted">Not specified</li>{% endfor %}</ul>
+      <p class="section-title">Not included</p>
+      <ul class="tick-list no">{% for i in object.exclusion_list %}<li>{% include "components/icon.html" with name="x" %}{{ i }}</li>{% empty %}<li class="text-muted">Not specified</li>{% endfor %}</ul>
+    </div>
+  </div>
+</div>
+{% endblock %}

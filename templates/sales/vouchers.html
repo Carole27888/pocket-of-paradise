@@ -1,0 +1,19 @@
+<!doctype html><html lang="en-GB"><head><meta charset="utf-8"><title>Vouchers · {{ it.title }}</title>
+<style>@page{size:A4;margin:16mm}*{box-sizing:border-box}body{font-family:Helvetica,Arial,sans-serif;color:#2B2014;font-size:11pt;margin:0}
+.v{page-break-after:always;border:1.5px solid #195D5A;border-radius:4mm;padding:10mm 11mm;position:relative;min-height:230mm}.v:last-child{page-break-after:auto}
+.hd{display:flex;justify-content:space-between;align-items:flex-start;border-bottom:3px solid #EDA036;padding-bottom:6mm;margin-bottom:8mm}.hd img{height:20mm}.hd .t{text-align:right}.hd .t b{display:block;font-size:20pt;color:#195D5A;letter-spacing:.06em}
+.hd .t small{color:#7a6c66}h2{font:bold 22pt Georgia,serif;color:#195D5A;margin:0 0 2mm}.sub{color:#7a6c66;margin:0 0 8mm}
+table{width:100%;border-collapse:collapse}td{padding:3.2mm 0;border-bottom:1px solid #eadfce;vertical-align:top}td:first-child{width:46mm;color:#7a6c66;font-size:9.5pt;text-transform:uppercase;letter-spacing:.08em}td:last-child{font-weight:bold}
+.note{margin-top:8mm;background:#FBF5EA;border-left:3mm solid #EDA036;padding:4mm 5mm;font-size:10pt;color:#4b3e39}.ft{position:absolute;left:11mm;right:11mm;bottom:9mm;font-size:9pt;color:#7a6c66;border-top:1px solid #eadfce;padding-top:3mm;display:flex;justify-content:space-between}
+.sig{margin-top:14mm;display:flex;gap:10mm}.sig div{flex:1;border-top:1px solid #7a6c66;padding-top:2mm;font-size:9pt;color:#7a6c66}</style></head><body>
+{% for s in stays %}<section class="v">
+<div class="hd">{% if logo %}<img src="{{ logo }}" alt="{{ company.name }}">{% else %}<b>{{ company.name }}</b>{% endif %}<div class="t"><b>ACCOMMODATION VOUCHER</b><small>{{ ref }} · voucher {{ forloop.counter }} of {{ stays|length }}</small></div></div>
+<h2>{{ s.lodge.name }}</h2><p class="sub">{{ s.destination.name }}{% if s.lodge.get_accommodation_type_display %} · {{ s.lodge.get_accommodation_type_display }}{% endif %}</p>
+<table><tr><td>Guest</td><td>{{ it.enquiry.client.full_name }}</td></tr><tr><td>Party</td><td>{{ it.enquiry.party_label }} ({{ it.pax }} guest{{ it.pax|pluralize }})</td></tr>
+{% if s.check_in %}<tr><td>Check-in</td><td>{{ s.check_in|date:"l j F Y" }}</td></tr><tr><td>Check-out</td><td>{{ s.check_out|date:"l j F Y" }}</td></tr>{% endif %}
+<tr><td>Nights</td><td>{{ s.nights }}</td></tr>{% if s.room %}<tr><td>Room</td><td>{{ s.room }}</td></tr>{% endif %}<tr><td>Meal plan</td><td>{{ s.meals }}</td></tr><tr><td>Booking reference</td><td>{{ ref }}</td></tr>
+{% if s.lodge.contact_name or s.lodge.contact_phone %}<tr><td>Lodge contact</td><td>{{ s.lodge.contact_name }} {{ s.lodge.contact_phone }}</td></tr>{% endif %}</table>
+<div class="note">Please receive the guests above on the dates shown. Charges for this stay are settled by {{ company.name }}; guests pay only for personal extras such as drinks and curios.</div>
+<div class="sig"><div>Issued by {{ company.name }}</div><div>Received by the lodge</div></div>
+<div class="ft"><span>{{ company.name }}{% if company.phone %} · {{ company.phone }}{% endif %}{% if company.email %} · {{ company.email }}{% endif %}</span><span>{{ today|date:"j M Y" }}</span></div></section>
+{% empty %}<p>This itinerary has no lodges yet.</p>{% endfor %}</body></html>

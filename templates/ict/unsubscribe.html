@@ -1,0 +1,6 @@
+{% load static %}<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex"><title>Unsubscribe</title>
+<style>body{margin:0;background:#FBF5EA;font:16px/1.6 system-ui,sans-serif;color:#2B2014;display:grid;place-items:center;min-height:100vh;padding:16px}.c{background:#fff;border:1px solid #EDE3D3;border-radius:16px;padding:28px;max-width:440px;text-align:center}button{background:#1F6F6B;color:#fff;border:0;border-radius:10px;padding:12px 22px;font:inherit;font-weight:700;cursor:pointer}</style></head>
+<body><div class="c"><img src="{% static 'brand/logo-full.png' %}" alt="Pocket of Paradise Travel Company" style="max-width:150px;margin-bottom:10px">
+{% if bad %}<h1 style="font-size:20px">This link isn't valid</h1><p>It may be incomplete. Reply to any of our messages and we'll remove you by hand.</p>
+{% elif done %}<h1 style="font-size:20px">You're unsubscribed</h1><p>{{ value }} won't receive bulk messages from us any more.</p>
+{% else %}<h1 style="font-size:20px">Stop receiving our bulk messages?</h1><p>{{ value }}</p><form method="post">{% csrf_token %}<button type="submit">Yes, unsubscribe me</button></form>{% endif %}</div></body></html>

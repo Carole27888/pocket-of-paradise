@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% block title %}Main menu{% endblock %}
+{% block content %}
+<section class="home-head">
+  <h1>Jambo, {{ request.user.full_name|default:request.user.email }}</h1>
+  <p>{% now "l, j F Y" %} · Choose a module to get started.</p>
+</section>
+{% if plan_due %}<section class="plan-nudge {{ plan_due.kind }}" role="alert"><span class="pn-ico">{% include "components/icon.html" with name="alert" size="22" %}</span><div class="grow"><b>{{ plan_due.title }} <span class="req-tag">Required</span></b><p>{{ plan_due.text }}</p></div><a class="btn btn-primary" href="{% url 'system:todo' %}#my-week">{{ plan_due.cta }}</a></section>{% endif %}
+{% if day_chips %}<div class="stat-grid cols-4" aria-label="Your day">{% for c in day_chips|slice:":4" %}<a class="stat{% if c.alert %} alert{% endif %}" href="{{ c.url }}"><span class="stat-ico">{% include "components/icon.html" with name=c.icon %}</span><div><small>{{ c.label }}</small><b>{{ c.value }}</b></div></a>{% endfor %}</div>{% endif %}
+{% for a in notices %}<section class="notice {% if a.level == 'important' %}important{% endif %}" aria-label="Notice"><b>{% include "components/icon.html" with name="megaphone" size="18" %} {{ a.title }}</b><p>{{ a.body|truncatechars:240|linebreaksbr }}</p><a href="{% url 'notifications:board' %}">Notice board →</a></section>{% endfor %}
+{% include "components/clock_widget.html" %}
+<h2 class="home-section">Modules</h2>
+<div class="module-grid">
+  {% for t in tiles %}
+    {% if t.allowed and t.module.available %}
+      <a class="module-tile" data-mod="{{ t.module.key }}" href="{{ t.url }}">
+        <span class="ico">{% include "components/icon.html" with name=t.module.icon %}</span>
+        <h2 style="font-size:17px">{{ t.module.name }}</h2>
+        <p>{{ t.module.description }}</p>
+        <span class="open-link">Open {% include "components/icon.html" with name="chevron-right" size="14" %}</span>
+      </a>
+    {% else %}
+      <div class="module-tile locked" aria-disabled="true">
+        <span class="ico">{% include "components/icon.html" with name=t.module.icon %}</span>
+        <h2 style="font-size:17px">{{ t.module.name }}</h2>
+        <p>{{ t.module.description }}</p>
+        <span class="corner pill pill-neutral">{% include "components/icon.html" with name="lock" size="12" %} Phase {{ t.module.phase }}</span>
+      </div>
+    {% endif %}
+  {% endfor %}
+</div>
+{% if briefing %}<details class="card mb-4 home-brief" aria-label="Your briefing"><summary><span>{% include "components/icon.html" with name="sparkles" size="16" %} {{ briefing.title }}</span><a href="{% url 'coach:inbox' %}">All messages →</a></summary><div class="text-sm" style="white-space:pre-wrap;max-height:260px;overflow:auto;margin-top:10px">{{ briefing.body }}</div></details>{% endif %}
+{% if setup %}<section class="card mb-4 setup" aria-label="Finish setting up"><div class="card-head"><h2>Finish setting up</h2><span class="sub">{{ setup.done }} of {{ setup.total }} done</span></div>
+  <div class="setup-bar" role="progressbar" aria-valuenow="{{ setup.percent }}" aria-valuemin="0" aria-valuemax="100"><i style="width:{{ setup.percent }}%"></i></div>
+  <ul class="setup-list">{% for r in setup.rows %}{% if not r.done %}<li><a href="{{ r.url }}"><span class="s-dot"></span><span><b>{{ r.label }}</b><small>{{ r.hint }}</small></span></a></li>{% endif %}{% endfor %}</ul></section>{% endif %}
+{% endblock %}

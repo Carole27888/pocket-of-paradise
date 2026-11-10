@@ -1,0 +1,5 @@
+<form method="post" action="{{ request.get_full_path }}" enctype="multipart/form-data" novalidate data-modal-form-body>
+  {% csrf_token %}
+  {% include "components/form_fields.html" %}
+  <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:14px"><button type="button" class="btn btn-secondary" data-modal-close>Cancel</button><button type="submit" class="btn btn-primary">{% include "components/icon.html" with name="check" %} Save</button></div>
+</form>

@@ -1,0 +1,15 @@
+<li class="itin-day">
+  <div class="itin-num"><div><small>Day</small><b>{{ day.day_number }}</b></div></div>
+  <div class="itin-body">
+    {% if day.picture_url %}<img class="itin-photo" src="{{ day.picture_url }}" alt="{{ day.title }}" loading="lazy">{% endif %}
+    <h3>{{ day.title }}</h3>
+    {% if day.description %}<p>{{ day.description|linebreaksbr }}</p>{% endif %}
+    <div class="itin-facts">
+      {% if day.destination %}<span>{% include "components/icon.html" with name="map-pin" %}{{ day.destination.name }}</span>{% endif %}
+      {% if day.accommodation %}<span>{% include "components/icon.html" with name="bed" %}{{ day.accommodation.name }}</span>{% endif %}
+      <span>{% include "components/icon.html" with name="utensils" %}<span class="meals" aria-label="Meals: {{ day.meals_code|default:'none' }}"><i class="{% if day.breakfast %}on{% endif %}">B</i><i class="{% if day.lunch %}on{% endif %}">L</i><i class="{% if day.dinner %}on{% endif %}">D</i></span></span>
+      {% if day.drive_km or day.drive_hours %}<span>{% include "components/icon.html" with name="route" %}{% if day.drive_km %}{{ day.drive_km }} km{% endif %}{% if day.drive_hours %} · {{ day.drive_hours }} h{% endif %}</span>{% endif %}
+    </div>
+    {% if day.activity_list %}<div class="chips mt-2">{% for a in day.activity_list %}<span class="pill pill-accent">{{ a }}</span>{% endfor %}</div>{% endif %}
+  </div>
+</li>

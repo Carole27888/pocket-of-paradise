@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% block title %}Users & Roles{% endblock %}
+{% block content %}
+<div class="page-header">
+  <div><h1>Users & Roles</h1><p>Sign-in accounts, their roles and linked staff profiles.</p></div>
+  <div class="actions"><a class="btn btn-primary" href="{% url 'accounts:user_create' %}">{% include "components/icon.html" with name="plus" %} New user</a></div>
+</div>
+<div class="grid grid-main-side">
+  <div class="card card-flush">
+    <div class="table-wrap"><table class="table stack-phone">
+      <thead><tr><th>User</th><th>Roles</th><th>Staff profile</th><th>Last sign-in</th><th>Status</th><th></th></tr></thead>
+      <tbody>
+      {% for u in users %}
+        <tr>
+          <td class="cell-first"><div class="flex items-center gap-2"><span class="avatar avatar-sm">{{ u.initials }}</span><div><div class="cell-main">{{ u.full_name }}</div><div class="cell-sub">{{ u.email }}</div></div></div></td>
+          <td data-label="Roles">{% for g in u.groups.all %}<span class="pill pill-brand" style="margin:2px 2px 2px 0">{{ g.name }}</span>{% empty %}{% if u.is_superuser %}<span class="pill pill-accent">Superuser</span>{% else %}—{% endif %}{% endfor %}</td>
+          <td data-label="Staff">{% if u.employee %}<a href="{{ u.employee.get_absolute_url }}">{{ u.employee.title|default:"Profile" }}</a>{% else %}<span class="text-muted">—</span>{% endif %}</td>
+          <td data-label="Last sign-in">{{ u.last_login|ds_datetime }}</td>
+          <td data-label="Status">{% if u.is_active %}{% status_pill "Active" "success" %}{% else %}{% status_pill "Disabled" "danger" %}{% endif %}</td>
+          <td class="text-right"><a class="btn btn-sm btn-secondary" href="{% url 'accounts:user_edit' u.pk %}">Edit</a>{% if u.totp_enabled %} <form method="post" action="{% url 'accounts:reset_2fa' u.pk %}" style="display:inline" onsubmit="return confirm('Reset two-factor for {{ u.full_name|escapejs }}?')">{% csrf_token %}<button class="btn btn-sm btn-ghost" type="submit" title="2FA is on: reset if they are locked out">Reset 2FA</button></form>{% endif %}</td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table></div>
+  </div>
+  <div class="card">
+    <div class="card-head"><h2>What each role can do</h2></div>
+    <dl class="dl">{% for r, d in role_descriptions.items %}<dt>{{ r }}</dt><dd>{{ d }}</dd>{% endfor %}</dl>
+  </div>
+</div>
+{% endblock %}

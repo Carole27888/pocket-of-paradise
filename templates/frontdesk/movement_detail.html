@@ -1,0 +1,78 @@
+{% extends "base.html" %}
+{% block title %}{{ mv.reference }}{% endblock %}
+{% block content %}
+<div class="page-header">
+  <div><div class="crumbs"><a href="{% url 'frontdesk:movement' %}">Trip Movement</a><span>/</span><span>{{ mv.reference }}</span></div>
+    <h1>{{ mv.subject_label }} <span class="text-muted" style="font-weight:600">· {{ mv.destination_label }}</span></h1>
+    <p>{{ mv.reference }} · {{ mv.get_purpose_display }}{% if mv.passengers %} · {{ mv.passengers }} passenger{{ mv.passengers|pluralize }}{% endif %}</p></div>
+  <div class="actions">
+    {% if mv.is_open %}{% if mv.is_late %}{% status_pill mv.late_label|add:" late" "danger" %}{% else %}{% status_pill "Out" "warning" %}{% endif %}
+    {% elif mv.returned_late %}{% status_pill "Back, "|add:mv.late_label|add:" late" "warning" %}{% else %}{% status_pill "Back on time" "success" %}{% endif %}
+  </div>
+</div>
+
+<div class="grid grid-main-side">
+  <div class="stack">
+    {% if form %}
+    <form method="post" novalidate class="card" style="border-top:3px solid var(--accent)">
+      {% csrf_token %}
+      <div class="card-head"><h2>Check in</h2><span class="sub">Expected back {{ mv.expected_return_at|ds_datetime }}</span></div>
+      {% if form.non_field_errors %}<div class="alert alert-danger mb-4">{{ form.non_field_errors|join:" " }}</div>{% endif %}
+      <div class="form-grid">
+        {% include "frontdesk/partials/field.html" with f=form.checked_in_at %}
+        {% if form.odometer_in %}{% include "frontdesk/partials/field.html" with f=form.odometer_in %}
+        {% include "frontdesk/partials/field.html" with f=form.fuel_in %}
+        {% include "frontdesk/partials/field.html" with f=form.condition_in %}{% endif %}
+        {% include "frontdesk/partials/field.html" with f=form.notes_in full=True %}
+      </div>
+      <div class="form-actions"><button class="btn btn-primary" type="submit">{% include "components/icon.html" with name="check" %} Check in</button></div>
+    </form>
+    {% elif mv.is_open %}
+    <div class="alert alert-info">{% include "components/icon.html" with name="clock" %}<span class="grow">Still out. The reservations desk checks it in on return.</span></div>
+    {% endif %}
+    <div class="card">
+      <div class="card-head"><h2>Check-out</h2><span class="sub">{{ mv.checked_out_by|default:"" }}</span></div>
+      <dl class="dl">
+        <dt>Left</dt><dd>{{ mv.checked_out_at|ds_datetime }}</dd>
+        <dt>Expected back</dt><dd class="{% if mv.is_late %}text-late{% endif %}">{{ mv.expected_return_at|ds_datetime }}</dd>
+        {% if mv.vehicle %}<dt>Odometer</dt><dd>{{ mv.odometer_out|floatformat:"0g"|default:"—" }} km</dd>
+        <dt>Fuel</dt><dd>{{ mv.get_fuel_out_display|default:"—" }}</dd>{% endif %}
+        {% if mv.notes_out %}<dt>Notes</dt><dd>{{ mv.notes_out|linebreaksbr }}</dd>{% endif %}
+      </dl>
+    </div>
+    {% if not mv.is_open %}
+    <div class="card">
+      <div class="card-head"><h2>Check-in</h2><span class="sub">{{ mv.checked_in_by|default:"" }}</span></div>
+      <dl class="dl">
+        <dt>Returned</dt><dd class="{% if mv.returned_late %}text-late{% endif %}">{{ mv.checked_in_at|ds_datetime }}{% if mv.returned_late %} ({{ mv.late_label }} late){% endif %}</dd>
+        {% if mv.vehicle %}<dt>Odometer</dt><dd>{{ mv.odometer_in|floatformat:"0g"|default:"—" }} km{% if mv.distance_km is not None %} · {{ mv.distance_km }} km driven{% endif %}</dd>
+        <dt>Fuel</dt><dd>{{ mv.get_fuel_in_display|default:"—" }}</dd>
+        <dt>Condition</dt><dd>{{ mv.get_condition_in_display|default:"—" }}</dd>{% endif %}
+        {% if mv.notes_in %}<dt>Notes</dt><dd>{{ mv.notes_in|linebreaksbr }}</dd>{% endif %}
+      </dl>
+    </div>{% endif %}
+  </div>
+  <div class="stack">
+    <div class="card">
+      <div class="card-head"><h2>Who & what</h2></div>
+      <div class="list">
+        {% if mv.vehicle %}<a class="list-item row-link" href="{{ mv.vehicle.get_absolute_url }}" style="color:inherit">
+          <span class="avatar avatar-sm">{% include "components/icon.html" with name="truck" size="14" %}</span>
+          <div class="grow"><div class="title">{{ mv.vehicle }}</div><div class="meta">{{ mv.vehicle.get_vehicle_type_display }} · {{ mv.vehicle.seats }} seats</div></div>
+          {% include "fleet/partials/vehicle_status.html" with v=mv.vehicle %}</a>{% endif %}
+        {% for p in mv.crew %}<a class="list-item row-link" href="{{ p.get_absolute_url }}" style="color:inherit">
+          <span class="avatar avatar-sm">{{ p.initials }}</span>
+          <div class="grow"><div class="title">{{ p.full_name }}</div><div class="meta">{% if p == mv.driver and p == mv.guide %}Driver & guide{% elif p == mv.driver %}Driver{% else %}Guide{% endif %}{% if p.phone %} · {{ p.phone|phone }}{% endif %}</div></div>
+          {% if p.phone %}<span class="text-brand">{% include "components/icon.html" with name="phone" size="16" %}</span>{% endif %}</a>{% endfor %}
+      </div>
+    </div>
+    {% if mv.enquiry %}
+    <div class="card">
+      <div class="card-head"><h2>Booking</h2></div>
+      <a class="list-item row-link" href="{{ mv.enquiry.get_absolute_url }}" style="color:inherit">
+        <div class="grow"><div class="title">{{ mv.enquiry.client.full_name }}</div><div class="meta">{{ mv.enquiry.reference }} · {{ mv.enquiry.interest_label }} · {{ mv.enquiry.party_label }}</div></div>
+        {% stage_pill mv.enquiry %}</a>
+    </div>{% endif %}
+  </div>
+</div>
+{% endblock %}

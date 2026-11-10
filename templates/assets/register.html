@@ -1,0 +1,20 @@
+{% extends "base.html" %}{% load l10n %}
+{% block title %}Fixed Assets{% endblock %}
+{% block content %}
+<div class="page-header"><div><h1>Fixed Assets</h1><p>Straight-line depreciation, posted to the ledger on the 1st of each month for the month just ended.</p></div>
+{% if can_edit %}<form method="post" class="actions">{% csrf_token %}<input type="hidden" name="action" value="depreciate"><button class="btn btn-secondary" type="submit">Post this month's depreciation</button></form>{% endif %}</div>
+<div class="grid grid-4 mb-4">{% include "components/kpi_card.html" with label="Cost (in service)" value=cost|floatformat:0 %}{% include "components/kpi_card.html" with label="Net book value" value=book|floatformat:0 accent=True %}{% include "components/kpi_card.html" with label="Assets" value=assets|length %}{% include "components/kpi_card.html" with label="In service" value=active_count %}</div>
+<div class="grid grid-main-side"><div class="card"><div class="card-head"><h2>Register</h2></div>
+{% for a in assets %}<div class="list-item"><div class="grow"><div class="fw-700">{{ a.tag }} · {{ a.name }}</div><div class="text-xs text-muted">{{ a.get_category_display }}{% if a.assigned_to %} · {{ a.assigned_to.full_name }}{% endif %}{% if a.location %} · {{ a.location }}{% endif %} · bought {{ a.purchase_date|ds_date }}</div></div>
+<div class="text-right"><div>{{ a.book_value|floatformat:0 }}</div><div class="text-xs text-muted">cost {{ a.cost|floatformat:0 }}</div></div>
+{% if a.status == "disposed" %}{% status_pill "Disposed" "neutral" %}{% elif can_edit %}<form method="post" onsubmit="return confirm('Mark as disposed?')">{% csrf_token %}<input type="hidden" name="action" value="dispose"><input type="hidden" name="pk" value="{{ a.pk|unlocalize }}"><button class="btn btn-ghost btn-sm" type="submit">Dispose</button></form>{% endif %}</div>
+{% empty %}<p class="text-muted text-sm">No assets yet.</p>{% endfor %}</div>
+<div class="stack">{% if can_edit %}<div class="card"><div class="card-head"><h2>Add asset</h2></div><form method="post" class="stack" style="gap:10px">{% csrf_token %}<input type="hidden" name="action" value="add">
+<div class="field"><label for="a-n">Name</label><input class="input" id="a-n" name="name" required></div>
+<div class="field"><label for="a-c">Category</label><select class="input select" id="a-c" name="category">{% for v, l in categories %}<option value="{{ v }}">{{ l }}</option>{% endfor %}</select></div>
+<div class="flex gap-2"><div class="field"><label for="a-k">Cost (KES)</label><input class="input" id="a-k" type="number" step="0.01" name="cost" required></div><div class="field"><label for="a-r">Residual</label><input class="input" id="a-r" type="number" step="0.01" name="residual" value="0"></div></div>
+<div class="flex gap-2"><div class="field"><label for="a-l">Life (months)</label><input class="input" id="a-l" type="number" name="life" value="60"></div><div class="field"><label for="a-d">Bought</label><input class="input" id="a-d" type="date" name="purchase_date" value="{{ today|date:'Y-m-d' }}"></div></div>
+<div class="field"><label for="a-e">Assigned to</label><select class="input select" id="a-e" name="assigned_to"><option value="">—</option>{% for e in employees %}<option value="{{ e.pk|unlocalize }}">{{ e.full_name }}</option>{% endfor %}</select></div>
+<div class="field"><label for="a-s">Serial / location</label><input class="input" id="a-s" name="serial" placeholder="Serial no."><input class="input mt-2" name="location" placeholder="Location"></div><button class="btn btn-primary" type="submit">Add</button></form></div>{% endif %}
+<div class="card"><div class="card-head"><h2>Depreciation runs</h2></div>{% for r in runs %}<div class="list-item"><span class="grow">{{ r.period }}</span><b>{{ r.amount|floatformat:2 }}</b></div>{% empty %}<p class="text-muted text-sm">None yet.</p>{% endfor %}</div></div></div>
+{% endblock %}

@@ -1,0 +1,9 @@
+{% extends "base.html" %}
+{% block title %}Agents{% endblock %}
+{% block content %}
+<div class="page-header"><div><h1>Agents</h1><p>Who answers the leads that come from social media, and how fast. {{ start|ds_date }} – {{ end|ds_date }}</p></div>
+  <div class="actions"><form method="get"><select class="input" name="range" onchange="this.form.submit()" aria-label="Period">{% for k, label in ranges %}<option value="{{ k }}" {% if k == range_key %}selected{% endif %}>{{ label }}</option>{% endfor %}</select></form></div></div>
+<div class="card card-flush"><div class="table-wrap"><table class="table stack-phone"><thead><tr><th>Agent</th><th class="text-right">Leads given</th><th class="text-right">Answered</th><th class="text-right">Avg first response</th><th class="text-right">Won</th><th class="text-right">Conversion</th></tr></thead><tbody>
+{% for r in rows %}<tr><td class="cell-first">{{ r.agent.full_name }}</td><td data-label="Leads" class="text-right">{{ r.leads }}</td><td data-label="Answered" class="text-right">{{ r.answered }}</td><td data-label="Response" class="text-right">{% if r.response is not None %}{{ r.response }} min{% else %}–{% endif %}</td><td data-label="Won" class="text-right">{{ r.won }}</td><td data-label="Conversion" class="text-right">{{ r.conversion }}%</td></tr>
+{% empty %}<tr><td colspan="6">{% include "components/empty_state.html" with icon="users" title="No social leads assigned" text="Leads from Facebook, Instagram, TikTok, Google and YouTube that are assigned to agents show up here." %}</td></tr>{% endfor %}</tbody></table></div></div>
+{% endblock %}

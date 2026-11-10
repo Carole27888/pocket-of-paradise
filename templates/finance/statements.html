@@ -1,0 +1,24 @@
+{% extends "base.html" %}{% load static %}
+{% block title %}Financial Statements{% endblock %}
+{% block extra_css %}<link rel="stylesheet" href="{% static 'css/sales.css' %}">{% endblock %}
+{% block content %}
+<div class="page-header"><div><h1>Financial Statements</h1><p>Generated from the journal · {{ start|ds_date }} – {{ end|ds_date }}</p></div>
+  <div class="actions">{% include "sales/partials/range_bar.html" %}</div></div>
+<nav class="tabs mb-4" style="padding:0">{% for k, l in tabs %}<a href="?type={{ k }}&range={{ range_key }}" class="{% if kind == k %}active{% endif %}">{{ l }}</a>{% endfor %}</nav>
+{% if kind == "income" %}
+<div class="card card-flush"><div class="card-head"><h2>Income statement</h2><a href="{% url 'finance:report' 'income-statement' %}?range={{ range_key }}&export=xlsx">{% include "components/icon.html" with name="download" size="14" %} Excel</a></div><div class="table-wrap mt-3"><table class="table">
+  {% for group, rows in pnl.sections.items %}<tr class="grp"><th colspan="2">{{ group }}</th></tr>{% for r in rows %}<tr><td>{{ r.account.name }}</td><td class="num">{{ r.amount|money }}</td></tr>{% endfor %}{% if group == "Cost of sales" %}<tr class="sub"><td><b>Gross profit</b></td><td class="num"><b>{{ pnl.gross_profit|money }}</b></td></tr>{% endif %}{% endfor %}
+  <tr class="sub"><td><b>Net profit</b></td><td class="num"><b>{{ pnl.net_profit|money }}</b></td></tr></table></div></div>
+{% elif kind == "balance" %}
+<div class="card card-flush"><div class="card-head"><h2>Balance sheet · {{ end|ds_date }}</h2><a href="{% url 'finance:report' 'balance-sheet' %}?range={{ range_key }}&export=xlsx">{% include "components/icon.html" with name="download" size="14" %} Excel</a></div><div class="table-wrap mt-3"><table class="table">
+  <tr class="grp"><th colspan="2">Assets</th></tr>{% for g, rows in bs.groups.asset.items %}{% for r in rows %}<tr><td>{{ r.account.name }}</td><td class="num">{{ r.amount|money }}</td></tr>{% endfor %}{% endfor %}<tr class="sub"><td><b>Total assets</b></td><td class="num"><b>{{ bs.assets|money }}</b></td></tr>
+  <tr class="grp"><th colspan="2">Liabilities</th></tr>{% for g, rows in bs.groups.liability.items %}{% for r in rows %}<tr><td>{{ r.account.name }}</td><td class="num">{{ r.amount|money }}</td></tr>{% endfor %}{% endfor %}<tr class="sub"><td><b>Total liabilities</b></td><td class="num"><b>{{ bs.liabilities|money }}</b></td></tr>
+  <tr class="grp"><th colspan="2">Equity</th></tr>{% for g, rows in bs.groups.equity.items %}{% for r in rows %}<tr><td>{{ r.account.name }}</td><td class="num">{{ r.amount|money }}</td></tr>{% endfor %}{% endfor %}<tr><td>Current-year earnings</td><td class="num">{{ bs.current_earnings|money }}</td></tr><tr class="sub"><td><b>Total equity</b></td><td class="num"><b>{{ bs.equity|money }}</b></td></tr>
+  <tr class="sub"><td>Check: assets − liabilities − equity</td><td class="num {% if bs.balanced %}text-success{% else %}text-danger{% endif %}"><b>{{ bs.check|money }}</b> {% if bs.balanced %}✓ balanced{% else %}✕ out of balance{% endif %}</td></tr></table></div></div>
+{% else %}
+<div class="card card-flush"><div class="card-head"><h2>Cash flow (indirect)</h2><a href="{% url 'finance:report' 'cash-flow' %}?range={{ range_key }}&export=xlsx">{% include "components/icon.html" with name="download" size="14" %} Excel</a></div><div class="table-wrap mt-3"><table class="table">
+  <tr class="grp"><th colspan="2">Operating activities</th></tr><tr><td>Net profit</td><td class="num">{{ cf.net_profit|money }}</td></tr><tr><td>Depreciation</td><td class="num">{{ cf.depreciation|money }}</td></tr>{% for k, v in cf.working_capital %}<tr><td>{{ k }}</td><td class="num">{{ v|money }}</td></tr>{% endfor %}<tr class="sub"><td><b>Net cash from operations</b></td><td class="num"><b>{{ cf.operating|money }}</b></td></tr>
+  <tr><td>Investing activities</td><td class="num">{{ cf.investing|money }}</td></tr><tr><td>Financing activities</td><td class="num">{{ cf.financing|money }}</td></tr><tr class="sub"><td><b>Net change in cash</b></td><td class="num"><b>{{ cf.net_change|money }}</b></td></tr>
+  <tr><td>Opening cash</td><td class="num">{{ cf.opening_cash|money }}</td></tr><tr><td>Closing cash</td><td class="num">{{ cf.closing_cash|money }}</td></tr><tr class="sub"><td>Check (should be 0)</td><td class="num">{{ cf.check|money }}</td></tr></table></div></div>
+{% endif %}
+{% endblock %}

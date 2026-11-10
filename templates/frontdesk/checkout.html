@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+{% block title %}Check out{% endblock %}
+{% block content %}
+<div class="page-header">
+  <div><div class="crumbs"><a href="{% url 'frontdesk:movement' %}">{% include "components/icon.html" with name="arrow-left" size="14" %} Trip Movement</a></div>
+    <h1>Check out</h1><p>Record a guide, driver or vehicle leaving the office. The vehicle becomes “Out on trip” and the crew “Out on trip”.</p></div>
+</div>
+{{ vehicle_odometers|json_script:"vehicle-odometers" }}
+<form method="post" novalidate class="stack"
+      x-data="{ odo: JSON.parse(document.getElementById('vehicle-odometers').textContent), v: '{{ form.vehicle.value|default:'' }}' }">
+  {% csrf_token %}
+  {% if form.non_field_errors %}<div class="alert alert-danger">{% include "components/icon.html" with name="alert" %}<span class="grow">{{ form.non_field_errors|join:" " }}</span></div>{% endif %}
+  <div class="card">
+    <p class="section-title">Vehicle & crew</p>
+    <div class="form-grid">
+      <div class="field{% if form.vehicle.errors %} invalid{% endif %}">
+        <label for="id_vehicle">Vehicle</label>
+        <select name="vehicle" id="id_vehicle" class="input select" x-model="v">
+          <option value="">No vehicle (crew only)</option>
+          {% for val, label in form.vehicle.field.choices %}{% if val %}<option value="{{ val }}" {% if form.vehicle.value|stringformat:"s" == val|stringformat:"s" %}selected{% endif %}>{{ label }}</option>{% endif %}{% endfor %}
+        </select>
+        <span class="help">{{ form.vehicle.help_text }}</span>
+        {% for e in form.vehicle.errors %}<span class="error">{{ e }}</span>{% endfor %}
+      </div>
+      {% include "frontdesk/partials/field.html" with f=form.passengers %}
+      {% include "frontdesk/partials/field.html" with f=form.driver %}
+      {% include "frontdesk/partials/field.html" with f=form.guide %}
+    </div>
+  </div>
+  <div class="card">
+    <p class="section-title">Trip</p>
+    <div class="form-grid">
+      {% include "frontdesk/partials/field.html" with f=form.purpose %}
+      {% include "frontdesk/partials/field.html" with f=form.enquiry %}
+      {% include "frontdesk/partials/field.html" with f=form.destination %}
+      {% include "frontdesk/partials/field.html" with f=form.destination_text %}
+    </div>
+  </div>
+  <div class="card">
+    <p class="section-title">Times & readings</p>
+    <div class="form-grid">
+      {% include "frontdesk/partials/field.html" with f=form.checked_out_at %}
+      {% include "frontdesk/partials/field.html" with f=form.expected_return_at %}
+      <div class="field{% if form.odometer_out.errors %} invalid{% endif %}" x-show="v" x-cloak>
+        <label for="id_odometer_out">{{ form.odometer_out.label }}</label>
+        <input type="number" name="odometer_out" id="id_odometer_out" class="input" min="0" inputmode="numeric"
+               value="{{ form.odometer_out.value|default_if_none:'' }}" :placeholder="odo[v] ?? ''">
+        <span class="help">{{ form.odometer_out.help_text }}</span>
+        {% for e in form.odometer_out.errors %}<span class="error">{{ e }}</span>{% endfor %}
+      </div>
+      <div x-show="v" x-cloak>{% include "frontdesk/partials/field.html" with f=form.fuel_out %}</div>
+      {% include "frontdesk/partials/field.html" with f=form.notes_out full=True %}
+    </div>
+  </div>
+  <div class="form-actions" style="margin-top:0">
+    <a class="btn btn-secondary" href="{% url 'frontdesk:movement' %}">Cancel</a>
+    <button type="submit" class="btn btn-primary">{% include "components/icon.html" with name="check" %} Check out</button>
+  </div>
+</form>
+{% endblock %}

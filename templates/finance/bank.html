@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+{% load l10n %}
+{% block title %}Bank Reconciliation{% endblock %}
+{% block content %}
+<div class="page-header"><div><h1>Bank Reconciliation</h1><p>Upload the bank statement, match each line to the books, and prove that the bank and the books agree.</p></div>
+  <div class="actions"><form method="get">{% if accounts|length > 1 %}<select class="input select" name="account" onchange="this.form.submit()" aria-label="Account">{% for a in accounts %}<option value="{{ a.code }}" {% if a.pk == account.pk %}selected{% endif %}>{{ a.name }}</option>{% endfor %}</select>{% endif %}</form></div></div>
+<div class="stat-grid mb-4">
+  <div class="stat"><span class="stat-ico">{% include "components/icon.html" with name="wallet" %}</span><div><small>Balance in the books</small><b>{{ s.book_balance|money }}</b></div></div>
+  <div class="stat"><span class="stat-ico">{% include "components/icon.html" with name="columns" %}</span><div><small>Last statement balance</small><b>{% if s.statement_balance is not None %}{{ s.statement_balance|money }}{% else %}–{% endif %}</b></div></div>
+  <div class="stat {% if s.unmatched_count %}alert{% endif %}"><span class="stat-ico">{% include "components/icon.html" with name="alert" %}</span><div><small>Lines to explain</small><b>{{ s.unmatched_count }}</b></div></div>
+  <div class="stat"><span class="stat-ico">{% include "components/icon.html" with name="clock" %}</span><div><small>In transit / outstanding</small><b>{{ s.deposits_in_transit|money }} / {{ s.outstanding_payments|money }}</b></div></div>
+</div>
+{% if can_act %}<div class="grid grid-2 mb-4">
+  <div class="card"><div class="card-head"><h2>Upload statement</h2></div>
+    <form method="post" action="{% url 'finance:bank_import' %}" enctype="multipart/form-data" class="stack" style="gap:10px">{% csrf_token %}<input type="hidden" name="account" value="{{ account.code }}">
+      <input class="input" type="file" name="file" accept=".csv,.xlsx" required aria-label="Statement file">
+      <p class="text-xs text-muted mb-0">CSV or Excel with a date column and either debit/credit or an amount column (and optionally narration, reference, balance). Lines already imported are skipped; matching entries are linked automatically.</p>
+      <div class="btn-row"><button class="btn btn-primary" type="submit">Import statement</button></div></form>
+    <form method="post" action="{% url 'finance:bank_auto' %}" class="mt-3">{% csrf_token %}<input type="hidden" name="account" value="{{ account.code }}"><button class="btn btn-secondary btn-sm" type="submit">Auto-match again</button></form></div>
+  <div class="card"><div class="card-head"><h2>Reconcile</h2></div>
+    <form method="post" action="{% url 'finance:bank_reconcile' %}" class="stack" style="gap:10px">{% csrf_token %}<input type="hidden" name="account" value="{{ account.code }}">
+      <div class="flex gap-2"><div class="field grow"><label for="r-d">Statement date</label><input class="input" id="r-d" type="date" name="statement_date" value="{{ today|date:'Y-m-d' }}" required></div>
+        <div class="field grow"><label for="r-b">Closing balance on the statement</label><input class="input" id="r-b" name="statement_balance" inputmode="decimal" value="{% if s.statement_balance is not None %}{{ s.statement_balance|unlocalize }}{% endif %}" required></div></div>
+      <div class="field"><label for="r-n">Notes</label><input class="input" id="r-n" name="notes"></div>
+      <div class="btn-row"><button class="btn btn-primary" type="submit">Reconcile</button></div></form></div>
+</div>{% endif %}
+<div class="mchips">{% for k, label in tabs %}<a class="mchip {% if tab == k %}active{% endif %}" href="?account={{ account.code }}&tab={{ k }}">{{ label }} ({{ counts|get_item:k }})</a>{% endfor %}</div>
+<div class="card card-flush"><div class="table-wrap"><table class="table stack-phone"><thead><tr><th>Date</th><th>Statement line</th><th class="text-right">Amount</th><th>Books</th><th></th></tr></thead><tbody>
+{% for ln in lines %}<tr><td data-label="Date">{{ ln.date|ds_date }}</td><td class="cell-first"><b>{{ ln.description|default:"(no description)" }}</b><div class="cell-sub">{{ ln.reference }}{% if ln.note %} · {{ ln.note }}{% endif %}</div></td>
+  <td data-label="Amount" class="text-right {% if ln.amount < 0 %}text-danger{% endif %}">{{ ln.amount|money }}</td>
+  <td data-label="Books">{% if ln.journal_line %}{{ ln.journal_line.entry.number }} · {{ ln.journal_line.entry.memo|truncatechars:40 }}{% elif ln.suggestions %}{% for jl in ln.suggestions %}<form method="post" action="{% url 'finance:bank_line_action' ln.pk|unlocalize %}" style="display:inline">{% csrf_token %}<input type="hidden" name="action" value="match"><input type="hidden" name="journal_line" value="{{ jl.pk|unlocalize }}"><button class="btn btn-secondary btn-sm" type="submit" {% if not can_act %}disabled{% endif %}>Match {{ jl.entry.number }} · {{ jl.entry.date|ds_date }}</button></form> {% endfor %}{% elif ln.status == "unmatched" %}<span class="text-muted text-sm">No entry in the books with this amount nearby</span>{% else %}–{% endif %}</td>
+  <td>{% if can_act %}{% if ln.status == "matched" %}<form method="post" action="{% url 'finance:bank_line_action' ln.pk|unlocalize %}">{% csrf_token %}<input type="hidden" name="action" value="unmatch"><button class="btn btn-ghost btn-sm" type="submit">Unmatch</button></form>
+    {% elif ln.status == "unmatched" %}<form method="post" action="{% url 'finance:bank_line_action' ln.pk|unlocalize %}" class="flex gap-2">{% csrf_token %}<input type="hidden" name="action" value="ignore"><input class="input" name="reason" placeholder="Reason" aria-label="Reason to ignore" style="min-width:110px"><button class="btn btn-ghost btn-sm" type="submit">Ignore</button></form>{% endif %}{% endif %}</td></tr>
+{% empty %}<tr><td colspan="5">{% include "components/empty_state.html" with icon="columns" title="Nothing here" text="Upload a bank statement to start." %}</td></tr>{% endfor %}</tbody></table></div></div>
+<div class="card card-flush mt-4"><div class="card-head" style="padding:16px 18px 0"><h2>Recent reconciliations</h2></div><div class="table-wrap mt-3"><table class="table stack-phone"><thead><tr><th>Statement date</th><th class="text-right">Statement</th><th class="text-right">Books</th><th class="text-right">Difference</th><th>By</th></tr></thead><tbody>
+{% for r in recs %}<tr><td data-label="Date">{{ r.statement_date|ds_date }}</td><td data-label="Statement" class="text-right">{{ r.adjusted_bank|money }}</td><td data-label="Books" class="text-right">{{ r.book_balance|money }}</td><td data-label="Difference" class="text-right">{% if r.balanced %}{% status_pill "Balanced" "success" %}{% else %}{% status_pill r.difference|money "warning" %}{% endif %}</td><td data-label="By">{{ r.reconciled_by|default:"–" }}</td></tr>
+{% empty %}<tr><td colspan="5" class="text-muted">No reconciliations yet.</td></tr>{% endfor %}</tbody></table></div></div>
+{% endblock %}

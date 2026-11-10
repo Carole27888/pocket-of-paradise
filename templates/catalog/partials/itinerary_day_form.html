@@ -1,0 +1,17 @@
+<div class="formset-row">
+  {% for h in form.hidden_fields %}{{ h }}{% endfor %}
+  {% if form.non_field_errors %}<div class="alert alert-danger mb-3">{{ form.non_field_errors|join:" " }}</div>{% endif %}
+  <div class="form-grid">
+    <div class="field"><label for="{{ form.day_number.id_for_label }}">Day</label>{{ form.day_number }}{% for e in form.day_number.errors %}<span class="error">{{ e }}</span>{% endfor %}</div>
+    <div class="field wide"><label for="{{ form.title.id_for_label }}">Title</label>{{ form.title }}{% for e in form.title.errors %}<span class="error">{{ e }}</span>{% endfor %}</div>
+    <div class="field"><label>Meals</label><div class="flex gap-3 items-center" style="min-height:44px">
+      <label class="flex items-center gap-1">{{ form.breakfast }} B</label><label class="flex items-center gap-1">{{ form.lunch }} L</label><label class="flex items-center gap-1">{{ form.dinner }} D</label></div></div>
+    <div class="field"><label for="{{ form.destination.id_for_label }}">Destination</label>{{ form.destination }}</div>
+    <div class="field"><label for="{{ form.accommodation.id_for_label }}">Accommodation</label>{{ form.accommodation }}</div>
+    <div class="field"><label for="{{ form.drive_km.id_for_label }}">Drive km</label>{{ form.drive_km }}</div>
+    <div class="field"><label for="{{ form.drive_hours.id_for_label }}">Drive hours</label>{{ form.drive_hours }}</div>
+    <div class="field wide"><label for="{{ form.activities.id_for_label }}">Activities (comma separated)</label>{{ form.activities }}</div>
+    <div class="field wide"><label for="{{ form.description.id_for_label }}">Description</label>{{ form.description }}</div>
+  </div>
+  {% if form.DELETE %}<label class="flex items-center gap-2 mt-3 text-sm text-danger">{{ form.DELETE }} Remove this day</label>{% endif %}
+</div>

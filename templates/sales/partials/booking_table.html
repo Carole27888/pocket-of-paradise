@@ -1,0 +1,17 @@
+<div class="table-wrap"><table class="table stack-phone enq-table">
+  <thead><tr><th>{% sort_link "booked_at" "Booking" %}</th><th>Trip</th><th>{% sort_link "travel_start" "Travel" %}</th><th>Who's that</th><th>Remark</th><th>Agent</th><th>{% sort_link "status" "Status" %}</th><th class="num">{% sort_link "total_amount" "Total" %}</th><th>Progress</th><th>Paid</th></tr></thead>
+  <tbody>{% for b in object_list %}
+    <tr>
+      <td class="cell-first"><a class="row-link cell-main" href="{{ b.get_absolute_url }}">{{ b.reference }}</a><div class="cell-sub">{{ b.client.full_name }}</div></td>
+      <td data-label="Trip">{{ b.trip_name|truncatechars:42 }}<div class="cell-sub">{{ b.party_label }}</div></td>
+      <td data-label="Travel">{{ b.travel_start|ds_date }}{% if b.travel_end %}<div class="cell-sub">to {{ b.travel_end|ds_date }}</div>{% endif %}</td>
+      <td data-label="Who's that" class="nw">{{ b.enquiry.brought_by_label|default:"—" }}</td>
+      <td data-label="Remark" title="{{ b.enquiry.remark }}">{{ b.enquiry.remark|default:"—"|truncatechars:30 }}</td>
+      <td data-label="Agent">{{ b.agent.short_name|default:"—" }}</td>
+      <td data-label="Status">{% if b.status == "cancelled" %}{% status_pill "Cancelled" "danger" %}{% elif b.status == "completed" %}{% status_pill "Completed" "neutral" %}{% elif b.status == "confirmed" %}{% status_pill "Confirmed" "success" %}{% elif b.status == "deposit" %}{% status_pill "Deposit paid" "info" %}{% else %}{% status_pill "Awaiting deposit" "warning" %}{% endif %}</td>
+      <td data-label="Total" class="num fw-700">{{ b.total_amount|money:b.currency }}</td>
+      <td data-label="Progress"><span class="dots" title="Quote → deposit → confirmed → travelled"><i class="on"></i><b class="on"></b><i class="{% if b.status != 'pending' and b.status != 'cancelled' %}on{% endif %}"></i><b class="{% if b.status == 'confirmed' or b.status == 'completed' %}on{% endif %}"></b><i class="{% if b.status == 'confirmed' or b.status == 'completed' %}on{% endif %}"></i><b class="{% if b.status == 'completed' %}on{% endif %}"></b><i class="{% if b.status == 'completed' %}on{% endif %}"></i></span></td>
+      <td data-label="Paid"><div class="bar {% if b.paid_percent >= 100 %}ok{% elif b.paid_percent >= b.deposit_percent %}warn{% else %}bad{% endif %}"><span style="width:{{ b.paid_percent }}%"></span></div><span class="text-xs text-muted">{{ b.paid_percent }}%</span></td>
+    </tr>{% empty %}<tr><td colspan="10">{% include "components/empty_state.html" with icon="briefcase" title="No bookings yet" text="Accept a quotation to create the first booking." %}</td></tr>{% endfor %}
+  </tbody></table></div>
+{% include "components/pagination.html" %}

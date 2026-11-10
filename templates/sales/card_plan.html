@@ -1,0 +1,16 @@
+{% extends "sales/_card_base.html" %}
+{% block title %}Plan your trip with {{ emp.full_name }}{% endblock %}
+{% block body %}
+<div class="card lift">
+  <h1 style="font-size:1.35rem">Tell {{ agent_first }} about your trip</h1>
+  <p class="muted" style="margin:6px 0 16px">A few details and {{ agent_first }} will come back to you with ideas and a price, usually the same day.</p>
+  {% if form.non_field_errors %}<p class="alert">{{ form.non_field_errors|join:" " }}</p>{% endif %}
+  <form method="post" class="stack" novalidate>{% csrf_token %}{{ form.website }}
+    {% for f in form.visible_fields %}{% if f.name == "date_from" %}<div class="two">{% endif %}{% if f.name == "adults" %}<div class="two">{% endif %}
+      <div><label for="{{ f.id_for_label }}">{{ f.label }}{% if f.field.required %} *{% endif %}</label>{{ f }}{% for e in f.errors %}<span class="err">{{ e }}</span>{% endfor %}</div>
+    {% if f.name == "date_to" or f.name == "children" %}</div>{% endif %}{% endfor %}
+    <button class="btn btn-a" type="submit">Send my trip request</button>
+    <p class="muted" style="font-size:.8rem;margin:0">We use these details only to plan your trip. See our <a href="{% url 'public_privacy' %}">privacy notice</a>.</p>
+  </form>
+</div>
+{% endblock %}

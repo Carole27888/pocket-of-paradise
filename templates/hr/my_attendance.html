@@ -1,0 +1,17 @@
+{% extends "base.html" %}{% load static %}
+{% block title %}My Attendance{% endblock %}
+{% block extra_vendor %}<script src="{% static 'vendor/chartjs/chart.umd.min.js' %}" defer></script>{% endblock %}
+{% block content %}
+<div class="page-header"><div><h1>My Attendance</h1><p>Your clock-ins and clock-outs. Your location is read once when you tap, and compared with the office.</p></div></div>
+{% include "components/clock_widget.html" %}
+<div class="grid grid-4 mb-4">{% include "components/kpi_card.html" with label="Days this month" value=days %}{% include "components/kpi_card.html" with label="Hours this month" value=hours %}{% include "components/kpi_card.html" with label="Late arrivals" value=late %}{% include "components/kpi_card.html" with label="Away from office" value=away %}</div>
+<div class="card mb-4"><div class="card-head"><h2>Hours worked</h2><span class="sub">Last 30 days</span></div><div style="height:240px"><canvas id="att-chart" aria-label="Hours worked per day" role="img"></canvas></div>
+  <div class="flex gap-3 text-xs text-muted mt-2" style="flex-wrap:wrap"><span><i style="display:inline-block;width:10px;height:10px;border-radius:2px;background:#1F6F6B"></i> On time</span><span><i style="display:inline-block;width:10px;height:10px;border-radius:2px;background:#D98A22"></i> Late</span><span><i style="display:inline-block;width:10px;height:10px;border-radius:2px;background:#9A8E86"></i> Clocked in away from the office</span></div></div>
+{{ chart|json_script:"att-data" }}
+<script>document.addEventListener("DOMContentLoaded",function(){var d=JSON.parse(document.getElementById("att-data").textContent);
+new Chart(document.getElementById("att-chart"),{type:"bar",data:{labels:d.labels,datasets:[{label:"Hours",data:d.hours,backgroundColor:d.colors,borderRadius:4}]},options:{maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:function(c){return c.parsed.y+" h"}}}},scales:{y:{beginAtZero:true,suggestedMax:9,title:{display:true,text:"Hours"}},x:{ticks:{maxRotation:0,autoSkip:true,maxTicksLimit:10}}}}});});</script>
+<div class="card card-flush"><div class="table-wrap"><table class="table stack-phone"><thead><tr><th>Date</th><th>In</th><th>Out</th><th>Hours</th><th>Where (in)</th><th></th></tr></thead><tbody>
+{% for r in recs %}<tr><td class="cell-first"><span class="cell-main">{{ r.date|ds_date }}</span></td><td data-label="In">{{ r.clock_in_at|ds_time }}{% if r.late %} {% status_pill "Late" "warning" %}{% endif %}</td><td data-label="Out">{% if r.clock_out_at %}{{ r.clock_out_at|ds_time }}{% else %}<span class="text-muted">still in</span>{% endif %}</td><td data-label="Hours">{{ r.hours }}</td>
+<td data-label="Where">{% if r.in_at_office %}{% status_pill "At office" "success" %}{% elif r.in_distance_m is not None %}{% status_pill "Away" "warning" %} <span class="text-sm text-muted">{{ r.in_distance_m }} m</span>{% else %}<span class="text-muted">—</span>{% endif %}</td><td>{% if r.in_map %}<a href="{{ r.in_map }}" target="_blank" rel="noopener">Map</a>{% endif %}</td></tr>
+{% empty %}<tr><td colspan="6" class="text-muted">No records yet. Clock in from the main menu.</td></tr>{% endfor %}</tbody></table></div></div>
+{% endblock %}

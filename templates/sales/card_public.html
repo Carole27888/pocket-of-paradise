@@ -1,0 +1,20 @@
+{% extends "sales/_card_base.html" %}
+{% block body %}
+<div class="card lift center">
+  <div class="av">{% if card.photo %}<img src="{{ card.photo.url }}" alt="">{% else %}{{ emp.initials|default:emp.full_name|slice:":2"|upper }}{% endif %}</div>
+  <h1 class="name">{{ emp.full_name }}</h1>
+  <div class="head">{{ card.headline|default:"Travel consultant" }}</div>
+  {% if card.bio %}<p class="muted" style="margin:10px 0 0">{{ card.bio }}</p>{% endif %}
+  <div style="text-align:left;margin-top:16px">
+    {% if emp.phone %}<a class="row" href="tel:{{ emp.phone }}"><i>☎</i><span><b>{{ emp.phone }}</b><br><small class="muted">Call</small></span></a>
+    <a class="row" href="{{ emp.phone|wa_link }}" target="_blank" rel="noopener"><i>✆</i><span><b>WhatsApp</b><br><small class="muted">Chat with {{ agent_first }}</small></span></a>{% endif %}
+    {% if email %}<a class="row" href="mailto:{{ email }}"><i>@</i><span><b>{{ email }}</b><br><small class="muted">E-mail</small></span></a>{% endif %}
+  </div>
+  <div class="stack" style="margin-top:16px">
+    <a class="btn btn-p" id="save" href="{% url 'public_card_vcard' card.token %}">Save my contact</a>
+    <a class="btn btn-a" href="{% url 'public_card_plan' card.token %}">Plan my trip →</a>
+  </div>
+  <p class="muted" id="next" style="font-size:.88rem;margin:12px 0 0" hidden>Saved! Now tell {{ agent_first }} about the trip you have in mind…</p>
+</div>
+<script>document.getElementById("save").addEventListener("click",function(){var n=document.getElementById("next");setTimeout(function(){n.hidden=false},400);setTimeout(function(){location.href="{% url 'public_card_plan' card.token %}"},2600)});</script>
+{% endblock %}

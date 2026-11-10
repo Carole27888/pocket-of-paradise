@@ -1,0 +1,6 @@
+{% load static %}<!doctype html><html><head><meta charset="utf-8"><title>{{ rep.title }}</title>
+<style>@page{size:A4 landscape;margin:16mm 12mm 18mm;@bottom-center{content:"Page " counter(page) " of " counter(pages);font-size:8pt;color:#6E6250}}
+body{font-family:Helvetica,Arial,sans-serif;color:#2B2014;font-size:9.5pt}header{display:flex;justify-content:space-between;align-items:center;border-bottom:3px solid #1F6F6B;padding-bottom:8px;margin-bottom:12px}h1{font-size:17pt;color:#1F6F6B;margin:0}.mut{color:#6E6250;font-size:8.5pt}
+table{width:100%;border-collapse:collapse}th{background:#1F6F6B;color:#fff;text-align:left;padding:5px 6px;font-size:8.5pt}td{padding:4px 6px;border-bottom:1px solid #EDE3D3}tr:nth-child(even) td{background:#FBF5EA}</style></head>
+<body><header><div><h1>{{ rep.title }}</h1><div class="mut">{% if rep.ranged %}{{ start|date:"j M Y" }} – {{ end|date:"j M Y" }} · {% endif %}{{ rows|length }} rows</div></div><div style="text-align:right"><b>{{ company.name }}</b><div class="mut">Generated {{ generated|date:"j M Y H:i" }} by {{ user.full_name }}</div></div></header>
+<table><thead><tr>{% for c in cols %}<th>{{ c }}</th>{% endfor %}</tr></thead><tbody>{% for r in rows %}<tr>{% for v in r %}<td>{{ v }}</td>{% endfor %}</tr>{% endfor %}</tbody></table></body></html>

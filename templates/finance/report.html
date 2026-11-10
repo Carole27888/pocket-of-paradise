@@ -1,0 +1,9 @@
+{% extends "base.html" %}{% load static %}
+{% block title %}{{ title }}{% endblock %}
+{% block extra_css %}<link rel="stylesheet" href="{% static 'css/sales.css' %}">{% endblock %}
+{% block content %}
+<div class="page-header"><div><div class="crumbs"><a href="{% url 'finance:reports' %}">Reports</a><span>/</span><span>{{ title }}</span></div><h1>{{ title }}</h1><p>{{ start|ds_date }} – {{ end|ds_date }}</p></div>
+  <div class="actions">{% include "sales/partials/range_bar.html" %}<a class="btn btn-secondary" href="?range={{ range_key }}&export=csv">{% include "components/icon.html" with name="download" %} CSV</a><a class="btn btn-secondary" href="?range={{ range_key }}&export=xlsx">{% include "components/icon.html" with name="download" %} Excel</a></div></div>
+<div class="card card-flush"><div class="table-wrap"><table class="table stack-phone"><thead><tr>{% for h in headers %}<th>{{ h }}</th>{% endfor %}</tr></thead>
+  <tbody>{% for row in rows %}<tr>{% for h, c in row %}<td {% if forloop.first %}class="cell-first"{% else %}data-label="{{ h }}"{% endif %}>{{ c }}</td>{% endfor %}</tr>{% empty %}<tr><td colspan="{{ headers|length }}" class="text-muted">No data for this period.</td></tr>{% endfor %}</tbody></table></div></div>
+{% endblock %}

@@ -1,0 +1,53 @@
+{% extends "base.html" %}{% load l10n %}
+{% block title %}Notice Board{% endblock %}
+{% block content %}
+<div class="page-header"><div><h1>Notice Board</h1><p>News and reminders from management. Important notices also reach people's phones.</p></div>
+  {% if can_post %}<div class="actions"><a class="btn btn-accent" href="{% url 'notifications:board_new' %}" data-modal-form="{% url 'notifications:board_new' %}" data-modal-title="Post a notice">{% include "components/icon.html" with name="plus" %} Post a notice</a></div>{% endif %}</div>
+<div class="grid grid-4 mb-4">
+  {% include "components/kpi_card.html" with label="Active notices" value=stats.active note="On the board now" accent=True %}
+  {% include "components/kpi_card.html" with label="Important" value=stats.important note="Also sent to phones" %}
+  {% include "components/kpi_card.html" with label="New this week" value=stats.new note="Posted in the last 3 days" %}
+  {% include "components/kpi_card.html" with label="Ending soon" value=stats.ending note="Expire within 7 days" %}
+</div>
+<div class="grid grid-6-4" x-data="{ f: 'all' }">
+  <div>
+    <div class="chips mb-3" role="tablist" aria-label="Filter notices">
+      <button type="button" class="chip" :class="{ 'chip-on': f === 'all' }" @click="f = 'all'">All <span class="n">{{ stats.active }}</span></button>
+      <button type="button" class="chip" :class="{ 'chip-on': f === 'important' }" @click="f = 'important'">Important <span class="n">{{ stats.important }}</span></button>
+      <button type="button" class="chip" :class="{ 'chip-on': f === 'new' }" @click="f = 'new'">New <span class="n">{{ stats.new }}</span></button>
+    </div>
+    <div class="stack" style="gap:14px">
+    {% for a in items %}
+      <article class="nb-card {% if a.level == 'important' %}important{% endif %}" x-show="f === 'all' || (f === 'important' && {% if a.level == 'important' %}true{% else %}false{% endif %}) || (f === 'new' && {% if a.is_new %}true{% else %}false{% endif %})">
+        <div class="nb-head">
+          <span class="avatar avatar-sm">{% if a.created_by %}{{ a.created_by.initials }}{% else %}DS{% endif %}</span>
+          <div class="grow"><b class="nb-title">{{ a.title }}</b>
+            <div class="nb-meta">{% if a.created_by %}{{ a.created_by.full_name }} · {% endif %}{{ a.created_at|timesince }} ago</div></div>
+          <div class="nb-pills">{% if a.pinned %}<span class="pill pill-info">{% include "components/icon.html" with name="star" size="12" %} Pinned</span>{% endif %}{% if a.level == "important" %}<span class="pill pill-danger">Important</span>{% endif %}{% if a.is_new %}<span class="pill pill-success">New</span>{% endif %}</div>
+        </div>
+        <p class="nb-body">{{ a.body }}</p>
+        <div class="nb-foot">
+          <span class="nb-chip">{% include "components/icon.html" with name="users" size="13" %} {% if a.roles %}{{ a.roles|join:", " }}{% else %}Everyone{% endif %}</span>
+          {% if a.expires_on %}<span class="nb-chip">{% include "components/icon.html" with name="clock" size="13" %} {% if a.days_left == 0 %}Ends today{% else %}Until {{ a.expires_on|ds_date }}{% endif %}</span>{% endif %}
+          {% if can_post %}<span class="grow"></span>
+            <a class="btn btn-ghost btn-sm" href="{% url 'notifications:board_edit' a.pk %}" data-modal-form="{% url 'notifications:board_edit' a.pk %}" data-modal-title="Edit notice">Edit</a>
+            <form method="post" action="{% url 'notifications:board_delete' a.pk|unlocalize %}" onsubmit="return confirm('Remove this notice?')">{% csrf_token %}<button class="btn btn-ghost btn-sm text-danger" type="submit">Remove</button></form>{% endif %}
+        </div>
+      </article>
+    {% empty %}<div class="card">{% include "components/empty_state.html" with icon="megaphone" title="Nothing on the board" text="When management posts a notice it appears here and on everyone's Main menu." %}</div>{% endfor %}
+    </div>
+  </div>
+  <aside class="stack" style="gap:16px">
+    <div class="card"><div class="card-head"><h2>Away today</h2><span class="sub">{{ away|length }}</span></div>
+      {% for r in away %}<div class="list-item"><span class="avatar avatar-sm">{{ r.employee.initials }}</span><div class="grow"><div class="fw-700">{{ r.employee.full_name }}</div><div class="text-xs text-muted">{{ r.leave_type.name }} · back {{ r.end_date|ds_date }}</div></div></div>
+      {% empty %}<p class="text-muted text-sm" style="margin:0">Everyone is in today.</p>{% endfor %}</div>
+    <div class="card"><div class="card-head"><h2>Leave coming up</h2><span class="sub">next 14 days</span></div>
+      {% for r in soon %}<div class="list-item"><span class="avatar avatar-sm">{{ r.employee.initials }}</span><div class="grow"><div class="fw-700">{{ r.employee.full_name }}</div><div class="text-xs text-muted">{{ r.start_date|ds_date }} – {{ r.end_date|ds_date }} · {{ r.leave_type.name }}</div></div></div>
+      {% empty %}<p class="text-muted text-sm" style="margin:0">No leave booked in the next two weeks.</p>{% endfor %}</div>
+    <div class="card"><div class="card-head"><h2>Quick links</h2></div>
+      <a class="list-item" href="{% url 'system:todo' %}">{% include "components/icon.html" with name="check-square" size="16" %}<span class="grow">My weekly plan</span></a>
+      <a class="list-item" href="{% url 'hr:my' %}">{% include "components/icon.html" with name="sun" size="16" %}<span class="grow">Request leave</span></a>
+      <a class="list-item" href="{% url 'hr:my_attendance' %}">{% include "components/icon.html" with name="clock" size="16" %}<span class="grow">Clock in / out</span></a></div>
+  </aside>
+</div>
+{% endblock %}

@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+{% block title %}My Profile{% endblock %}
+{% block content %}
+<div class="page-header"><div><h1>My Profile</h1><p>Your own personal and payroll details. Changes to bank, M-PESA, KRA PIN or pay method are flagged to Finance, so there is always a record of who changed what.</p></div></div>
+<div class="grid grid-main-side" style="align-items:start">
+  <div class="card">
+    <div class="card-head"><h2>Personal details</h2></div>
+    {% if form %}
+    <form method="post" novalidate>{% csrf_token %}
+      {% if form.non_field_errors %}<div class="alert alert-danger mb-4">{{ form.non_field_errors|join:" " }}</div>{% endif %}
+      <div class="form-grid">
+        <div class="field"><label for="{{ form.full_name.id_for_label }}">Full name <span class="req">*</span></label>{{ form.full_name }}{% for e in form.full_name.errors %}<span class="error">{{ e }}</span>{% endfor %}</div>
+        <div class="field"><label for="{{ form.phone.id_for_label }}">Phone</label>{{ form.phone }}{% for e in form.phone.errors %}<span class="error">{{ e }}</span>{% endfor %}</div>
+        <div class="field full"><label for="{{ form.email.id_for_label }}">Email</label>{{ form.email }}<span class="help">{{ form.email.help_text }}</span></div>
+      </div>
+      <p class="rep-sub" style="margin:22px 0 10px">Payroll &amp; tax</p>
+      <div class="form-grid">
+        {% for f in form.visible_fields %}{% if f.name != "full_name" and f.name != "phone" and f.name != "email" %}
+        <div class="field{% if f.errors %} invalid{% endif %}"><label for="{{ f.id_for_label }}">{{ f.label }}{% if f.field.required %} <span class="req">*</span>{% endif %}</label>{{ f }}{% for e in f.errors %}<span class="error">{{ e }}</span>{% endfor %}</div>
+        {% endif %}{% endfor %}
+      </div>
+      <button class="btn btn-primary btn-block" type="submit" style="margin-top:18px">Save</button>
+    </form>
+    {% else %}<p class="text-muted">Your login is not linked to a staff record yet, so there are no personal or payroll details to edit. Ask HR to link it.</p>{% endif %}
+  </div>
+  <div class="stack" style="gap:16px">
+  <div class="card" id="alerts">
+    <div class="card-head"><h2>Alerts</h2></div>
+    <p class="text-sm text-muted">New leads, reminders, approvals and every other alert reach you here as well as in the app.</p>
+    <form method="post" novalidate class="stack" style="gap:10px">{% csrf_token %}<input type="hidden" name="action" value="alerts">
+      <div class="field{% if alerts.whatsapp_number.errors %} invalid{% endif %}"><label for="{{ alerts.whatsapp_number.id_for_label }}">{{ alerts.whatsapp_number.label }}</label>{{ alerts.whatsapp_number }}
+        <span class="help">{% if not request.user.whatsapp_number and request.user.whatsapp_target %}Now using your staff phone {{ request.user.whatsapp_target }}. {% endif %}{{ alerts.whatsapp_number.help_text }}</span>{% for e in alerts.whatsapp_number.errors %}<span class="error">{{ e }}</span>{% endfor %}</div>
+      <div class="field"><label for="{{ alerts.notify_via.id_for_label }}">{{ alerts.notify_via.label }}</label>{{ alerts.notify_via }}<span class="help">{{ alerts.notify_via.help_text }}</span></div>
+      <button class="btn btn-primary" type="submit">Save alerts</button></form>
+    {% if request.user.employee and request.user.employee.is_sales_agent %}<a class="btn btn-secondary btn-sm mt-3" href="{% url 'sales:my_card' %}">{% include "components/icon.html" with name="id-card" %} My QR business card</a>{% endif %}
+  </div>
+  <div class="card">
+    <div class="card-head"><h2>Account security</h2></div>
+    <p class="text-sm text-muted">Two-factor authentication and backup codes are managed from Security, not here.</p>
+    <a class="btn btn-secondary" href="{% url 'accounts:security' %}">{% include "components/icon.html" with name="shield" %} Go to Security</a>
+  </div>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,11 @@
+<form method="post" action="{% url 'deals:kyc_submit' client.pk %}" enctype="multipart/form-data" data-modal-form-body novalidate>
+  {% csrf_token %}
+  <p class="text-sm text-muted mb-3">{{ client.full_name }}{% if kyc %} · current status: {{ kyc.get_status_display }}{% endif %}</p>
+  {% if error %}<div class="alert alert-danger mb-3">{{ error }}</div>{% endif %}
+  <div class="stack" style="gap:10px">
+    <div class="field"><label for="k-t">ID type</label><select class="input select" id="k-t" name="id_type">{% for v, l in id_types %}<option value="{{ v }}" {% if kyc.id_type == v or posted.id_type == v %}selected{% endif %}>{{ l }}</option>{% endfor %}</select></div>
+    <div class="field"><label for="k-n">ID / passport number</label><input class="input" id="k-n" name="id_number" value="{{ posted.id_number }}" required autocomplete="off"></div>
+    <div class="field"><label for="k-d">Scan or photo (optional, max 8 MB)</label><input class="input" id="k-d" type="file" name="document" accept="image/*,.pdf"></div>
+  </div>
+  <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:14px"><button type="button" class="btn btn-secondary" data-modal-close>Cancel</button><button type="submit" class="btn btn-primary">{% include "components/icon.html" with name="check" %} Submit for verification</button></div>
+</form>

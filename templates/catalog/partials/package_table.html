@@ -1,0 +1,22 @@
+<div class="table-wrap"><table class="table stack-phone">
+  <thead><tr>
+    <th>{% sort_link "code" "Code" %}</th><th>{% sort_link "title" "Package" %}</th><th>Type</th>
+    <th>{% sort_link "days" "Duration" %}</th><th class="num">{% sort_link "price_per_person" "Price pp" %}</th>
+    <th>{% sort_link "status" "Status" %}</th><th class="num">{% sort_link "enquiry_count" "Open enquiries" %}</th>
+  </tr></thead>
+  <tbody>
+  {% for p in object_list %}
+    <tr>
+      <td data-label="Code" class="nowrap">{{ p.code }}</td>
+      <td class="cell-first"><a class="row-link cell-main" href="{{ p.get_absolute_url }}">{{ p.title }}</a>
+        <div class="cell-sub">{% for d in p.destinations.all %}{{ d.name }}{% if not forloop.last %} · {% endif %}{% endfor %}</div></td>
+      <td data-label="Type">{{ p.get_package_type_display }}</td>
+      <td data-label="Duration" class="nowrap">{{ p.duration_label }}</td>
+      <td data-label="Price pp" class="num fw-700 nowrap">{{ p.price_per_person|money:p.currency }}</td>
+      <td data-label="Status">{% if p.status == "published" %}{% status_pill "Published" "success" %}{% elif p.status == "seasonal" %}{% status_pill "Seasonal" "warning" %}{% elif p.status == "draft" %}{% status_pill "Draft" "neutral" %}{% else %}{% status_pill "Retired" "danger" %}{% endif %}</td>
+      <td data-label="Open enquiries" class="num">{{ p.enquiry_count }}</td>
+    </tr>
+  {% empty %}<tr><td colspan="7">{% include "components/empty_state.html" with icon="map" title="No packages match" %}</td></tr>{% endfor %}
+  </tbody>
+</table></div>
+{% include "components/pagination.html" %}

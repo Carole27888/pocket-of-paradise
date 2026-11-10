@@ -1,0 +1,12 @@
+{% extends "sales/_card_base.html" %}
+{% block title %}Thank you{% endblock %}
+{% block body %}
+<div class="card lift center">
+  <div class="av">{% if card.photo %}<img src="{{ card.photo.url }}" alt="">{% else %}✓{% endif %}</div>
+  <h1 style="font-size:1.4rem">Thank you{% if first %}, {{ first }}{% endif %}!</h1>
+  <p class="muted">{{ emp.full_name }} has your request and will contact you shortly{% if emp.phone %}, usually on WhatsApp from {{ emp.phone }}{% endif %}.</p>
+  <div class="stack" style="margin-top:14px">{% if emp.phone %}<a class="btn btn-w" href="{{ emp.phone|wa_link }}" target="_blank" rel="noopener">Chat on WhatsApp now</a>{% endif %}
+    <a class="btn btn-o" href="{% url 'public_card_vcard' card.token %}">Save {{ agent_first }}'s contact</a>
+    <a class="btn btn-o" href="{% url 'public_catalogue' %}">Browse our safaris</a></div>
+</div>
+{% endblock %}

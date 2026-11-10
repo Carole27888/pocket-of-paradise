@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+{% block title %}My Leave{% endblock %}
+{% block content %}
+<div class="page-header"><div><h1>My Leave</h1><p>Balances are worked out from approved leave, so they are always current.</p></div></div>
+{% if not emp %}<div class="card"><p class="text-muted">Your login isn't linked to an employee record yet. Ask Admin to link it under People.</p></div>{% else %}
+<div class="grid grid-4 mb-4">{% for t, b in balances %}{% include "components/kpi_card.html" with label=t.name value=b.remaining|floatformat:'-1' sub=b.pending|yesno:"incl. pending,of entitlement" %}{% endfor %}</div>
+<div class="grid grid-main-side">
+  <div class="card"><div class="card-head"><h2>My requests</h2></div>
+    {% for r in reqs %}<div class="list-item"><div class="grow"><div class="fw-700">{{ r.leave_type.name }} · {{ r.start_date|ds_date }}{% if r.end_date != r.start_date %} – {{ r.end_date|ds_date }}{% endif %}</div><div class="text-xs text-muted">{{ r.days }} day(s){% if r.reason %} · {{ r.reason }}{% endif %}{% if r.decision_note %} · “{{ r.decision_note }}”{% endif %}</div></div>
+      {% if r.status == "approved" %}{% status_pill "Approved" "success" %}{% elif r.status == "pending" %}{% status_pill "Pending" "warning" %}{% elif r.status == "cancel_requested" %}{% status_pill "Cancellation asked" "warning" %}{% elif r.status == "rejected" %}{% status_pill "Declined" "danger" %}{% else %}{% status_pill r.get_status_display "neutral" %}{% endif %}
+      {% if r.status == "pending" or r.status == "approved" and r.end_date >= today %}<form method="post" action="{% url 'hr:cancel' r.pk %}">{% csrf_token %}<button class="btn btn-ghost btn-sm" type="submit">{% if r.status == "pending" %}Withdraw{% else %}Ask to cancel{% endif %}</button></form>{% endif %}</div>
+    {% empty %}<p class="text-muted text-sm">No leave requested yet.</p>{% endfor %}</div>
+  <div class="card"><div class="card-head"><h2>Request leave</h2></div>
+    <form method="post" enctype="multipart/form-data" class="stack" style="gap:10px">{% csrf_token %}
+      {% if form.non_field_errors %}<div class="alert alert-danger">{{ form.non_field_errors }}</div>{% endif %}
+      {% for f in form %}<div class="field"><label for="{{ f.id_for_label }}">{{ f.label }}</label>{{ f }}{{ f.errors }}</div>{% endfor %}
+      <button class="btn btn-primary" type="submit">Submit request</button></form></div></div>
+{% endif %}
+{% endblock %}

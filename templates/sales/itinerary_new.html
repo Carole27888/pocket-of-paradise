@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+{% block title %}Build an itinerary{% endblock %}
+{% block content %}
+<div class="page-header">
+  <div>
+    {% if cancel_url %}<div class="crumbs"><a href="{{ cancel_url }}">{% include "components/icon.html" with name="arrow-left" size="14" %} Back</a></div>{% endif %}
+    <h1>{{ title }}</h1>
+    {% if subtitle %}<p>{{ subtitle }}</p>{% endif %}
+  </div>
+</div>
+<div class="grid grid-6-4">
+  <div class="stack" style="gap:18px">
+  <form method="post" class="card" novalidate>
+    {% csrf_token %}
+    {% include "components/form_fields.html" %}
+    <div class="form-actions">
+      {% if cancel_url %}<a class="btn btn-secondary" href="{{ cancel_url }}">Cancel</a>{% endif %}
+      <button type="submit" class="btn btn-primary">{% include "components/icon.html" with name="check" %} Save</button>
+    </div>
+  </form>
+  <div class="card card-flush">
+    <div class="card-head" style="padding:16px 18px 0"><h2>Quoted itineraries</h2><span class="sub">{{ quoted_count }} turned into a quotation</span></div>
+    <div class="table-wrap mt-3"><table class="table stack-phone">
+      <thead><tr><th>Client</th><th>Itinerary</th><th>Quotation</th><th>Status</th><th class="num">Quote total</th></tr></thead>
+      <tbody>
+      {% for i in quoted %}
+        <tr>
+          <td class="cell-first"><a class="row-link cell-main" href="{{ i.enquiry.get_absolute_url }}">{{ i.enquiry.client.full_name }}</a><div class="cell-sub">{{ i.enquiry.reference }}</div></td>
+          <td data-label="Itinerary"><a href="{{ i.get_absolute_url }}">{{ i.title|truncatechars:36 }}</a><div class="cell-sub">{{ i.day_count }} day{{ i.day_count|pluralize }} · {{ i.created_at|ds_date }}</div></td>
+          <td data-label="Quotation"><a class="fw-700" href="{{ i.quotation.get_absolute_url }}">{{ i.quotation.reference }}</a></td>
+          <td data-label="Status">{% if i.quotation.status == "accepted" %}{% status_pill "Accepted" "success" %}{% elif i.quotation.status == "sent" %}{% status_pill "Sent" "info" %}{% elif i.quotation.status == "draft" %}{% status_pill "Draft" "warning" %}{% elif i.quotation.status == "rejected" %}{% status_pill "Declined" "danger" %}{% else %}{% status_pill i.quotation.get_status_display "neutral" %}{% endif %}</td>
+          <td data-label="Quote total" class="num fw-700">{{ i.quotation.total|money:i.quotation.currency }}</td>
+        </tr>
+      {% empty %}<tr><td colspan="5">{% include "components/empty_state.html" with icon="file-text" title="No quoted itineraries yet" text="Once an itinerary is turned into a quotation it is listed here, with the quotation's status." %}</td></tr>{% endfor %}
+      </tbody></table></div>
+    <div class="see-all"><a href="{% url 'sales:quotations' %}">See all quotations →</a></div>
+  </div>
+  </div>
+  <div class="card card-flush">
+    <div class="card-head" style="padding:16px 18px 0"><h2>Recent itineraries</h2></div>
+    <div class="table-wrap mt-3"><table class="table stack-phone">
+      <thead><tr><th>Itinerary</th><th>Status</th><th class="num">Total</th></tr></thead>
+      <tbody>
+      {% for i in recent %}
+        <tr>
+          <td class="cell-first"><a class="row-link cell-main" href="{{ i.get_absolute_url }}">{{ i.enquiry.client.full_name }}</a>
+            <div class="cell-sub">{{ i.enquiry.reference }} · {{ i.created_at|ds_date }}</div></td>
+          <td data-label="Status">{% if i.status == "sent" %}{% status_pill "Sent" "info" %}{% else %}{% status_pill "Draft" "neutral" %}{% endif %}</td>
+          <td data-label="Total" class="num">{{ i.sell_total|money_compact }}</td>
+        </tr>
+      {% empty %}<tr><td colspan="3">{% include "components/empty_state.html" with icon="route" title="No itineraries yet" text="The ones you build will show here." %}</td></tr>{% endfor %}
+      </tbody></table></div>
+    <div class="see-all"><a href="{% url 'sales:itineraries' %}">See all itineraries →</a></div>
+  </div>
+</div>
+{% endblock %}

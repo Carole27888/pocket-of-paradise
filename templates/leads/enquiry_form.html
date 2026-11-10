@@ -1,0 +1,83 @@
+{% extends "base.html" %}{% load l10n %}
+{% block title %}New Enquiry{% endblock %}
+{% block content %}
+<div class="page-header">
+  <div><div class="crumbs"><a href="{% url 'leads:list' %}">{% include "components/icon.html" with name="arrow-left" size="14" %} Enquiries</a></div>
+    <h1>New Enquiry</h1><p>Capture WhatsApp, walk-in, call and DM enquiries. Returning clients are detected from their phone or email.</p></div>
+</div>
+<form method="post" novalidate class="stack">
+  {% csrf_token %}
+  {% if form.non_field_errors %}<div class="alert alert-danger">{{ form.non_field_errors|join:" " }}</div>{% endif %}
+  <div class="card">
+    <p class="section-title">Source{% if request.user.is_superuser or "COO" in request.user.role_names or "Admin" in request.user.role_names %} <a class="text-sm fw-600" style="margin-left:8px" href="{% url 'leads:sources' %}">+ Add a source</a>{% endif %}</p>
+    <div class="source-picker" role="radiogroup" aria-label="Source">
+      {% for val, label in form.source.field.choices %}{% if val in primary_sources %}
+        <label><input type="radio" name="source" value="{{ val }}" {% if form.source.value == val %}checked{% endif %}>{% source_badge val %} {{ label }}</label>
+      {% endif %}{% endfor %}
+    </div>
+    <details class="mt-3" {% if form.source.value and form.source.value not in primary_sources %}open{% endif %}>
+      <summary class="text-sm fw-700 text-brand" style="cursor:pointer">Other channels (social, website, referral, partner)</summary>
+      <div class="chips mt-3">
+        {% for val, label in form.source.field.choices %}{% if val not in primary_sources %}
+          <label class="chip"><input type="radio" name="source" value="{{ val }}" class="check" style="width:16px;height:16px" {% if form.source.value == val %}checked{% endif %}>{% source_badge val %} {{ label }}</label>
+        {% endif %}{% endfor %}
+      </div>
+    </details>
+    {% for e in form.source.errors %}<span class="error">{{ e }}</span>{% endfor %}
+  </div>
+
+  <div class="card">
+    <p class="section-title">Client</p>
+    <div class="form-grid">
+      <div class="field{% if form.full_name.errors %} invalid{% endif %}"><label for="id_full_name">Client name <span class="req">*</span></label>{{ form.full_name }}{% for e in form.full_name.errors %}<span class="error">{{ e }}</span>{% endfor %}</div>
+      <div class="field{% if form.phone.errors %} invalid{% endif %}"><label for="id_phone">Phone number <span class="req">*</span></label>
+        <input type="tel" name="phone" id="id_phone" class="input" value="{{ form.phone.value|default:'' }}" required autocomplete="tel" placeholder="0712 345 678 or +44…"
+               hx-get="{% url 'leads:returning_check' %}" hx-trigger="input changed delay:500ms, blur" hx-target="#returning" hx-include="#id_email">
+        {% for e in form.phone.errors %}<span class="error">{{ e }}</span>{% endfor %}</div>
+      <div class="field"><label for="id_email">Email</label>
+        <input type="email" name="email" id="id_email" class="input" value="{{ form.email.value|default:'' }}" autocomplete="email"
+               hx-get="{% url 'leads:returning_check' %}" hx-trigger="change" hx-target="#returning" hx-include="#id_phone">
+        {% for e in form.email.errors %}<span class="error">{{ e }}</span>{% endfor %}</div>
+      <div class="field"><label for="id_nationality">Nationality</label>{{ form.nationality }}</div>
+      <div class="full" id="returning">{% if match %}{% include "leads/partials/returning_banner.html" %}{% endif %}</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <p class="section-title">Trip</p>
+    <div class="form-grid">
+      <div class="field"><label for="id_package">Package of interest</label>{{ form.package }}</div>
+      <div class="field"><label for="id_destination">Destination</label>{{ form.destination }}</div>
+      <div class="field"><label for="id_purpose">Purpose <span class="req">*</span></label>{{ form.purpose }}</div>
+      <div class="field"><label for="id_travel_date_from">Preferred travel date</label>{{ form.travel_date_from }}{% for e in form.travel_date_from.errors %}<span class="error">{{ e }}</span>{% endfor %}</div>
+      <div class="field"><label for="id_adults">Adults</label>{{ form.adults }}{% for e in form.adults.errors %}<span class="error">{{ e }}</span>{% endfor %}</div>
+      <div class="field"><label for="id_children">Children</label>{{ form.children }}</div>
+      <div class="field full"><label for="id_budget_text">Budget</label>{{ form.budget_text }}<span class="help">{{ form.budget_text.help_text }}</span></div>
+      <div class="field"><label for="id_brought_by">Who's that (brought the lead)</label>{{ form.brought_by }}<span class="help">{{ form.brought_by.help_text }}</span></div>
+      <div class="field"><label for="id_remark">Remark</label>{{ form.remark }}<span class="help">{{ form.remark.help_text }}</span></div>
+      <div class="field full"><label for="id_notes">Notes</label>{{ form.notes }}</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-head"><p class="section-title mb-0">Assign to a travel consultant</p><span class="sub">Off / on-leave agents can't be picked</span></div>
+    <div class="agent-picker">
+      <label><input type="radio" name="assigned_agent" value="" {% if not form.assigned_agent.value %}checked{% endif %}><span class="avatar avatar-sm">—</span><span class="who"><b>Assign later</b><small>Goes to the unassigned queue</small></span></label>
+      {% for a in agents %}
+        <label class="{% if not a.is_available %}off{% endif %}">
+          <input type="radio" name="assigned_agent" value="{{ a.pk|unlocalize }}" {% if not a.is_available %}disabled{% endif %} {% if form.assigned_agent.value|stringformat:"s" == a.pk|stringformat:"s" %}checked{% endif %}>
+          <span class="avatar avatar-sm">{{ a.initials }}</span>
+          <span class="who"><b>{{ a.full_name }}</b><small>{{ a.open_count }} open · limit {{ a.daily_enquiry_limit }}/day</small></span>
+          {% if a.on_duty == "in_office" %}{% status_pill "In office" "success" %}{% elif a.on_duty == "out_on_trip" %}{% status_pill "Out" "warning" %}{% else %}{% status_pill a.get_on_duty_display "danger" %}{% endif %}
+        </label>
+      {% endfor %}
+    </div>
+    {% for e in form.assigned_agent.errors %}<span class="error mt-2" style="display:block">{{ e }}</span>{% endfor %}
+  </div>
+
+  <div class="form-actions" style="margin-top:0">
+    <a class="btn btn-secondary" href="{% url 'leads:list' %}">Cancel</a>
+    <button type="submit" class="btn btn-primary">{% include "components/icon.html" with name="check" %} Save enquiry</button>
+  </div>
+</form>
+{% endblock %}

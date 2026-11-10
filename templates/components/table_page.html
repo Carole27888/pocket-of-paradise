@@ -1,0 +1,17 @@
+{% extends "base.html" %}{% load static %}
+{% block title %}{{ title }}{% endblock %}
+{% block extra_css %}<link rel="stylesheet" href="{% static 'css/sales.css' %}">{% endblock %}
+{% block content %}
+<div class="page-header">
+  <div><h1>{{ title }}</h1>{% if subtitle %}<p>{{ subtitle }}</p>{% endif %}</div>
+  {% if header_actions %}<div class="actions">{% for a in header_actions %}<a class="btn btn-{{ a.style|default:'secondary' }}" href="{{ a.url }}"{% if a.modal %} data-modal-form="{{ a.url }}" data-modal-title="{{ a.modal }}"{% endif %}>{% if a.icon %}{% include "components/icon.html" with name=a.icon %} {% endif %}{{ a.label }}</a>{% endfor %}</div>{% endif %}
+</div>
+{% if kpi_cards %}<div class="grid grid-4 mb-4">{% for k in kpi_cards %}
+  <div class="card kpi{% if k.accent %} kpi-accent{% endif %}"><span class="kpi-label">{{ k.label }}</span><span class="kpi-value{% if k.danger %} text-danger{% endif %}">{{ k.value }}</span>{% if k.note %}<span class="kpi-delta {{ k.dir }}">{{ k.note }}</span>{% endif %}</div>{% endfor %}</div>{% endif %}
+{% block above %}{% endblock %}
+<div class="card card-flush">
+  {% if tabs %}<nav class="tabs" aria-label="Status">{% for t in tabs %}<a href="{% if t.key %}?{{ tabs_field }}={{ t.key }}{% else %}?{% endif %}" class="{% if t.active %}active{% endif %}">{{ t.label }} <span class="n">{{ t.count }}</span></a>{% endfor %}</nav>{% endif %}
+  {% include "components/filter_bar.html" with placeholder=placeholder keep=tabs_field %}
+  <div id="list-region">{% include "components/table_partial.html" %}</div>
+</div>
+{% endblock %}

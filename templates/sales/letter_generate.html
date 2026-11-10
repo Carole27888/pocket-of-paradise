@@ -1,0 +1,9 @@
+{% extends "base.html" %}{% load l10n %}
+{% block title %}{{ t.name }}{% endblock %}
+{% block content %}
+<div class="page-header"><div><div class="crumbs"><a href="{{ b.get_absolute_url }}">{% include "components/icon.html" with name="arrow-left" size="14" %} {{ b.reference }}</a></div><h1>{{ t.name }}</h1><p>For {{ b.client.full_name }} · {{ b.title }}</p></div>
+  <div class="actions"><a class="btn btn-secondary" href="?print=1" target="_blank" rel="noopener">{% include "components/icon.html" with name="printer" %} Print / PDF</a>{% if mailto %}<a class="btn btn-secondary" href="{{ mailto }}">{% include "components/icon.html" with name="mail" %} Open in mail</a>{% endif %}<button class="btn btn-primary" type="button" id="copy-letter">Copy text</button></div></div>
+<div class="mchips">{% for x in templates %}<a class="chip {% if x.pk == t.pk %}active{% endif %}" href="{% url 'sales:letter' b.pk|unlocalize x.pk|unlocalize %}">{{ x.name }}</a>{% endfor %}</div>
+<div class="card">{% if subject %}<p><b>Subject:</b> {{ subject }}</p>{% endif %}<div id="letter-text" style="white-space:pre-wrap;line-height:1.7">{{ body }}</div></div>
+<script>document.getElementById("copy-letter").addEventListener("click",function(){var t=document.getElementById("letter-text").innerText;navigator.clipboard&&navigator.clipboard.writeText(t);this.textContent="Copied"});</script>
+{% endblock %}

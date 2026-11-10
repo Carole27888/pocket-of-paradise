@@ -1,0 +1,21 @@
+{% extends "base.html" %}{% load static %}
+{% block title %}Sales & Revenue{% endblock %}
+{% block extra_css %}<link rel="stylesheet" href="{% static 'css/sales.css' %}">{% endblock %}
+{% block extra_vendor %}<script src="{% static 'vendor/chartjs/chart.umd.min.js' %}" defer></script>{% endblock %}
+{% block extra_js %}<script src="{% static 'js/charts.js' %}" defer></script>{% endblock %}
+{% block content %}
+<div class="page-header"><div><h1>Sales & Revenue</h1><p>Revenue is recognised when a trip completes; until then payments sit in deposits held · {{ start|ds_date }} – {{ end|ds_date }}</p></div><div class="actions">{% include "sales/partials/range_bar.html" %}</div></div>
+<div class="grid grid-4 mb-4">
+  {% include "components/kpi_card.html" with label="Revenue recognised" value=pnl.revenue|money_compact accent=True %}
+  {% include "components/kpi_card.html" with label="Invoiced" value=invoiced|money_compact note="Issued in the period" %}
+  {% include "components/kpi_card.html" with label="Deposits held" value=deposits|money_compact note="Paid, trip not yet completed" %}
+  {% include "components/kpi_card.html" with label="Gross profit" value=pnl.gross_profit|money_compact %}
+</div>
+{{ charts|json_script:"rev-charts" }}
+<div class="grid grid-main-side mb-4">
+  {% include "components/chart_card.html" with title="Revenue trend" sub="Last 6 months, KES" kind="line" source="rev-charts" key="trend" %}
+  <div class="card"><div class="card-head"><h2>Revenue by stream</h2></div>{% for name, v in streams %}<div class="list-item"><span class="grow">{{ name }}</span><b>{{ v|money }}</b></div>{% empty %}<p class="text-muted text-sm">No revenue recognised in this period.</p>{% endfor %}</div>
+</div>
+<div class="card card-flush"><div class="card-head"><h2>Sales ledger</h2><span class="sub">Bookings made in the period</span></div><div class="table-wrap mt-3"><table class="table stack-phone"><thead><tr><th>Booking</th><th>Tour</th><th>Travel</th><th>Agent</th><th class="num">Value</th><th class="num">Paid</th><th class="num">Outstanding</th></tr></thead>
+  <tbody>{% for b in bookings %}<tr><td class="cell-first"><a class="row-link cell-main" href="{{ b.get_absolute_url }}">{{ b.reference }}</a><div class="cell-sub">{{ b.client.full_name }}</div></td><td data-label="Tour">{{ b.title|truncatechars:34 }}</td><td data-label="Travel">{{ b.travel_start|ds_date }}</td><td data-label="Agent">{{ b.agent.short_name|default:"—" }}</td><td data-label="Value" class="num">{{ b.total_amount|money:b.currency }}</td><td data-label="Paid" class="num">{{ b.amount_paid|money:b.currency }}</td><td data-label="Outstanding" class="num">{{ b.balance|money:b.currency }}</td></tr>{% empty %}<tr><td colspan="7" class="text-muted">No bookings in this period.</td></tr>{% endfor %}</tbody></table></div></div>
+{% endblock %}

@@ -1,0 +1,35 @@
+{% extends "base.html" %}{% load l10n %}
+{% block title %}Assign Leads{% endblock %}
+{% block content %}
+<form method="post" action="{% url 'sales:assign_leads_bulk' %}" id="assign-form">{% csrf_token %}<input type="hidden" name="next" value="{{ request.get_full_path }}"></form>
+<div class="page-header"><div><h1>Assign Leads</h1><p>Filter new and pending leads, then hand them to the right agent. {{ waiting_total }} lead{{ waiting_total|pluralize }} waiting.</p></div>
+  <div class="actions"><button class="btn btn-secondary" form="assign-form" type="submit" name="auto_all" value="1" formaction="{% url 'sales:assignment_auto' %}" formnovalidate>{% include "components/icon.html" with name="refresh" %} Auto-distribute (round robin)</button>
+  <button class="btn btn-primary" form="assign-form" type="submit" id="assign-selected" disabled title="Rules and round-robin pick the agent for each ticked lead">{% include "components/icon.html" with name="user-plus" %} Assign selected</button></div></div>
+{% if not auto_on %}<div class="alert alert-info mb-4"><span class="grow"><b>Automatic assignment is off.</b> New leads wait here until you give them out. ICT or the Sales Manager can switch it back on under Lead Routing.</span></div>{% endif %}
+<div class="mgrid" style="--side:360px">
+  <div class="card card-flush">
+    <div style="padding:16px 18px">
+      <div class="grid grid-3" style="gap:10px" id="af">
+        {% include "sales/partials/assign_filter.html" %}
+      </div>
+    </div>
+    <div class="card-head mhead" style="padding:0 18px"><h2>{% if status == "assigned" %}Already assigned{% elif status == "all" %}All open leads{% else %}Waiting for an agent{% endif %}</h2><span class="sub">{{ shown }} matching · oldest first</span></div>
+    <div class="table-wrap mt-3"><table class="table assign-table"><thead><tr><th style="width:34px"><input type="checkbox" id="pick-all" aria-label="Select all"></th><th>Lead</th><th>Source</th><th>Interested in</th><th>Waiting</th><th>{% if status == "unassigned" %}Suggested agent{% else %}Agent{% endif %}</th></tr></thead><tbody>
+    {% for r in rows %}<tr><td class="a-check"><input type="checkbox" form="assign-form" name="ids" value="{{ r.e.pk|unlocalize }}" class="pick"></td>
+      <td class="cell-first a-lead"><a class="row-link cell-main" href="{{ r.e.get_absolute_url }}">{{ r.e.client.full_name }}</a><div class="cell-sub">{{ r.e.reference }} · {{ r.e.client.phone|default:"" }}</div></td>
+      <td class="a-src" data-label="Source">{% source_badge r.e True %}</td><td class="a-int" data-label="Interested in">{{ r.e.interest_label|truncatechars:30 }}<div class="cell-sub">{{ r.e.adults }} adult{{ r.e.adults|pluralize }}{% if r.e.children %} + {{ r.e.children }} child{{ r.e.children|pluralize:"ren" }}{% endif %}</div></td>
+      <td class="a-wait" data-label="Waiting">{{ r.e.created_at|timesince }}</td>
+      <td class="a-agent" data-label="Agent">{% if r.e.assigned_agent %}{{ r.e.assigned_agent.short_name }}{% elif r.suggest %}<span class="a-sugg">Suggested</span> <b>{{ r.suggest.agent.short_name }}</b><div class="cell-sub">{{ r.suggest.why }}</div>{% else %}<span class="text-muted">Nobody available</span>{% endif %}</td></tr>
+    {% empty %}<tr><td colspan="6">{% include "components/empty_state.html" with icon="check" title="Nobody waiting" text="No leads match these filters." %}</td></tr>{% endfor %}</tbody></table></div></div>
+  <div class="card"><div class="card-head"><h2>Agent capacity today</h2></div>
+    {% for c in caps %}<div class="mrow" style="align-items:flex-start;flex-wrap:wrap"><span class="avatar avatar-sm">{{ c.agent.initials|default:c.agent.short_name|slice:":2" }}</span><div class="grow"><div style="font-weight:700">{{ c.agent.full_name }}{% if not c.available %} <span class="text-sm text-muted">· {{ c.agent.get_on_duty_display }}</span>{% endif %}</div><div class="text-sm text-muted">{{ c.today }} of {{ c.limit }} today · {{ c.open }} open</div></div>
+      <button class="btn btn-secondary btn-sm assign-here" form="assign-form" type="submit" name="agent" value="{{ c.agent.pk|unlocalize }}" disabled>Assign here</button>
+      <div class="mbar" style="width:100%;margin-top:6px"><span style="width:{{ c.pct|unlocalize }}%"></span></div></div>{% endfor %}
+    <p class="text-sm text-muted mt-3">Bar shows new leads today against each agent's daily limit. Tick leads on the left, then press Assign here. You can go over a limit when you choose an agent yourself.</p></div>
+</div>
+<script>
+(function(){var all=document.getElementById("pick-all");
+function sync(){var n=document.querySelectorAll(".pick:checked").length;document.getElementById("assign-selected").disabled=!n;document.querySelectorAll(".assign-here").forEach(function(b){b.disabled=!n;});}
+document.addEventListener("change",function(e){if(e.target===all){document.querySelectorAll(".pick").forEach(function(c){c.checked=all.checked;});}sync();});sync();})();
+</script>
+{% endblock %}

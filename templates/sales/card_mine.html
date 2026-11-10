@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% block title %}My QR card{% endblock %}
+{% block content %}
+<div class="page-header"><div><h1>My QR business card</h1><p>Print it, put it on your WhatsApp status or e-mail signature. Whoever scans it can save your contact and send you their trip request, which comes straight to you as a lead.</p></div></div>
+{% include "sales/_card_stats.html" %}
+<div class="grid grid-main-side mt-4" style="align-items:start">
+  <div class="stack" style="gap:16px">
+    <div class="card"><div class="card-head"><h2>Your card</h2><span class="pill {% if card.is_active %}pill-success{% else %}pill-neutral{% endif %}">{% if card.is_active %}Live{% else %}Switched off{% endif %}</span></div>
+      <img src="{% url 'public_card_image' card.token %}?v={{ card.pk }}" alt="Business card for {{ emp.full_name }}" style="width:100%;border-radius:12px;border:1px solid var(--border)">
+      <div class="btn-row mt-3">
+        <a class="btn btn-primary btn-sm" href="{% url 'public_card_image' card.token %}?download=1">{% include "components/icon.html" with name="download" %} Download card</a>
+        <a class="btn btn-secondary btn-sm" href="{% url 'public_card_qr' card.token %}?download=1">{% include "components/icon.html" with name="download" %} QR code only</a>
+        <a class="btn btn-secondary btn-sm" href="https://wa.me/?text={{ share }}" target="_blank" rel="noopener">{% include "components/icon.html" with name="whatsapp" %} Share on WhatsApp</a>
+        <a class="btn btn-ghost btn-sm" href="{{ card.public_path }}" target="_blank" rel="noopener">{% include "components/icon.html" with name="eye" %} Open as a client sees it</a></div>
+      <div class="flex gap-2 mt-3"><input class="input" id="card-url" value="{{ url }}" readonly aria-label="Card link"><button type="button" class="btn btn-secondary" data-copy="{{ url }}">Copy</button></div></div>
+    <div class="card card-flush"><div class="card-head"><h2>Leads from my card</h2></div>{% include "sales/_card_leads.html" %}</div>
+  </div>
+  <div class="card"><div class="card-head"><h2>What the card says</h2></div>
+    <form method="post" enctype="multipart/form-data" novalidate>{% csrf_token %}{% include "components/form_fields.html" %}
+      <button class="btn btn-primary btn-block mt-3" type="submit">Save</button></form>
+    <p class="text-xs text-muted mt-3 mb-0">Your name, phone and e-mail come from My Profile.</p></div>
+</div>
+{% include "ict/_copy_script.html" %}
+{% endblock %}

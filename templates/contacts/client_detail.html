@@ -1,0 +1,53 @@
+{% extends "base.html" %}{% load l10n %}
+{% block title %}{{ object.full_name }}{% endblock %}
+{% block content %}
+<div class="page-header">
+  <div><div class="crumbs"><a href="{% url 'contacts:list' %}">Clients</a><span>/</span><span>{{ object.full_name }}</span></div>
+    <div class="flex items-center gap-3"><span class="avatar avatar-lg">{{ object.initials }}</span>
+      <div><h1>{{ object.full_name }}</h1><p>{{ object.nationality|default:"Nationality not recorded" }}{% if object.is_international %} · <span class="pill pill-info">Diaspora / international</span>{% endif %}{% if enquiries|length > 1 %} · <span class="pill pill-accent">Returning client</span>{% endif %}</p></div></div></div>
+  <div class="actions">
+    {% if object.phone %}
+      <a class="btn btn-secondary" href="tel:{{ object.phone }}">{% include "components/icon.html" with name="phone" %} Call</a>
+      <a class="btn btn-secondary" href="{{ object.phone|wa_link }}" target="_blank" rel="noopener">{% include "components/icon.html" with name="whatsapp" %} WhatsApp</a>{% endif %}
+    {% if object.email %}<a class="btn btn-secondary" href="mailto:{{ object.email }}">{% include "components/icon.html" with name="mail" %} Email</a>{% endif %}
+    {% if request.user.can_manage_clients %}<a class="btn btn-secondary" href="{% url 'contacts:edit' object.pk %}">{% include "components/icon.html" with name="edit" %} Edit</a>{% endif %}
+    <a class="btn btn-accent" href="{% url 'leads:create' %}?client={{ object.pk|unlocalize }}">{% include "components/icon.html" with name="plus" %} New enquiry</a>
+  </div>
+</div>
+<div class="grid grid-side-main">
+  <div class="stack">
+    <div class="card"><div class="card-head"><h2>Contact</h2></div>
+      <dl class="dl">
+        <dt>Phone</dt><dd>{{ object.phone|phone|default:"—" }}</dd>
+        <dt>Alt phone</dt><dd>{{ object.alt_phone|phone|default:"—" }}</dd>
+        <dt>Email</dt><dd>{{ object.email|default:"—" }}</dd>
+        <dt>Residence</dt><dd>{{ object.country_of_residence|default:"—" }}</dd>
+        <dt>Language</dt><dd>{{ object.preferred_language|default:"—" }}</dd>
+        <dt>Passport</dt><dd>{{ object.masked_passport|default:"—" }}</dd>
+        <dt>Owner</dt><dd>{% if object.owner %}{{ object.owner.full_name }}{% else %}Not assigned{% endif %}</dd>
+        <dt>Client since</dt><dd>{{ object.created_at|ds_date }}</dd>
+      </dl></div>
+    <div class="card"><div class="card-head"><h2>Travel notes</h2></div>
+      <dl class="dl"><dt>Dietary</dt><dd>{{ object.dietary_notes|default:"—" }}</dd><dt>Medical</dt><dd>{{ object.medical_notes|default:"—" }}</dd></dl>
+      {% if object.notes %}<p class="text-sm mt-3">{{ object.notes|linebreaksbr }}</p>{% endif %}</div>
+  </div>
+  <div class="stack">
+    <div class="card card-flush">
+      <div class="card-head"><h2>Enquiry history</h2><span class="sub">{{ enquiries|length }} total</span></div>
+      <div class="table-wrap mt-3"><table class="table stack-phone">
+        <thead><tr><th>Reference</th><th>Interest</th><th>Party</th><th>Stage</th><th>Agent</th><th>Received</th></tr></thead>
+        <tbody>
+        {% for e in enquiries %}
+          <tr><td class="cell-first"><a class="row-link cell-main" href="{{ e.get_absolute_url }}">{{ e.reference }}</a><div class="cell-sub">{% source_badge e True %}</div></td>
+            <td data-label="Interest">{{ e.interest_label }}</td><td data-label="Party">{{ e.party_label }}</td><td data-label="Stage">{% stage_pill e %}</td>
+            <td data-label="Agent">{{ e.assigned_agent.short_name|default:"—" }}</td><td data-label="Received">{{ e.created_at|ds_date }}</td></tr>
+        {% empty %}<tr><td colspan="6"><p class="p-4 text-muted mb-0">No enquiries yet.</p></td></tr>{% endfor %}
+        </tbody></table></div>
+    </div>
+    {% if companion_trips %}
+    <div class="card"><div class="card-head"><h2>Travelled as companion</h2></div>
+      <div class="list">{% for t in companion_trips %}<a class="list-item row-link" href="{{ t.enquiry.get_absolute_url }}"><div class="grow"><div class="title">{{ t.enquiry.reference }}</div><div class="meta">{{ t.get_relationship_display }} of {{ t.enquiry.client.full_name }}</div></div></a>{% endfor %}</div></div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

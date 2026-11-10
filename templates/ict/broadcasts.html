@@ -1,0 +1,19 @@
+{% extends "base.html" %}{% load l10n %}
+{% block title %}Bulk SMS & Email{% endblock %}
+{% block content %}
+<div class="page-header"><div><h1>Bulk SMS &amp; Email</h1><p>Send a message to hundreds of clients and contacts at once. SMS goes through Africa's Talking, e-mail through Brevo.</p></div>
+  {% if can_send %}<div class="actions"><a class="btn btn-secondary" href="{% url 'ict:broadcast_new' %}?channel=email">{% include "components/icon.html" with name="mail" %} New e-mail</a><a class="btn btn-accent" href="{% url 'ict:broadcast_new' %}?channel=sms">{% include "components/icon.html" with name="send" %} New SMS</a></div>{% endif %}</div>
+<div class="grid grid-4 mb-4">
+  <div class="card kpi kpi-accent"><span class="kpi-label">SMS sent this month</span><span class="kpi-value">{{ sms_month }}</span><span class="kpi-delta {% if sms_live %}up{% endif %}">{% if sms_live %}Africa's Talking connected{% else %}Mock mode · add the key{% endif %}</span></div>
+  <div class="card kpi"><span class="kpi-label">E-mails sent this month</span><span class="kpi-value">{{ email_month }}</span><span class="kpi-delta {% if email_live %}up{% endif %}">{% if email_live %}Brevo connected{% else %}Mock mode · add the key{% endif %}</span></div>
+  {% include "components/kpi_card.html" with label="Failed this month" value=failed_month %}
+  {% include "components/kpi_card.html" with label="Broadcasts" value=items|length %}</div>
+{% if not sms_live or not email_live %}<div class="alert alert-info mb-4"><span class="grow">{% if not sms_live and not email_live %}No provider keys yet, so sending is simulated: everything works and is recorded, but nothing leaves the system.{% elif not sms_live %}SMS is simulated until the Africa's Talking key is added.{% else %}E-mail is simulated until the Brevo key is added.{% endif %} Add keys under Administration → Integration Keys, then press Test key.</span></div>{% endif %}
+<div class="card card-flush"><nav class="tabs"><a href="?" class="{% if not channel %}active{% endif %}">All</a><a href="?channel=sms" class="{% if channel == 'sms' %}active{% endif %}">SMS</a><a href="?channel=email" class="{% if channel == 'email' %}active{% endif %}">E-mail</a></nav>
+<div class="table-wrap"><table class="table stack-phone"><thead><tr><th>Broadcast</th><th>Channel</th><th>Status</th><th class="num">Recipients</th><th class="num">Sent</th><th class="num">Failed</th><th>When</th></tr></thead><tbody>
+{% for it in items %}{% with b=it.b c=it.c %}<tr><td class="cell-first"><a class="row-link cell-main" href="{% url 'ict:broadcast' b.pk %}">{{ b.name }}</a><div class="cell-sub">{{ b.created_by.full_name|default:"—" }}</div></td>
+<td data-label="Channel">{% if b.channel == "sms" %}{% status_pill "SMS" "info" %}{% else %}{% status_pill "E-mail" "warning" %}{% endif %}</td>
+<td data-label="Status">{% if b.status == "sent" %}{% status_pill "Sent" "success" %}{% elif b.status == "sending" %}{% status_pill "Sending" "info" %}{% elif b.status == "scheduled" %}{% status_pill "Scheduled" "warning" %}{% elif b.status == "cancelled" %}{% status_pill "Cancelled" "neutral" %}{% else %}{% status_pill "Draft" "neutral" %}{% endif %}{% if b.status != "draft" and not b.live %} <span class="text-xs text-muted">mock</span>{% endif %}</td>
+<td class="num" data-label="Recipients">{{ c.total }}</td><td class="num" data-label="Sent">{{ c.sent }}</td><td class="num" data-label="Failed">{{ c.failed }}</td><td data-label="When">{% if b.scheduled_at and b.status == "scheduled" %}{{ b.scheduled_at|ds_datetime }}{% else %}{{ b.created_at|ds_datetime }}{% endif %}</td></tr>{% endwith %}
+{% empty %}<tr><td colspan="7" class="text-muted">Nothing sent yet. Start with New SMS or New e-mail.</td></tr>{% endfor %}</tbody></table></div></div>
+{% endblock %}

@@ -1,0 +1,15 @@
+{% extends "base.html" %}{% load static %}
+{% block title %}Manifest · {{ dep.reference }}{% endblock %}
+{% block extra_css %}<link rel="stylesheet" href="{% static 'css/sales.css' %}">{% endblock %}
+{% block extra_js %}<script src="{% static 'js/offline-checkin.js' %}" defer></script>{% endblock %}
+{% block content %}
+<div class="page-header"><div><div class="crumbs"><a href="{{ dep.get_absolute_url }}">{{ dep.reference }}</a><span>/</span><span>Manifest</span></div>
+  <h1>Manifest & check-in</h1><p>{{ dep.package.title }} · {{ dep.start_date|ds_date }} · {{ checked }} of {{ entries|length }} checked in</p></div>
+  <div class="actions"><a class="btn btn-secondary" href="?print=1" target="_blank" rel="noopener">{% include "components/icon.html" with name="printer" %} Print</a>
+    {% if can_manage %}<a class="btn btn-secondary" href="?sync=1">{% include "components/icon.html" with name="refresh" %} Add from bookings</a><a class="btn btn-secondary" href="{% url 'trips:manifest_add' dep.pk %}">{% include "components/icon.html" with name="plus" %} Add guest</a>{% endif %}
+    {% if can_checkin and checked < entries|length %}<form method="post" action="{% url 'trips:manifest_check_all' dep.pk %}">{% csrf_token %}<button class="btn btn-accent" type="submit">Check in everyone</button></form>{% endif %}</div></div>
+<div class="card card-flush" data-manifest><div class="table-wrap"><table class="table stack-phone">
+  <thead><tr><th>Guest</th><th>Nationality</th><th>Passport</th><th>Dietary / medical</th><th>Pickup</th><th>Check-in</th><th></th></tr></thead>
+  <tbody>{% for e in entries %}{% include "trips/partials/manifest_row.html" %}
+    {% empty %}<tr><td colspan="7">{% include "components/empty_state.html" with icon="users" title="Empty manifest" text="Add confirmed bookings to this departure, then choose “Add from bookings”." %}</td></tr>{% endfor %}</tbody></table></div></div>
+{% endblock %}

@@ -1,0 +1,13 @@
+{% extends "base.html" %}{% load static %}
+{% block title %}Two-factor sign-in{% endblock %}
+{% block body_class %}auth-page{% endblock %}
+{% block body %}
+<main style="min-height:100vh;display:grid;place-items:center;padding:24px;background:var(--page-bg)"><div class="card" style="width:min(420px,100%);padding:28px">
+  <img src="{% static 'brand/logo-full.png' %}" alt="Pocket of Paradise Travel Company" style="max-width:180px;display:block;margin:0 auto 16px">
+  <h1 style="font-size:21px;margin:0 0 4px">Two-factor sign-in</h1><p class="text-muted text-sm mb-4">Enter the 6-digit code from your authenticator app for <b>{{ email }}</b>, or one of your recovery codes.</p>
+  {% if error %}<div class="alert alert-danger mb-4">{{ error }}</div>{% endif %}
+  <form method="post" class="stack" style="gap:14px">{% csrf_token %}<div class="field"><label for="code">Code</label><input class="input" id="code" name="code" inputmode="numeric" autocomplete="one-time-code" autofocus required style="font-size:20px;letter-spacing:.2em;text-align:center"></div>
+    <button class="btn btn-primary btn-block" type="submit">Verify</button></form>
+  <p class="text-center text-sm mt-4"><a href="{% url 'accounts:login' %}">Back to sign in</a></p></div></main>
+<div id="toasts" class="toasts"></div>
+{% endblock %}

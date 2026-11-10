@@ -1,0 +1,16 @@
+<div class="table-wrap"><table class="table stack-phone">
+  <thead><tr><th>{% sort_link "name" "Name" %}</th><th>{% sort_link "destination__name" "Destination" %}</th><th>{% sort_link "accommodation_type" "Type" %}</th><th>{% sort_link "star_rating" "Stars" %}</th><th>Contact</th><th class="num">Rates</th></tr></thead>
+  <tbody>
+  {% for a in object_list %}
+    <tr>
+      <td class="cell-first"><a class="row-link cell-main" href="{{ a.get_absolute_url }}">{{ a.name }}</a></td>
+      <td data-label="Destination">{{ a.destination.name }}</td>
+      <td data-label="Type">{{ a.get_accommodation_type_display }}</td>
+      <td data-label="Stars" class="text-accent fw-700">{% if a.star_rating %}{{ a.star_rating }}★{% else %}—{% endif %}</td>
+      <td data-label="Contact">{{ a.contact_name|default:"—" }}{% if a.contact_phone %}<div class="cell-sub"><a href="tel:{{ a.contact_phone }}">{{ a.contact_phone|phone }}</a></div>{% endif %}</td>
+      <td data-label="Rates" class="num">{{ a.rate_count }}</td>
+    </tr>
+  {% empty %}<tr><td colspan="6">{% include "components/empty_state.html" with icon="bed" title="No accommodations found" %}</td></tr>{% endfor %}
+  </tbody>
+</table></div>
+{% include "components/pagination.html" %}

@@ -1,0 +1,7 @@
+{% load l10n %}
+<form method="post" action="{% url 'tasks:new' %}?kind={{ kind }}{% if enq %}&enquiry={{ enq.pk|unlocalize }}{% endif %}" data-modal-form-body novalidate>
+  {% csrf_token %}
+  {% if enq %}<p class="text-sm text-muted mb-3">{{ enq.reference }} · {{ enq.client.full_name }}</p>{% endif %}
+  {% include "components/form_fields.html" %}
+  <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:14px"><button type="button" class="btn btn-secondary" data-modal-close>Cancel</button><button type="submit" class="btn btn-primary">Save</button></div>
+</form>

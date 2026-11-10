@@ -1,0 +1,4 @@
+<div class="card">
+  <div class="card-head"><h2>{{ title }}</h2>{% if sub %}<span class="sub">{{ sub }}</span>{% endif %}</div>
+  <div class="chart-box{% if small %} sm{% endif %}"><canvas data-chart="{{ kind }}" data-chart-source="{{ source }}" {% if key %}data-chart-key="{{ key }}"{% endif %} aria-label="{{ title }}" role="img"></canvas></div>
+</div>

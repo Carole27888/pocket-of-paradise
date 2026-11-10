@@ -1,0 +1,7 @@
+{% extends "base.html" %}
+{% block title %}Retention{% endblock %}
+{% block content %}
+<div class="page-header"><div><h1>Retention</h1><p>How long personal data is kept. The job runs on the 2nd of each month; you can also run it now.</p></div>{% if can_manage %}<div class="actions"><form method="post">{% csrf_token %}<button class="btn btn-accent" type="submit">Run retention now</button></form></div>{% endif %}</div>
+<div class="grid grid-2"><div class="card card-flush"><div class="card-head"><h2>Rules</h2></div><div class="table-wrap mt-3"><table class="table"><thead><tr><th>Data</th><th class="num">Kept for</th></tr></thead><tbody>{% for label, days, when in rules %}<tr><td>{{ label }}</td><td class="num">{{ days }} days {{ when }}</td></tr>{% endfor %}</tbody></table></div><p class="text-sm text-muted" style="padding:12px 16px">Invoices, receipts, payroll and ledger entries are never deleted (legal record-keeping): only the person is scrubbed.</p></div>
+  <div class="card card-flush"><div class="card-head"><h2>Recent runs</h2></div><div class="table-wrap mt-3"><table class="table"><thead><tr><th>When</th><th>By</th><th>Result</th></tr></thead><tbody>{% for r in runs %}<tr><td>{{ r.ran_at|ds_datetime }}</td><td>{{ r.by.full_name|default:"Scheduled job" }}</td><td class="text-sm">{% for k, v in r.counts.items %}{{ k|cut:"_" }}: {{ v }}{% if not forloop.last %} · {% endif %}{% endfor %}</td></tr>{% empty %}<tr><td colspan="3" class="text-muted">Not run yet.</td></tr>{% endfor %}</tbody></table></div></div></div>
+{% endblock %}

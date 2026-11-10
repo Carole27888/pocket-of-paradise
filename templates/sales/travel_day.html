@@ -1,0 +1,66 @@
+{% extends "base.html" %}{% load static %}
+{% block title %}Travel day · {{ b.client.full_name }}{% endblock %}
+{% block extra_css %}<link rel="stylesheet" href="{% static 'css/sales.css' %}"><style>@media print{.no-print{display:none!important}}.td-grid{display:grid;gap:16px;grid-template-columns:repeat(auto-fit,minmax(300px,1fr))}</style>{% endblock %}
+{% block content %}
+<div class="page-header">
+  <div><div class="crumbs"><a href="{% url 'sales:bookings' %}">Bookings</a><span>/</span><a href="{{ b.get_absolute_url }}">{{ b.reference }}</a><span>/</span><span>Travel day</span></div>
+    <h1>{{ b.client.full_name }} travels {% if b.travel_start %}{{ b.travel_start|date:"l j F Y" }}{% else %}(no date yet){% endif %}</h1>
+    <p>{{ b.trip_name|default:b.title }} · {{ b.party_label }}{% if left is not None %} · {% if left > 1 %}in {{ left }} days{% elif left == 1 %}tomorrow{% elif left == 0 %}today{% else %}already started{% endif %}{% endif %} · {{ b.get_status_display }}</p></div>
+  <div class="actions no-print"><button type="button" class="btn btn-secondary" onclick="window.print()">{% include "components/icon.html" with name="printer" %} Print</button>
+    {% if b.portal_token %}<a class="btn btn-secondary" href="{% url 'public_trip_portal' b.portal_token %}" target="_blank" rel="noopener">{% include "components/icon.html" with name="eye" %} Client's page</a>{% endif %}
+    <a class="btn btn-secondary" href="{{ b.get_absolute_url }}">Booking</a></div></div>
+
+{% if b.balance > 0 or not dep or dep and not dep.guide %}<div class="alert alert-warn mb-4 no-print"><span class="grow"><b>Before they travel:</b>
+  {% if b.balance > 0 %}balance of {{ b.balance|money:b.currency }} still due. {% endif %}{% if not dep %}no departure (guide, vehicle) linked yet. {% elif not dep.guide %}no guide on the departure yet. {% endif %}</span></div>{% endif %}
+
+<div class="td-grid">
+  <div class="card"><div class="card-head"><h2>Client</h2></div>
+    <dl class="dl"><dt>Name</dt><dd><a href="{{ b.client.get_absolute_url }}">{{ b.client.full_name }}</a></dd>
+      <dt>Phone</dt><dd>{{ b.client.phone|default:"-" }}{% if b.client.phone %} <a class="no-print" href="{{ b.client.phone|wa_link }}" target="_blank" rel="noopener">WhatsApp</a>{% endif %}</dd>
+      {% if b.client.alt_phone %}<dt>Other phone</dt><dd>{{ b.client.alt_phone }}</dd>{% endif %}
+      <dt>E-mail</dt><dd>{{ b.client.email|default:"-" }}</dd>
+      <dt>Nationality</dt><dd>{{ b.client.nationality|default:"-" }}{% if b.client.is_international %} · international{% endif %}</dd>
+      {% if b.client.dietary_notes %}<dt>Diet</dt><dd>{{ b.client.dietary_notes }}</dd>{% endif %}
+      {% if b.client.medical_notes %}<dt>Medical</dt><dd>{{ b.client.medical_notes }}</dd>{% endif %}</dl>
+    {% if party %}<p class="rep-sub" style="margin:14px 0 6px">Travelling with</p>{% for p in party %}<div class="text-sm">{{ p.full_name }} <span class="text-muted">· {{ p.get_relationship_display }}{% if p.is_child %} · child{% if p.age %} ({{ p.age }}){% endif %}{% endif %}{% if p.dietary_notes %} · {{ p.dietary_notes }}{% endif %}</span></div>{% endfor %}{% endif %}</div>
+
+  <div class="card"><div class="card-head"><h2>Departure &amp; contacts</h2></div>
+    {% if dep %}<dl class="dl"><dt>Departure</dt><dd><a href="{{ dep.get_absolute_url }}">{{ dep.reference }}</a> · {{ dep.get_stage_display }}</dd>
+      <dt>Pick-up</dt><dd>{% if dep.pickup_time %}{{ dep.pickup_time|time:"H:i" }} · {% endif %}{{ dep.meeting_point|default:"-" }}</dd>
+      <dt>Guide</dt><dd>{% if dep.guide %}{{ dep.guide.full_name }}{% if dep.guide.phone %} · {{ dep.guide.phone }}{% endif %}{% else %}<span class="text-danger">Not assigned</span>{% endif %}</dd>
+      <dt>Driver</dt><dd>{% if dep.driver %}{{ dep.driver.full_name }}{% if dep.driver.phone %} · {{ dep.driver.phone }}{% endif %}{% else %}-{% endif %}</dd>
+      <dt>Vehicle</dt><dd>{% if dep.vehicle %}{{ dep.vehicle.registration_no }}{% else %}-{% endif %}</dd>
+      <dt>Readiness</dt><dd class="text-sm">{% if dep.accommodation_confirmed %}✔{% else %}○{% endif %} Lodges · {% if dep.permits_issued %}✔{% else %}○{% endif %} Permits · {% if dep.park_fees_paid %}✔{% else %}○{% endif %} Park fees · {% if dep.meals_arranged %}✔{% else %}○{% endif %} Meals · {% if dep.insurance_ok %}✔{% else %}○{% endif %} Insurance</dd></dl>
+    {% else %}<p class="text-sm text-muted">No departure linked. Link one on the <a href="{{ b.get_absolute_url }}">booking</a> to show the guide, driver and vehicle here.</p>{% endif %}
+    <p class="rep-sub" style="margin:14px 0 6px">Office</p>
+    <div class="text-sm">{% if b.agent %}Agent: <b>{{ b.agent.full_name }}</b>{% if b.agent.phone %} · {{ b.agent.phone }}{% endif %}<br>{% endif %}{{ company.name }}{% if company.phone %} · {{ company.phone }}{% endif %}</div></div>
+
+  <div class="card"><div class="card-head"><h2>Payments</h2><span class="sub">{{ b.paid_percent }}% paid</span></div>
+    <dl class="dl"><dt>Total</dt><dd>{{ b.total_amount|money:b.currency }}</dd><dt>Paid</dt><dd>{{ b.amount_paid|money:b.currency }}</dd><dt>Balance</dt><dd><b class="{% if b.balance > 0 %}text-danger{% else %}text-success{% endif %}">{{ b.balance|money:b.currency }}</b></dd></dl>
+    {% for r in rows %}<div class="text-sm" style="display:flex;justify-content:space-between;padding:4px 0"><span>{{ r.label }}</span><span>{{ r.amount|money:b.currency }} · {{ r.state|title }}</span></div>{% endfor %}
+    {% for p in payments|slice:":6" %}<div class="text-xs text-muted">{{ p.received_at|date:"j M Y" }} · {{ p.get_method_display }} · {{ p.amount|money:b.currency }}{% if p.reference %} · {{ p.reference }}{% endif %}</div>{% endfor %}</div>
+
+  <div class="card"><div class="card-head"><h2>Documents</h2></div>
+    {% for d in docs %}<div class="text-sm" style="padding:4px 0">{% if d.ok %}✔{% else %}○{% endif %} {{ d.label }} <span class="text-muted">· {{ d.detail }}</span></div>{% endfor %}
+    <p class="rep-sub" style="margin:14px 0 6px">The client was asked to bring</p>
+    <ul class="text-sm" style="margin:0;padding-left:18px">{% for t in client_docs %}<li>{{ t }}</li>{% endfor %}</ul></div>
+</div>
+
+<div class="card mt-4"><div class="card-head"><h2>Flights</h2></div>
+  {% if flights %}<div class="table-wrap"><table class="table stack-phone"><thead><tr><th>Flight</th><th>Route</th><th>Departs</th><th>Arrives</th><th>Ref</th><th class="no-print"></th></tr></thead><tbody>
+  {% for f in flights %}<tr><td class="cell-first"><b>{{ f.airline }} {{ f.flight_number }}</b><div class="text-xs text-muted">{{ f.get_leg_display }}</div></td><td data-label="Route">{{ f.from_airport|default:"?" }} → {{ f.to_airport|default:"?" }}</td>
+    <td data-label="Departs">{{ f.departs_at|date:"D j M H:i"|default:"-" }}</td><td data-label="Arrives">{{ f.arrives_at|date:"D j M H:i"|default:"-" }}</td><td data-label="Ref">{{ f.pnr|default:"-" }}{% if f.notes %}<div class="text-xs text-muted">{{ f.notes }}</div>{% endif %}</td>
+    <td class="no-print">{% if can_act %}<form method="post" action="{% url 'sales:booking_flight_delete' b.pk f.pk %}">{% csrf_token %}<button class="btn btn-ghost btn-sm text-danger" type="submit">Remove</button></form>{% endif %}</td></tr>{% endfor %}</tbody></table></div>
+  {% else %}<p class="text-sm text-muted">No flights recorded.</p>{% endif %}
+  {% if can_act %}<details class="no-print mt-3"><summary class="fw-700" style="cursor:pointer">Add a flight</summary>
+    <form method="post" action="{% url 'sales:booking_flight_add' b.pk %}" class="mt-3" novalidate>{% csrf_token %}{% with form=flight_form %}{% include "components/form_fields.html" %}{% endwith %}<button class="btn btn-primary mt-3" type="submit">Add flight</button></form></details>{% endif %}</div>
+
+<div class="card mt-4"><div class="card-head"><h2>Itinerary &amp; accommodation</h2>{% if it %}<a class="sub no-print" href="{{ it.get_absolute_url }}">Open itinerary</a>{% endif %}</div>
+  {% if stays %}<div class="flex gap-3 mb-3" style="flex-wrap:wrap">{% for s in stays %}<span class="pill pill-neutral">🛏 {{ s.name }} · {{ s.nights }} night{{ s.nights|pluralize }}{% if s.first %} from {{ s.first|date:"j M" }}{% endif %}{% if s.room %} · {{ s.room }}{% endif %}</span>{% endfor %}</div>{% endif %}
+  {% for d in days %}<div style="display:flex;gap:12px;padding:10px 0;border-bottom:1px solid var(--border)"><span class="avatar">{{ d.day_number }}</span><div class="grow"><b>{{ d.title }}</b>{% if d.date %} <span class="text-xs text-muted">· {{ d.date|date:"D j M" }}</span>{% endif %}
+    <div class="text-xs text-muted">{% if d.destination %}📍 {{ d.destination.name }} {% endif %}{% if d.accommodation %}🛏 {{ d.accommodation.name }} {% endif %}{% if d.drive_hours %}🚙 {{ d.drive_hours|floatformat:1 }} h{% endif %}</div>
+    {% if d.story %}<p class="text-sm" style="margin:4px 0 0">{{ d.story|truncatewords:40 }}</p>{% endif %}</div></div>
+  {% empty %}<p class="text-sm text-muted">No itinerary is linked to this booking.</p>{% endfor %}</div>
+
+{% if reminders %}<p class="text-xs text-muted mt-3">Reminders sent: {% for r in reminders %}{{ r.get_audience_display }} {{ r.days_before }} day{{ r.days_before|pluralize }} before ({{ r.sent_at|date:"j M" }}{% if not r.ok %}, failed{% endif %}){% if not forloop.last %} · {% endif %}{% endfor %}</p>{% endif %}
+{% endblock %}

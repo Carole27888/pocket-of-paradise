@@ -1,0 +1,90 @@
+/* Pocket of Paradise design tokens — palette taken from the brand logo.
+   Ink brown #3C2D18 (outline, wordmark, palm) · Sea teal #4FA99F · Sun orange #EDA036 · Sand gold #EEB63F · Cream #F9EDD7.
+   Change colours here only; templates never hard-code hex values. */
+
+@font-face { font-family: "Manrope"; font-weight: 400; font-style: normal; font-display: swap; src: url("../fonts/manrope-latin-400-normal.woff2") format("woff2"); }
+@font-face { font-family: "Manrope"; font-weight: 500; font-style: normal; font-display: swap; src: url("../fonts/manrope-latin-500-normal.woff2") format("woff2"); }
+@font-face { font-family: "Manrope"; font-weight: 600; font-style: normal; font-display: swap; src: url("../fonts/manrope-latin-600-normal.woff2") format("woff2"); }
+@font-face { font-family: "Manrope"; font-weight: 700; font-style: normal; font-display: swap; src: url("../fonts/manrope-latin-700-normal.woff2") format("woff2"); }
+@font-face { font-family: "Manrope"; font-weight: 800; font-style: normal; font-display: swap; src: url("../fonts/manrope-latin-800-normal.woff2") format("woff2"); }
+@font-face { font-family: "Fraunces"; font-weight: 600; font-style: normal; font-display: swap; src: url("../fonts/fraunces-latin-600-normal.woff2") format("woff2"); }
+@font-face { font-family: "Fraunces"; font-weight: 700; font-style: normal; font-display: swap; src: url("../fonts/fraunces-latin-700-normal.woff2") format("woff2"); }
+@font-face { font-family: "Fraunces"; font-weight: 800; font-style: normal; font-display: swap; src: url("../fonts/fraunces-latin-800-normal.woff2") format("woff2"); }
+@font-face { font-family: "Fraunces"; font-weight: 500; font-style: italic; font-display: swap; src: url("../fonts/fraunces-latin-500-italic.woff2") format("woff2"); }
+
+:root {
+  /* brand */
+  --sidebar: #2E2114;            /* the logo's ink brown, deepened: calm, lets the content lead */
+  --sidebar-text: #F9EDD7;
+  --sidebar-muted: #BBA98C;
+  --sidebar-hover: rgba(79, 169, 159, .14);
+  --sidebar-active: rgba(79, 169, 159, .26);
+  --primary: #1F6F6B;            /* the logo's sea, darkened so white text passes contrast: buttons, links, accents */
+  --primary-hover: #195D5A;
+  --primary-active: #2A8A84;     /* active sidebar item, progress bars */
+  --primary-soft: #E2F1EE;
+  --accent: #D98A22;             /* the logo's sun: high-intent CTAs, badges */
+  --accent-hover: #C27716;
+  --accent-strong: #9A5A0C;      /* accessible orange text on white */
+  --accent-soft: #FDEFD6;
+  --sun: #EEB63F;                /* sand gold highlights */
+  --sun-soft: #FCF3DA;
+  --peach: #F6DDA6;
+
+  /* surfaces */
+  --page-bg: #FBF5EA;            /* the logo's cream, lightened */
+  --card: #FFFFFF;
+  --border: #EADFCB;
+  --border-strong: #D9CBB2;
+  --table-head: #F6EEDF;
+  --row-hover: #FCF8F0;
+
+  /* text */
+  --text: #2B2014;               /* the logo's ink brown */
+  --text-muted: #6E6250;
+  --text-faint: #9A8D78;
+  --on-primary: #FFFFFF;
+
+  /* semantic */
+  --success: #146C43;  --success-bg: #E4F3EA;
+  --danger: #A8201A;   --danger-bg: #FDE8E7;
+  --warning: #8A4B08;  --warning-bg: #FDF1DC;
+  --info: #1D4ED8;     --info-bg: #E6EEFD;
+  --neutral: #4B4540;  --neutral-bg: #F1ECE4;
+
+  /* channel colours (Marketing) */
+  --ch-fb: #2563EB; --ch-ig: #DB2777; --ch-tt: #0F766E; --ch-go: #B45309; --ch-yt: #DC2626; --ch-ta: #00AF87;
+  /* reservations-desk sources */
+  --ch-wa: #146C43; --ch-wi: #7C3AED; --ch-cl: #1D4ED8; --ch-dm: #DB2777; --ch-ws: #0F766E; --ch-agent: #B45309; --ch-rf: #6D28D9;
+
+  /* trip production */
+  --prod-sourced: #D97706; --prod-shot: #2563EB; --prod-posted: #16A34A;
+
+  /* pipeline stages: background / text */
+  --st-enquiry-bg: #EEF1EF;  --st-enquiry: #44524C;
+  --st-quoted-bg: #E6EEFD;   --st-quoted: #1D4ED8;
+  --st-hot-bg: #FFEDD5;      --st-hot: #C2410C;
+  --st-itinerary-bg: #F3E8FF; --st-itinerary: #7E22CE;
+  --st-deposit-bg: #FEF3C7;  --st-deposit: #92400E;
+  --st-confirmed-bg: #CCFBF1; --st-confirmed: #0F766E;
+  --st-completed-bg: #E4F3EA; --st-completed: #146C43;
+  --st-lost-bg: #FDE8E7;     --st-lost: #A8201A;
+
+  /* type */
+  --font-ui: "Manrope", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --font-display: "Fraunces", Georgia, "Times New Roman", serif;
+  --fs-xs: 11.5px; --fs-sm: 12.5px; --fs-base: 14px; --fs-md: 15px; --fs-lg: 18px; --fs-xl: 22px; --fs-h1: 26px; --fs-kpi: 28px;
+
+  /* spacing / shape */
+  --s-1: 4px; --s-2: 8px; --s-3: 12px; --s-4: 16px; --s-5: 20px; --s-6: 24px; --s-7: 28px; --s-8: 32px;
+  --radius-sm: 6px; --radius: 8px; --radius-card: 12px; --radius-pill: 999px;
+  --shadow-sm: 0 1px 2px rgba(59, 16, 12, .06);
+  --shadow: 0 4px 16px rgba(59, 16, 12, .08);
+  --shadow-lg: 0 18px 48px rgba(59, 16, 12, .18);
+  --focus: 0 0 0 3px rgba(232, 137, 26, .45);
+
+  /* layout */
+  --sidebar-w: 248px; --topbar-h: 64px; --bottomnav-h: 64px; --tap: 44px;
+  --safe-top: env(safe-area-inset-top, 0px); --safe-bottom: env(safe-area-inset-bottom, 0px);
+  --safe-left: env(safe-area-inset-left, 0px); --safe-right: env(safe-area-inset-right, 0px);
+}

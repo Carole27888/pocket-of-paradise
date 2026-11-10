@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+{% block title %}Attendance{% endblock %}
+{% block content %}
+<div class="page-header"><div><h1>Attendance</h1><p>Who clocked in on {{ day|date:"l j F Y" }}, from where, and how long they've worked.</p></div>
+<form method="get" class="inline-form"><input class="input" type="date" name="date" value="{{ day|date:'Y-m-d' }}" onchange="this.form.submit()" aria-label="Date"></form></div>
+<div class="grid grid-4 mb-4">{% include "components/kpi_card.html" with label="Clocked in" value=recs|length accent=True %}{% include "components/kpi_card.html" with label="In now" value=in_now %}{% include "components/kpi_card.html" with label="Late" value=late %}{% include "components/kpi_card.html" with label="Away from office" value=away %}</div>
+<div class="card card-flush mb-4"><div class="table-wrap"><table class="table stack-phone"><thead><tr><th>Person</th><th>In</th><th>Out</th><th>Hours</th><th>Location (in)</th><th>Location (out)</th></tr></thead><tbody>
+{% for r in recs %}<tr><td class="cell-first"><span class="cell-main">{{ r.user.full_name }}</span><div class="cell-sub">{{ r.user.primary_role }}</div></td><td data-label="In">{{ r.clock_in_at|ds_time }}{% if r.late %} {% status_pill "Late" "warning" %}{% endif %}</td><td data-label="Out">{% if r.clock_out_at %}{{ r.clock_out_at|ds_time }}{% else %}<span class="text-muted">in</span>{% endif %}</td><td data-label="Hours">{{ r.hours }}</td>
+<td data-label="Location (in)">{% if r.in_at_office %}{% status_pill "At office" "success" %}{% elif r.in_distance_m is not None %}{% status_pill "Away" "warning" %} <span class="text-sm text-muted">{{ r.in_distance_m }} m</span>{% else %}<span class="text-muted">not shared</span>{% endif %} {% if r.in_map %}<a href="{{ r.in_map }}" target="_blank" rel="noopener">Map</a>{% endif %}</td>
+<td data-label="Location (out)">{% if r.clock_out_at %}{% if r.out_at_office %}At office{% elif r.out_distance_m is not None %}{{ r.out_distance_m }} m away{% else %}—{% endif %} {% if r.out_map %}<a href="{{ r.out_map }}" target="_blank" rel="noopener">Map</a>{% endif %}{% endif %}</td></tr>
+{% empty %}<tr><td colspan="6" class="text-muted">Nobody has clocked in on this day.</td></tr>{% endfor %}</tbody></table></div></div>
+{% if absent %}<div class="card"><div class="card-head"><h2>Not clocked in</h2><span class="sub">{{ absent|length }}</span></div><div class="chips">{% for u in absent %}<span class="pill pill-neutral">{{ u.full_name }}</span>{% endfor %}</div></div>{% endif %}
+{% endblock %}

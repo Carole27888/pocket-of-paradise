@@ -1,0 +1,110 @@
+{% extends "base.html" %}{% load static %}
+{% block title %}{{ category.name }}{% endblock %}
+{% block content %}
+<div class="page-header"><div><div class="crumbs"><a href="{% url 'catalog:library' %}?kind={{ category.kind }}">{% include "components/icon.html" with name="arrow-left" size="14" %} Photo library</a></div>
+  <h1>{{ category.name }}</h1><p>{{ category.get_kind_display }} pack · pick these photos for any day or lodge when building an itinerary.</p></div>
+  {% if can_edit %}<div class="actions">
+    <button type="button" class="btn btn-accent" onclick="document.getElementById('file-input').click()">{% include "components/icon.html" with name="plus" %} Upload photos</button>
+    <form method="post" action="{% url 'catalog:pack_delete' category.slug %}" onsubmit="return confirm('Delete this pack and ALL its photos?')">{% csrf_token %}<button class="btn btn-ghost text-danger">Delete pack</button></form></div>{% endif %}</div>
+
+<div class="grid grid-4 mb-4">
+  {% include "components/kpi_card.html" with label="Photos" value=total note="In this pack" accent=True %}
+  {% include "components/kpi_card.html" with label="Tagged" value=tagged note="Easy to find when building a day" %}
+  {% include "components/kpi_card.html" with label="Untagged" value=untagged note="Add tags so they can be searched" %}
+  {% include "components/kpi_card.html" with label="Tags in use" value=tag_counts|length note="Click one below to filter" %}
+</div>
+
+{% if can_edit %}
+<form method="post" enctype="multipart/form-data" id="up-form" class="card pp-up">{% csrf_token %}
+  <label class="pp-drop" id="drop" for="file-input">{% include "components/icon.html" with name="image" size="26" %}<span><b>Drag photos here</b> or click to browse<small>JPG, PNG or WebP · as many as you like · they are shrunk automatically</small></span></label>
+  <input type="file" name="images" accept="image/*" multiple id="file-input" hidden>
+  <div class="pp-up-side">
+    <label class="field" style="margin:0"><span class="text-sm fw-700">Tags for these photos</span><input name="tags" class="input" placeholder="lion, sunset, tent: so you can find them later"></label>
+    <div id="queue" hidden><div class="pp-queue"><b id="qcount"></b><span><button type="button" class="btn btn-ghost btn-sm" id="qclear">Clear</button><button class="btn btn-primary btn-sm" id="qgo" type="submit">Upload</button></span></div>
+      <div class="lib-progress" id="prog" hidden><i id="bar"></i></div><p class="text-muted text-sm" id="qstatus" style="margin:4px 0 0"></p></div>
+  </div>
+</form>{% endif %}
+
+<div class="card pp-tools">
+  <form method="get" class="pp-search">{% include "components/icon.html" with name="search" size="16" %}<input class="input" name="q" value="{{ q }}" placeholder="Search tags or captions…" aria-label="Search photos">{% if tag %}<input type="hidden" name="tag" value="{{ tag }}">{% endif %}{% if q or tag %}<a class="btn btn-ghost btn-sm" href="{% url 'catalog:photo_pack' category.slug %}">Clear</a>{% endif %}</form>
+  <div class="pp-chips"><a class="chip {% if not tag %}active{% endif %}" href="?">All <b>{{ total }}</b></a>{% if untagged %}<a class="chip {% if tag == '__untagged' %}active{% endif %}" href="?tag=__untagged">Untagged <b>{{ untagged }}</b></a>{% endif %}{% for t, n in tag_counts %}<a class="chip {% if tag == t %}active{% endif %}" href="?tag={{ t|urlencode }}">{{ t }} <b>{{ n }}</b></a>{% endfor %}</div>
+</div>
+
+<form method="post" action="{% url 'catalog:photos_bulk' category.slug %}" id="bulk">{% csrf_token %}
+  <div class="pp-grid">
+  {% for im in images %}
+    <figure class="pp-card">
+      <a class="pp-img" href="{{ im.image.url }}" data-full="{{ im.image.url }}" data-tags="{{ im.tags }}"><img src="{{ im.thumb_url }}" alt="{{ im.caption|default:im.tags }}" loading="lazy"></a>
+      {% if can_edit %}<label class="pp-check" title="Select"><input type="checkbox" name="selected" value="{{ im.pk }}"><i></i></label>{% endif %}
+      <figcaption>
+        <div class="pp-tags">{% for t in im.tag_list|slice:":3" %}<span class="pp-tag">{{ t }}</span>{% empty %}<span class="pp-none">No tags yet</span>{% endfor %}{% if im.tag_list|length > 3 %}<span class="pp-tag more">+{{ im.tag_list|length|add:"-3" }}</span>{% endif %}</div>
+        {% if can_edit %}<button type="button" class="btn btn-ghost btn-sm" data-edit-tags="{{ im.pk }}" data-tags="{{ im.tags }}">Edit tags</button>{% endif %}
+      </figcaption>
+    </figure>
+  {% empty %}<div class="card" style="grid-column:1/-1">{% include "components/empty_state.html" with icon="image" title="No photos here" text="Upload some above, or clear the search." %}</div>{% endfor %}
+  </div>
+  {% if can_edit and images %}
+  <div class="pp-bulk" id="bulkbar" hidden>
+    <b><span id="selcount">0</span> selected</b>
+    <label class="check-label"><input type="checkbox" id="all"> All</label>
+    <input class="input" name="tags" placeholder="Tags to apply…"><select class="input select" name="mode"><option value="add">Add tags</option><option value="set">Replace tags</option></select>
+    <button class="btn btn-primary btn-sm" name="action" value="tag">Apply tags</button>
+    <button class="btn btn-secondary btn-sm text-danger" name="action" value="delete" onclick="return confirm('Delete the selected photos?')">Delete</button>
+  </div>{% endif %}
+</form>
+
+<div class="modal-backdrop" id="pp-modal" hidden><div class="modal" style="max-width:520px" role="dialog" aria-modal="true"><div class="modal-head"><h2 id="pp-mt">Edit tags</h2><button type="button" class="icon-btn" data-pp-close aria-label="Close">×</button></div><div id="pp-mb"></div></div></div>
+
+<script>
+(function () {
+  var $ = function (s, r) { return (r || document).querySelector(s); }, $$ = function (s, r) { return Array.prototype.slice.call((r || document).querySelectorAll(s)); };
+  // ---- selection bar
+  var bar = $("#bulkbar"), all = $("#all");
+  function sync() { var n = $$(".pp-check input:checked").length; if (bar) { bar.hidden = n === 0; $("#selcount").textContent = n; } $$(".pp-card").forEach(function (c) { c.classList.toggle("sel", c.querySelector(".pp-check input") && c.querySelector(".pp-check input").checked); }); }
+  document.addEventListener("change", function (e) { if (e.target.closest(".pp-check")) sync(); });
+  if (all) all.addEventListener("change", function () { $$(".pp-check input").forEach(function (c) { c.checked = all.checked; }); sync(); });
+  // ---- modal (large view and tag edit)
+  var modal = $("#pp-modal"), mb = $("#pp-mb"), mt = $("#pp-mt");
+  function open(title, html) { mt.textContent = title; mb.innerHTML = html; modal.hidden = false; var f = mb.querySelector("input[type=text]"); if (f) f.focus(); }
+  modal.addEventListener("click", function (e) { if (e.target === modal || e.target.closest("[data-pp-close]")) modal.hidden = true; });
+  document.addEventListener("keydown", function (e) { if (e.key === "Escape") modal.hidden = true; });
+  document.addEventListener("click", function (e) {
+    var img = e.target.closest(".pp-img");
+    if (img) { e.preventDefault(); modal.querySelector(".modal").style.maxWidth = "880px"; open(img.dataset.tags || "Photo", '<img src="' + img.dataset.full + '" alt="" style="width:100%;border-radius:10px;display:block">'); return; }
+    var ed = e.target.closest("[data-edit-tags]");
+    if (ed) {
+      modal.querySelector(".modal").style.maxWidth = "520px";
+      var csrf = $("#bulk [name=csrfmiddlewaretoken]").value;
+      open("Edit tags", '<form method="post" action="' + $("#bulk").action + '"><input type="hidden" name="csrfmiddlewaretoken" value="' + csrf + '"><input type="hidden" name="selected" value="' + ed.dataset.editTags + '"><input type="hidden" name="mode" value="set"><input type="hidden" name="action" value="tag">' +
+        '<div class="field"><label for="pp-t">Tags (separate with commas)</label><input class="input" id="pp-t" type="text" name="tags" value="' + (ed.dataset.tags || "").replace(/"/g, "&quot;") + '" placeholder="lion, sunset, tent"></div>' +
+        '<div style="display:flex;gap:10px;justify-content:flex-end;margin-top:14px"><button type="button" class="btn btn-secondary" data-pp-close>Cancel</button><button class="btn btn-primary" type="submit">Save tags</button></div></form>');
+    }
+  });
+  // ---- upload queue (3 photos per request, with progress)
+  var f = $("#up-form");
+  if (f) {
+    var inp = $("#file-input"), drop = $("#drop"), q = $("#queue"), files = [];
+    function show() { q.hidden = !files.length; $("#qcount").textContent = files.length + " photo" + (files.length == 1 ? "" : "s") + " ready"; }
+    function add(l) { for (var i = 0; i < l.length; i++) if (/^image\//.test(l[i].type)) files.push(l[i]); show(); }
+    inp.addEventListener("change", function () { add(inp.files); inp.value = ""; });
+    ["dragenter", "dragover"].forEach(function (t) { drop.addEventListener(t, function (e) { e.preventDefault(); drop.classList.add("over"); }); });
+    ["dragleave", "drop"].forEach(function (t) { drop.addEventListener(t, function (e) { e.preventDefault(); drop.classList.remove("over"); }); });
+    drop.addEventListener("drop", function (e) { add(e.dataTransfer.files); });
+    $("#qclear").onclick = function () { files = []; show(); };
+    f.addEventListener("submit", function (e) {
+      e.preventDefault(); if (!files.length) return;
+      var st = $("#qstatus"), barEl = $("#bar"), i = 0, tags = f.querySelector("[name=tags]").value, csrf = f.querySelector("[name=csrfmiddlewaretoken]").value;
+      $("#prog").hidden = false; $("#qgo").disabled = true;
+      (function next() {
+        if (i >= files.length) { location.reload(); return; }
+        var fd = new FormData(); fd.append("csrfmiddlewaretoken", csrf); fd.append("tags", tags);
+        for (var k = 0; k < 3 && i < files.length; k++, i++) fd.append("images", files[i]);
+        fetch(location.href, { method: "POST", body: fd, headers: { "X-Requested-With": "XMLHttpRequest" } }).then(function (r) { return r.json(); })
+          .then(function () { barEl.style.width = (i / files.length * 100) + "%"; st.textContent = "Uploaded " + i + " of " + files.length; next(); })
+          .catch(function () { st.textContent = "Upload failed. Try again."; $("#qgo").disabled = false; });
+      })();
+    });
+  }
+})();
+</script>
+{% endblock %}

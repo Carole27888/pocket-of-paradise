@@ -1,0 +1,13 @@
+{% extends "base.html" %}{% load static %}
+{% block title %}Finance Calendar{% endblock %}
+{% block extra_css %}<link rel="stylesheet" href="{% static 'css/sales.css' %}">{% endblock %}
+{% block content %}
+<div class="page-header"><div><h1>Finance Calendar</h1><p>KRA dates, payroll, invoice and bill due dates, and departures</p></div>
+  <div class="actions"><a class="btn btn-secondary" href="?year={{ prev.year }}&month={{ prev.month }}">‹ {{ prev|date:"M Y" }}</a><span class="btn btn-ghost">{{ first|date:"F Y" }}</span><a class="btn btn-secondary" href="?year={{ next.year }}&month={{ next.month }}">{{ next|date:"M Y" }} ›</a></div></div>
+<div class="grid grid-main-side">
+  <div class="card card-flush"><div class="cal"><div class="cal-h">{% for d in "MTWTFSS" %}<span>{{ d }}</span>{% endfor %}</div>
+    {% for week in weeks %}<div class="cal-w">{% for c in week %}<div class="cal-d {% if not c.in_month %}off{% endif %} {% if c.today %}today{% endif %}"><b>{{ c.date.day }}</b>{% for e in c.events|slice:":3" %}<span class="ev ev-{{ e.cat }} {% if e.done %}done{% endif %}" title="{{ e.title }}">{{ e.title }}</span>{% endfor %}{% if c.events|length > 3 %}<span class="more">+{{ c.events|length|add:"-3" }}</span>{% endif %}</div>{% endfor %}</div>{% endfor %}</div></div>
+  <div class="stack"><div class="card"><div class="card-head"><h2>Next 7 days</h2></div>{% for d, title, cat, done in soon %}<div class="task-row"><div class="grow">{{ title }}</div><span class="when">{{ d|ds_date }}</span></div>{% empty %}<p class="text-muted text-sm">Nothing in the next week.</p>{% endfor %}</div>
+    {% if can_manage %}<div class="card"><div class="card-head"><h2>Add an event</h2></div><form method="post" action="{% url 'finance:event_new' %}" class="stack" style="gap:10px">{% csrf_token %}{% include "components/form_fields.html" %}<button class="btn btn-primary" type="submit">Add</button></form></div>{% endif %}</div>
+</div>
+{% endblock %}

@@ -1,0 +1,22 @@
+{% extends "base.html" %}{% load static %}
+{% block title %}Receivables & Debt{% endblock %}
+{% block extra_css %}<link rel="stylesheet" href="{% static 'css/sales.css' %}">{% endblock %}
+{% block extra_vendor %}<script src="{% static 'vendor/chartjs/chart.umd.min.js' %}" defer></script>{% endblock %}
+{% block extra_js %}<script src="{% static 'js/charts.js' %}" defer></script>{% endblock %}
+{% block content %}
+<div class="page-header"><div><h1>Receivables & Debt Collection</h1><p>Who owes us, how old it is, and who to chase</p></div></div>
+<div class="grid grid-4 mb-4">
+  {% include "components/kpi_card.html" with label="Total outstanding" value=ar.total|money_compact accent=True %}
+  {% include "components/kpi_card.html" with label="Overdue 30+ days" value=overdue30|money_compact %}
+  {% include "components/kpi_card.html" with label="Collected this month" value=collected|money_compact %}
+  {% include "components/kpi_card.html" with label="Average days to collect" value=avg_days|default:"—" %}
+</div>
+{{ charts|json_script:"ar-charts" }}
+<div class="grid grid-main-side mb-4">
+  <div class="card"><div class="card-head"><h2>Aging</h2><span class="sub">Days past due date</span></div><div class="strip mb-4">{% for label, v in ar.buckets.items %}<div class="cell"><b>{{ v|money_compact }}</b><span>{{ label }} days</span></div>{% endfor %}</div><div class="chart-box sm"><canvas data-chart="bar" data-chart-source="ar-charts" data-chart-key="aging" aria-label="Aging" role="img"></canvas></div></div>
+  <div class="card"><div class="card-head"><h2>Reminder schedule</h2></div><ul class="tick-list"><li>{% include "components/icon.html" with name="check" %}Balance reminders 30 / 14 / 7 / 2 days before travel</li><li>{% include "components/icon.html" with name="check" %}1 and 7 days overdue: SMS + task for the consultant</li><li>{% include "components/icon.html" with name="check" %}30 days overdue: demand letter alert to Finance</li></ul></div>
+</div>
+<div class="card card-flush"><div class="card-head"><h2>Debtors</h2><a href="{% url 'finance:invoices' %}?status=overdue">Overdue invoices →</a></div><div class="table-wrap mt-3"><table class="table stack-phone"><thead><tr><th>Invoice</th><th>Client</th><th>Due</th><th class="num">Days late</th><th class="num">Balance</th><th></th></tr></thead>
+  <tbody>{% for i in debtors %}<tr><td class="cell-first"><a class="row-link cell-main" href="{{ i.get_absolute_url }}">{{ i.number }}</a></td><td data-label="Client">{{ i.client.full_name }}<div class="cell-sub">{{ i.client.phone|phone }}</div></td><td data-label="Due">{{ i.due_date|ds_date }}</td><td data-label="Days late" class="num {% if i.days_overdue > 30 %}text-late{% endif %}">{{ i.days_overdue }}</td><td data-label="Balance" class="num fw-700">{{ i.balance|money:i.currency }}</td>
+    <td class="text-right">{% if can_manage %}<form method="post" action="{% url 'finance:remind' i.pk %}" style="display:inline">{% csrf_token %}<input type="hidden" name="next" value="{% url 'finance:receivables' %}"><button class="btn btn-secondary btn-sm" name="via" value="sms" type="submit">SMS</button> <button class="btn btn-secondary btn-sm" name="via" value="email" type="submit">E-mail</button></form>{% endif %} <a class="btn btn-primary btn-sm" href="{{ i.get_absolute_url }}">Record payment</a></td></tr>{% empty %}<tr><td colspan="6">{% include "components/empty_state.html" with icon="check" title="Nothing outstanding" %}</td></tr>{% endfor %}</tbody></table></div></div>
+{% endblock %}

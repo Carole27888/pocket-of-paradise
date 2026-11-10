@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}Production Reports{% endblock %}
+{% block extra_vendor %}<script src="{% static 'vendor/chartjs/chart.umd.min.js' %}" defer></script>{% endblock %}
+{% block extra_js %}<script src="{% static 'js/charts.js' %}" defer></script>{% endblock %}
+{% block content %}
+<div class="page-header"><div><h1>Production Reports</h1><p>How much content went out, and for which trips.</p></div></div>
+{{ charts|json_script:"prod-charts" }}
+<div class="stat-grid mb-4">
+  <div class="stat"><span class="stat-ico">{% include "components/icon.html" with name="check" %}</span><div><small>Posted, all time</small><b>{{ total_posted }}</b></div></div>
+  <div class="stat"><span class="stat-ico">{% include "components/icon.html" with name="clock" %}</span><div><small>Avg days, shoot to post</small><b>{{ avg_days|default:"–" }}</b></div></div>
+  <div class="stat"><span class="stat-ico">{% include "components/icon.html" with name="camera" %}</span><div><small>Posted, last 6 months</small><b>{{ posted_6m }}</b></div></div>
+  <div class="stat"><span class="stat-ico">{% include "components/icon.html" with name="trending-up" %}</span><div><small>Packages covered</small><b>{{ by_package|length }}</b></div></div>
+</div>
+<div class="grid grid-2">
+  <div class="card"><div class="card-head"><h2>Posted per month</h2></div><div class="chart-box"><canvas data-chart="bar" data-chart-source="prod-charts" data-chart-key="posted" aria-label="Posted per month" role="img"></canvas></div></div>
+  <div class="card"><div class="card-head"><h2>Most-covered packages</h2></div>
+    {% for name, n in by_package %}<div class="mrow"><span class="grow">{{ name }}</span><b>{{ n }}</b></div>{% empty %}<p class="text-muted text-sm">Nothing has been posted yet.</p>{% endfor %}</div>
+</div>
+{% endblock %}

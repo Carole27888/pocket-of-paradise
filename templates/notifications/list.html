@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+{% load l10n %}
+{% block title %}Notifications{% endblock %}
+{% block content %}
+<div class="page-header"><div><h1>Notifications</h1><p>{{ unread }} unread. Alerts for follow-ups, hand-overs, approvals and anything that needs you.</p></div>
+  <div class="actions">{% if unread %}<button class="btn btn-secondary" type="button" hx-post="{% url 'notifications:read_all' %}" hx-swap="none">Mark all read</button>{% endif %}</div></div>
+<div class="mchips"><a class="mchip {% if show != 'unread' %}active{% endif %}" href="?">All</a><a class="mchip {% if show == 'unread' %}active{% endif %}" href="?show=unread">Unread</a></div>
+<div class="card">
+{% for n in items %}<a class="list-item" href="{% url 'notifications:open' n.pk|unlocalize %}" style="text-decoration:none;color:inherit">
+  <span class="stat-ico" style="width:36px;height:36px">{% if n.level == "danger" or n.level == "warning" %}{% include "components/icon.html" with name="alert" size="18" %}{% else %}{% include "components/icon.html" with name="bell" size="18" %}{% endif %}</span>
+  <div class="grow"><div class="fw-700">{{ n.title }}{% if not n.read_at %} <span class="pill pill-info">New</span>{% endif %}</div>{% if n.body %}<div class="text-sm text-muted">{{ n.body }}</div>{% endif %}<div class="text-xs text-faint">{{ n.created_at|timesince }} ago</div></div></a>
+{% empty %}<p class="text-muted text-sm">You're all caught up.</p>{% endfor %}</div>
+{% endblock %}

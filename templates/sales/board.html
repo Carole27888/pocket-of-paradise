@@ -1,0 +1,52 @@
+{% extends "base.html" %}{% load l10n static %}
+{% block title %}Pipeline Board{% endblock %}
+{% block extra_css %}<link rel="stylesheet" href="{% static 'css/sales.css' %}">{% endblock %}
+{% block extra_js %}<script src="{% static 'js/sales.js' %}" defer></script>{% endblock %}
+{% block content %}
+<div class="page-header">
+  <div><h1>Pipeline Board</h1><p>{{ total_value|money_compact }} open · {{ weighted|money_compact }} weighted forecast. {% if can_move %}Drag a card to move it, or use “Move to”.{% endif %}</p></div>
+  <div class="actions">{% if request.user.can_capture_enquiries %}<a class="btn btn-accent" href="{% url 'leads:create' %}">{% include "components/icon.html" with name="plus" %} New lead</a>{% endif %}</div>
+</div>
+<form class="board-tools" method="get">
+  <input class="input" type="search" name="q" value="{{ q }}" placeholder="Search client, ref, destination…" aria-label="Search">
+  {% if request.user.sees_all_sales %}
+  <select class="input select" name="agent" aria-label="Agent"><option value="">All agents</option><option value="none" {% if agent_id == "none" %}selected{% endif %}>Unassigned</option>
+    {% for a in agents %}<option value="{{ a.pk|unlocalize }}" {% if agent_id == a.pk|stringformat:"d" %}selected{% endif %}>{{ a.full_name }}</option>{% endfor %}</select>{% endif %}
+  <select class="input select" name="source" aria-label="Source"><option value="">All sources</option>
+    {% for v, l in sources %}<option value="{{ v }}" {% if source == v %}selected{% endif %}>{{ l }}</option>{% endfor %}</select>
+  <button class="btn btn-secondary btn-sm" type="submit">Filter</button>
+  {% if q or agent_id or source %}<a class="btn btn-ghost btn-sm" href="{% url 'sales:board' %}">Clear</a>{% endif %}
+</form>
+<div class="board" id="board">
+  {% for c in columns %}
+  <section class="kcol" data-stage="{{ c.code }}" {% if c.droppable and can_move %}data-droppable="1"{% endif %} aria-label="{{ c.label }}">
+    <header class="kcol-head">
+      <div class="top"><span class="pill stage-{{ c.code }}">{{ c.label }}</span><span class="count fw-800">{{ c.count }}</span></div>
+      <div class="sum"><span class="total">{{ c.value|money_compact }}</span><span>{{ c.weight }}% likely</span></div>
+    </header>
+    <div class="kcol-body">
+      {% for e in c.cards %}
+      <article class="kcard" {% if can_move and c.droppable %}draggable="true"{% else %}data-locked="1"{% endif %} data-id="{{ e.pk|unlocalize }}" data-value="{{ e.deal_value|default:0|stringformat:'f' }}" data-move-url="{% url 'sales:board_move' e.pk %}">
+        <div class="row"><a class="name row-link" href="{{ e.get_absolute_url }}">{{ e.client.full_name }}</a>{% source_badge e %}</div>
+        <div class="sub">{{ e.interest_label }} · {{ e.party_label }}</div>
+        <div class="row"><span class="val">{% if e.deal_value %}{{ e.deal_value|money_compact }}{% else %}<span class="text-faint">No value</span>{% endif %}</span>
+          <span class="sub">{{ e.assigned_agent.short_name|default:"Unassigned" }}</span></div>
+        <div class="row">
+          <span>{% if e.next_action_due and e.next_action_due < now %}<span class="flag late">{% include "components/icon.html" with name="clock" size="12" %} {{ e.next_action|default:"Follow-up" }} overdue</span>
+            {% elif e.next_action %}<span class="flag warn">{% include "components/icon.html" with name="clock" size="12" %} {{ e.next_action|truncatechars:22 }}</span>
+            {% else %}<span class="sub">{{ e.days_in_stage }}d in stage</span>{% endif %}</span>
+          {% if can_move and c.droppable %}<select class="kmove" aria-label="Move {{ e.client.full_name }} to"><option value="{{ c.code }}" selected>Move to…</option>
+            {% for col in columns %}{% if col.droppable and col.code != c.code %}<option value="{{ col.code }}">{{ col.label }}</option>{% endif %}{% endfor %}<option value="lost">Lost</option></select>{% endif %}
+        </div>
+      </article>
+      {% empty %}<p class="text-muted text-sm" style="padding:8px">No leads here.</p>{% endfor %}
+      {% if c.more %}<div class="kcol-more">+{{ c.more }} more · <a href="{% url 'leads:list' %}?stage={{ c.code }}">see all</a></div>{% endif %}
+    </div>
+  </section>
+  {% endfor %}
+  <section class="kcol" data-stage="lost" {% if can_move %}data-droppable="1"{% endif %} aria-label="Lost">
+    <header class="kcol-head"><div class="top"><span class="pill stage-lost">Lost</span><span class="count fw-800">0</span></div><div class="sum"><span class="total">KES 0</span><span>Drop here</span></div></header>
+    <div class="kcol-body"><p class="text-muted text-sm" style="padding:8px">Drop a card to mark a lead lost. You'll be asked why.</p></div>
+  </section>
+</div>
+{% endblock %}

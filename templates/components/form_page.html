@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="page-header">
+  <div>
+    {% if cancel_url %}<div class="crumbs"><a href="{{ cancel_url }}">{% include "components/icon.html" with name="arrow-left" size="14" %} Back</a></div>{% endif %}
+    <h1>{{ title }}</h1>
+    {% if subtitle %}<p>{{ subtitle }}</p>{% endif %}
+  </div>
+</div>
+<form method="post" enctype="multipart/form-data" class="card" novalidate>
+  {% csrf_token %}
+  {% include "components/form_fields.html" %}
+  <div class="form-actions">
+    {% if cancel_url %}<a class="btn btn-secondary" href="{{ cancel_url }}">Cancel</a>{% endif %}
+    <button type="submit" class="btn btn-primary">{% include "components/icon.html" with name="check" %} Save</button>
+  </div>
+</form>
+{% endblock %}

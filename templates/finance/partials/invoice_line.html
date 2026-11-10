@@ -1,0 +1,5 @@
+<div class="formset-row">{% for h in form.hidden_fields %}{{ h }}{% endfor %}
+  <div class="form-grid"><div class="field wide"><label for="{{ form.description.id_for_label }}">Description</label>{{ form.description }}{% for e in form.description.errors %}<span class="error">{{ e }}</span>{% endfor %}</div>
+    <div class="field"><label for="{{ form.quantity.id_for_label }}">Qty</label>{{ form.quantity }}</div><div class="field"><label for="{{ form.unit_price.id_for_label }}">Unit price</label>{{ form.unit_price }}</div>
+    <div class="field check-field">{{ form.vat_applicable }}<label for="{{ form.vat_applicable.id_for_label }}">VAT applies</label></div></div>
+  {% if form.DELETE %}<label class="flex items-center gap-2 mt-2 text-sm text-danger">{{ form.DELETE }} Remove this line</label>{% endif %}</div>

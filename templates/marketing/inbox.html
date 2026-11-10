@@ -1,0 +1,14 @@
+{% extends "base.html" %}{% load static %}
+{% block title %}Unified Inbox{% endblock %}
+{% block extra_css %}<link rel="stylesheet" href="{% static 'css/sales.css' %}">{% endblock %}
+{% block content %}
+<div class="page-header"><div><h1>Unified Inbox</h1><p>Messages and comments from every social channel · {{ open_count }} awaiting a reply</p></div></div>
+<div class="chips mb-4">
+  <a class="chip {% if filter == 'open' %}active{% endif %}" href="?filter=open">Needs reply</a><a class="chip {% if filter == 'all' %}active{% endif %}" href="?filter=all">All</a><a class="chip {% if filter == 'converted' %}active{% endif %}" href="?filter=converted">Converted</a>
+  {% for c in channels %}<a class="chip" href="?filter={{ filter }}&channel={{ c.key }}">{{ c.name }}</a>{% endfor %}</div>
+<div class="stack">{% for m in messages_ %}<div class="card"><div class="flex justify-between wrap gap-2"><div>{% source_badge m.channel.key %} <b>{{ m.sender }}</b> <span class="text-xs text-muted">{{ m.get_kind_display }} · {{ m.received_at|ds_datetime }}</span></div>{% if m.enquiry %}<a class="pill pill-success" href="{{ m.enquiry.get_absolute_url }}">{{ m.enquiry.reference }}</a>{% endif %}</div>
+  <p class="mt-2">{{ m.message }}</p>{% if m.replied %}<p class="text-sm text-success">↳ {{ m.reply_text }}</p>{% endif %}
+  {% if can_manage %}<div class="flex gap-3 wrap mt-2">{% if not m.replied %}<form method="post" action="{% url 'marketing:inbox_reply' m.pk %}" class="flex gap-2 grow">{% csrf_token %}<input class="input" name="text" placeholder="Write a reply…" required maxlength="1000"><button class="btn btn-primary btn-sm" type="submit">Reply</button></form>{% endif %}
+    {% if not m.enquiry %}<form method="post" action="{% url 'marketing:inbox_convert' m.pk %}" class="flex gap-2">{% csrf_token %}<input class="input" name="phone" placeholder="Guest phone" required style="max-width:170px"><button class="btn btn-secondary btn-sm" type="submit">Convert to enquiry</button></form>{% endif %}</div>{% endif %}</div>
+{% empty %}<div class="card">{% include "components/empty_state.html" with icon="mail" title="Inbox zero" text="New messages and comments from your channels appear here." %}</div>{% endfor %}</div>
+{% endblock %}

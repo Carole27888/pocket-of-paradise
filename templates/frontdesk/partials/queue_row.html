@@ -1,0 +1,11 @@
+{% load desk l10n %}<tr id="q-{{ e.pk|unlocalize }}">
+  <td class="cell-first"><a class="row-link cell-main" href="{{ e.get_absolute_url }}">{{ e.client.full_name }}</a>
+    <div class="cell-sub">{{ e.reference }} · <a href="{{ e.client.phone|wa_link }}" target="_blank" rel="noopener">{{ e.client.phone|phone }}</a>{% if e.is_returning_client %} · <span class="text-accent fw-700">Returning</span>{% endif %}</div></td>
+  <td data-label="Channel">{% source_badge e True %}</td>
+  <td data-label="Interest">{{ e.interest_label }}<div class="cell-sub">{{ e.party_label }}</div></td>
+  <td data-label="Captured">{{ e.created_at|ds_time }}<div class="cell-sub">{{ e.created_at|ds_date }}</div></td>
+  <td data-label="Status">{% queue_pill e %}{% if not e.assigned_agent_id and e.stage != "lost" and e.stage != "completed" %} {% waited e.created_at %}{% endif %}</td>
+  <td data-label="Agent">{{ e.assigned_agent.short_name|default:"—" }}</td>
+  <td class="text-right">{% if can_distribute %}{% if not e.assigned_agent_id and e.stage != "lost" and e.stage != "completed" %}<button type="button" class="btn btn-primary btn-sm assign-btn" data-lead="{{ e.pk|unlocalize }}" data-name="{{ e.client.full_name }}" data-sub="{{ e.interest_label }}">Assign</button>
+    {% endif %}{% endif %}{% if can_run_desk and e.assigned_agent_id and not e.last_contact_at %}<form method="post" action="{% url 'frontdesk:remind_agent' e.pk %}">{% csrf_token %}<input type="hidden" name="next" value="/frontdesk/queues/"><button class="btn btn-secondary btn-sm" type="submit">Remind agent</button></form>{% endif %}</td>
+</tr>

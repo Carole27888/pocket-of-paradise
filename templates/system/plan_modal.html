@@ -1,0 +1,12 @@
+<form method="post" action="{% url 'system:plan_add' %}" data-modal-form-body novalidate>
+  {% csrf_token %}
+  {% if error %}<div class="alert alert-danger mb-3">{{ error }}</div>{% endif %}
+  <div class="stack" style="gap:12px">
+    <div class="field"><label for="pl-t">What will you do?</label><input class="input" id="pl-t" name="title" maxlength="200" value="{{ posted.title }}" placeholder="e.g. Follow up all quoted leads" required></div>
+    <div class="field" style="max-width:180px"><label for="pl-s">Start time (optional)</label><input class="input" id="pl-s" type="time" name="start_time" value="{{ posted.start_time }}"></div>
+    <div class="field"><label>On which days?</label>
+      <div class="flex gap-2 wrap">{% for d in week %}<label class="chip"><input type="checkbox" class="check" name="days" value="{{ d|date:'Y-m-d' }}" {% if d|date:'Y-m-d' in ticked %}checked{% endif %}> {{ d|date:"D j" }}</label>{% endfor %}</div>
+      <span class="help">Tick several days to plan the same thing on each.</span></div>
+  </div>
+  <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:14px"><button type="button" class="btn btn-secondary" data-modal-close>Cancel</button><button type="submit" class="btn btn-primary">{% include "components/icon.html" with name="plus" %} Add to my week</button></div>
+</form>

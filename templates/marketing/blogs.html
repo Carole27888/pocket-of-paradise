@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% block title %}Blogs{% endblock %}
+{% block content %}
+<div class="page-header"><div><h1>Blogs</h1><p>Posts read from the company website. They are checked every morning; press Fetch now after publishing a new one.</p></div>
+  {% if can_edit and source.url %}<div class="actions"><form method="post" action="{% url 'marketing:blogs_fetch' %}">{% csrf_token %}<button class="btn btn-primary" type="submit">{% include "components/icon.html" with name="refresh" %} Fetch now</button></form></div>{% endif %}</div>
+<div class="grid grid-main-side">
+  <div class="card"><div class="card-head"><h2>{{ count }} post{{ count|pluralize }}</h2></div>
+  {% for b in posts %}<div class="list-item" style="align-items:flex-start">
+    {% if b.image_url %}<img src="{{ b.image_url }}" alt="" loading="lazy" style="width:72px;height:54px;object-fit:cover;border-radius:8px;flex:none">{% else %}<span class="stat-ico" style="width:72px;height:54px">{% include "components/icon.html" with name="file-text" %}</span>{% endif %}
+    <div class="grow"><a class="fw-700" href="{{ b.url }}" target="_blank" rel="noopener">{{ b.title }}</a><div class="text-xs text-muted">{% if b.published_at %}{{ b.published_at|ds_date }}{% else %}Found {{ b.fetched_at|ds_date }}{% endif %}{% if b.author %} · {{ b.author }}{% endif %}{% if b.categories %} · {{ b.categories }}{% endif %}</div>{% if b.summary %}<div class="text-sm text-muted">{{ b.summary|truncatechars:160 }}</div>{% endif %}</div></div>
+  {% empty %}{% include "components/empty_state.html" with icon="file-text" title="No blogs yet" text="Add the website's blog address, then press Fetch now." %}{% endfor %}</div>
+  <div class="card"><div class="card-head"><h2>Blog address</h2></div>
+    {% if can_edit %}<form method="post" class="stack" style="gap:12px">{% csrf_token %}
+      <div class="field"><label for="b-u">Address of the blog</label><input class="input" id="b-u" type="url" name="url" value="{{ source.url }}" placeholder="https://pocketofparadise.co.ke/blog/"></div>
+      <label class="check-label"><input type="checkbox" name="is_active" {% if source.is_active %}checked{% endif %}> Check every day</label>
+      <div><button class="btn btn-primary" type="submit">Save</button></div></form>{% else %}<p class="text-sm">{{ source.url|default:"Not set" }}</p>{% endif %}
+    {% if source.last_fetched_at %}<p class="text-xs text-muted mt-3 mb-0">Last checked {{ source.last_fetched_at|ds_datetime }} · {{ source.last_result }}</p>{% endif %}
+    {% if source.last_error %}<p class="text-xs text-danger mb-0">{{ source.last_error }}</p>{% endif %}</div>
+</div>
+{% endblock %}

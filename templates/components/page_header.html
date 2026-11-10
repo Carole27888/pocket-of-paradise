@@ -1,0 +1,7 @@
+<div class="page-header">
+  <div>
+    {% if crumb_url %}<div class="crumbs"><a href="{{ crumb_url }}">{{ crumb_label }}</a><span>/</span><span>{{ crumb_current|default:title }}</span></div>{% endif %}
+    <h1>{{ title }}</h1>
+    {% if subtitle %}<p>{{ subtitle }}</p>{% endif %}
+  </div>
+</div>

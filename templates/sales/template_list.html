@@ -1,0 +1,16 @@
+{% extends "base.html" %}{% load static l10n %}
+{% block title %}Itinerary Templates{% endblock %}
+{% block content %}
+<div class="page-header"><div><h1>Itinerary Templates</h1><p>Build a day or a whole trip once and reuse it. Start an itinerary from a template, or drag single days from here into any itinerary.</p></div>
+  {% if can_work %}<div class="actions"><a class="btn btn-accent" href="{% url 'sales:template_new' %}">{% include "components/icon.html" with name="plus" %} New template</a></div>{% endif %}</div>
+<form method="get" class="mb-4"><input class="input" type="search" name="q" value="{{ q }}" placeholder="Search templates, places or days…" aria-label="Search" style="max-width:420px"></form>
+<style>.tplgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(290px,1fr));gap:16px}.tplc{display:flex;flex-direction:column;padding:0;overflow:hidden}.tplc .ph{display:block;height:140px;background:var(--primary-soft) center/cover}.tplc .bd{padding:14px 16px;display:flex;flex-direction:column;gap:6px;flex:1}.tplc .acts{display:flex;gap:8px;flex-wrap:wrap;margin-top:auto;padding-top:8px}</style>
+<div class="tplgrid">{% for it in items %}{% with t=it.t %}<div class="card tplc"><a class="ph" href="{{ t.get_absolute_url }}" aria-label="Open {{ t.title }}" {% if t.cover_url %}style="background-image:url('{{ t.cover_url }}')"{% else %}style="height:48px"{% endif %}></a>
+  <div class="bd"><a href="{{ t.get_absolute_url }}" style="font-size:1.05rem;font-weight:700;color:inherit">{{ t.title }}</a><span class="text-sm text-muted">{{ t.day_count }} day{{ t.day_count|pluralize }}{% if t.places %} · {{ t.places }}{% endif %}</span>{% if t.description %}<span class="text-sm">{{ t.description }}</span>{% endif %}
+    <span class="text-xs text-muted">{% if t.created_by %}By {{ t.created_by.full_name }} · {% endif %}used {{ t.times_used }} time{{ t.times_used|pluralize }}</span>
+    <div class="acts"><a class="btn btn-secondary btn-sm" href="{{ t.get_absolute_url }}">View</a>{% if can_work %}<a class="btn btn-primary btn-sm" href="{% url 'sales:itinerary_new' %}?template={{ t.pk|unlocalize }}">Use for a lead</a>{% endif %}
+      {% if it.can_edit %}<a class="btn btn-secondary btn-sm" href="{% url 'sales:template_edit' t.pk %}">Edit</a>{% endif %}
+      {% if can_work %}<form method="post" action="{% url 'sales:template_duplicate' t.pk %}">{% csrf_token %}<button class="btn btn-ghost btn-sm" type="submit">Duplicate</button></form>{% endif %}
+      {% if it.can_delete %}<form method="post" action="{% url 'sales:template_delete' t.pk %}" onsubmit="return confirm('Delete this template?')">{% csrf_token %}<button class="btn btn-ghost btn-sm text-danger" type="submit">Delete</button></form>{% endif %}</div></div></div>{% endwith %}
+{% empty %}<div class="card" style="grid-column:1/-1"><p class="text-muted mb-0">{% if q %}No template matches “{{ q }}”.{% else %}No templates yet. Create one, or open a finished itinerary and press “Save as template”.{% endif %}</p></div>{% endfor %}</div>
+{% endblock %}

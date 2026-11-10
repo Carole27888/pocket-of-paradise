@@ -1,0 +1,12 @@
+{% extends "base.html" %}{% load l10n %}
+{% block title %}Leave Overview{% endblock %}
+{% block content %}
+<div class="page-header"><div><h1>Leave Overview</h1><p>Approved leave for the {{ year }} leave year.</p></div>
+<form method="get" class="inline-form"><select class="input select" name="dept" onchange="this.form.submit()" aria-label="Department"><option value="">All departments</option>{% for d in departments %}<option value="{{ d.pk|unlocalize }}" {% if dept == d.pk|stringformat:"s" %}selected{% endif %}>{{ d.name }}</option>{% endfor %}</select><input class="input" type="number" name="year" value="{{ year }}" style="width:90px" aria-label="Year"><button class="btn btn-secondary" type="submit">Go</button></form></div>
+<div class="grid grid-4 mb-4">{% include "components/kpi_card.html" with label="Days taken" value=data.total_days accent=True %}{% include "components/kpi_card.html" with label="Approved requests" value=data.requests %}{% include "components/kpi_card.html" with label="Awaiting approval" value=data.pending %}{% include "components/kpi_card.html" with label="Away today" value=away|length %}</div>
+<div class="grid grid-2">
+<div class="card"><div class="card-head"><h2>By type</h2></div>{% for k, v in data.by_type.items %}<div class="list-item"><span class="grow">{{ k }}</span><b>{{ v }}</b></div>{% empty %}<p class="text-muted text-sm">No leave taken.</p>{% endfor %}</div>
+<div class="card"><div class="card-head"><h2>By department</h2></div>{% for k, v in data.by_dept.items %}<div class="list-item"><span class="grow">{{ k }}</span><b>{{ v }}</b></div>{% empty %}<p class="text-muted text-sm">No leave taken.</p>{% endfor %}</div>
+<div class="card"><div class="card-head"><h2>Most days taken</h2></div>{% for k, v in data.top %}<div class="list-item"><span class="grow">{{ k }}</span><b>{{ v }}</b></div>{% empty %}<p class="text-muted text-sm">—</p>{% endfor %}</div>
+<div class="card"><div class="card-head"><h2>Away today</h2></div>{% for r in away %}<div class="list-item"><span class="grow">{{ r.employee.full_name }}</span><span class="text-muted text-sm">back {{ r.end_date|ds_date }}</span></div>{% empty %}<p class="text-muted text-sm">Everyone is in.</p>{% endfor %}</div></div>
+{% endblock %}
