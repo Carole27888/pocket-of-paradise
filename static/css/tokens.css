@@ -35,12 +35,12 @@
   --peach: #F6DDA6;
 
   /* surfaces */
-  --page-bg: #FBF5EA;            /* the logo's cream, lightened */
+  --page-bg: #F2F7F6;            /* the brand green, barely there (~5% over white) */
   --card: #FFFFFF;
-  --border: #EADFCB;
-  --border-strong: #D9CBB2;
-  --table-head: #F6EEDF;
-  --row-hover: #FCF8F0;
+  --border: #DCE7E4;
+  --border-strong: #C5D6D2;
+  --table-head: #E9F1EF;
+  --row-hover: #F6FAF9;
 
   /* text */
   --text: #2B2014;               /* the logo's ink brown */

@@ -68,7 +68,7 @@
 .ib-ready.good { background: #e3f4ea; color: #14663b; } .ib-ready.warn { background: #fff1d6; color: #8a5a00; } .ib-ready.bad { background: #fdeaea; color: #1F6F6B; }
 .ib-pop { position: absolute; right: 0; top: calc(100% + 8px); z-index: 40; width: 360px; max-height: 70vh; overflow-y: auto; background: #fff; border: 1px solid var(--border-strong); border-radius: 14px; box-shadow: 0 14px 36px rgba(42, 33, 30, .22); padding: 8px; }
 .ib-pop-title { padding: 8px 10px 6px; font-weight: 800; font-size: 14px; }
-.ib-chk { display: flex; gap: 10px; align-items: flex-start; padding: 7px 10px; border-radius: 9px; color: var(--text); text-decoration: none; font-size: 13px; } .ib-chk:hover { background: var(--page-bg, #F6EEDF); }
+.ib-chk { display: flex; gap: 10px; align-items: flex-start; padding: 7px 10px; border-radius: 9px; color: var(--text); text-decoration: none; font-size: 13px; } .ib-chk:hover { background: var(--page-bg, #E9F1EF); }
 .ib-chk i { flex: none; width: 20px; height: 20px; border-radius: 50%; display: grid; place-items: center; font-style: normal; font-size: 12px; font-weight: 800; }
 .ib-chk.ok i { background: #e3f4ea; color: #14663b; } .ib-chk.no i { background: #fdeaea; color: #1F6F6B; } .ib-chk.soft i { background: #fff1d6; color: #8a5a00; } .ib-chk.ok span { color: var(--text-muted); }
 .ib-days-head { display: flex; justify-content: space-between; align-items: center; margin: 8px 0 10px; scroll-margin-top: 150px; } .ib-days-head h2 { margin: 0; font-size: 18px; }
