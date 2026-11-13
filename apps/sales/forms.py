@@ -395,26 +395,35 @@ class PriceLineForm(StyledModelForm):
                    "unit_price": forms.NumberInput(attrs={"min": 0, "step": "0.01"})}
 
 
+class AccommodationChoice(forms.ModelChoiceField):
+    def label_from_instance(self, acc):
+        n = acc.photo_pack.images.count() if acc.photo_pack_id else 0
+        return f"{acc.name} · {acc.destination.name}" + (f" · {n} photo{'s' if n != 1 else ''}" if n else " · no photos yet")
+
+
 class HotelForm(StyledModelForm):
+    """An accommodation option on an itinerary, picked from the Accommodations module (its photos come with it)."""
+
     class Meta:
         model = ItineraryHotel
-        fields = ["photo_pack", "name", "meal_plan", "room_type", "price_per_person"]
-        widgets = {"name": forms.TextInput(attrs={"placeholder": "Lodge name (defaults to the photo pack)"}),
+        fields = ["accommodation", "name", "meal_plan", "room_type", "price_per_person"]
+        field_classes = {"accommodation": AccommodationChoice}
+        widgets = {"name": forms.TextInput(attrs={"placeholder": "Defaults to the accommodation's name"}),
                    "room_type": forms.TextInput(attrs={"placeholder": "e.g. Garden view double"}), "price_per_person": forms.NumberInput(attrs={"min": 0, "step": "0.01"})}
 
     def __init__(self, *a, **kw):
         super().__init__(*a, **kw)
-        from apps.catalog.models import PhotoCategory
+        from apps.catalog.models import Accommodation
 
-        self.fields["photo_pack"].queryset = PhotoCategory.objects.filter(kind="accommodation")
-        self.fields["photo_pack"].empty_label = "Lodge photos…"
+        self.fields["accommodation"].queryset = Accommodation.objects.alive().select_related("destination", "photo_pack").order_by("destination__name", "name")
+        self.fields["accommodation"].empty_label = "Choose an accommodation…"
 
     def clean(self):
         d = super().clean()
-        if not d.get("name") and d.get("photo_pack"):
-            d["name"] = d["photo_pack"].name
-        if not d.get("name") and not self.errors and self.has_changed():
-            self.add_error("name", "Give the lodge a name or pick its photo pack.")
+        if not d.get("name") and d.get("accommodation"):
+            d["name"] = d["accommodation"].name
+        if not d.get("name") and not d.get("accommodation") and not self.errors and self.has_changed():
+            self.add_error("accommodation", "Choose an accommodation (or type a name).")
         return d
 
 

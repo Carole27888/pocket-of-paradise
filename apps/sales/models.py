@@ -598,8 +598,10 @@ class LeadItineraryDay(models.Model):
         picked = self.photos.first() if self.pk and hasattr(self, "photos") else None
         if picked:
             return picked.image
-        photo = self.destination.photos.first() if self.destination_id else None
-        return photo.image if photo else None
+        if self.destination_id:                 # the destination's tagged photos, then its older admin gallery
+            photo = self.destination.pack_photos.first() or self.destination.photos.first()
+            return photo.image if photo else None
+        return None
 
     @property
     def picture_url(self) -> str:
@@ -681,7 +683,9 @@ class ItineraryHotel(models.Model):
     """A lodge option quoted on an itinerary with its own per-person price; options are alternatives for the client to choose from."""
 
     itinerary = models.ForeignKey(LeadItinerary, on_delete=models.CASCADE, related_name="hotels")
-    photo_pack = models.ForeignKey("catalog.PhotoCategory", null=True, blank=True, on_delete=models.SET_NULL, related_name="+", verbose_name="Lodge photos",
+    accommodation = models.ForeignKey("catalog.Accommodation", null=True, blank=True, on_delete=models.SET_NULL, related_name="+",
+                                      help_text="From the Accommodations module; its photos are used for this option.")
+    photo_pack = models.ForeignKey("catalog.PhotoCategory", null=True, blank=True, on_delete=models.SET_NULL, related_name="+", verbose_name="Accommodation photos",
                                    limit_choices_to={"kind": "accommodation"})
     name = models.CharField(max_length=150, blank=True)
     meal_plan = models.CharField(max_length=30, choices=MEAL_PLANS, default="Full Board")
@@ -692,11 +696,18 @@ class ItineraryHotel(models.Model):
         ordering = ["pk"]
 
     def __str__(self):
-        return self.name or (self.photo_pack.name if self.photo_pack_id else "Lodge option")
+        return self.name or (self.accommodation.name if self.accommodation_id else self.photo_pack.name if self.photo_pack_id else "Accommodation option")
 
     @property
     def total(self) -> Decimal:
         return q2(self.price_per_person * self.itinerary.pax)
+
+    @property
+    def pack(self):
+        """The photos to show: the accommodation's own (always current), else a pack chosen before options came from Accommodations."""
+        if self.accommodation_id and self.accommodation.photo_pack_id:
+            return self.accommodation.photo_pack
+        return self.photo_pack if self.photo_pack_id else None
 
 
 

@@ -1,5 +1,5 @@
 """Module registry: drives the sidebar, module switcher, bottom navigation and access checks."""
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 
 from django.urls import NoReverseMatch, reverse
 
@@ -38,6 +38,14 @@ class Module:
     nav: list = field(default_factory=list)
     available: bool = True
 
+    def __post_init__(self):
+        # an item without a section belongs to the one above it, so a group's heading still shows when its first item is hidden for someone
+        cur, out = "", []
+        for n in self.nav:
+            cur = n.section or cur
+            out.append(n if n.section == cur else replace(n, section=cur))
+        self.nav = out
+
     @property
     def home_url(self):
         return self.nav[0].url if self.nav else "#"
@@ -72,6 +80,7 @@ MODULES: list[Module] = [
             NavItem("Fleet", "fleet:list", "truck", ("fleet:",), True, "Fleet"),
             NavItem("Staff & Guides", "people:list", "id-card", ("people:",)),
             NavItem("Standard Terms", "core:standard_terms", "file-text", ("core:standard_terms",), roles=frozenset({R.OPERATIONS, R.COO, R.ADMIN})),
+            NavItem("Competitor Watch", "insights:competitors", "eye", ("insights:competitor",), roles=frozenset({R.OPERATIONS})),
         ],
     ),
     Module(
@@ -83,6 +92,7 @@ MODULES: list[Module] = [
             NavItem("Leads Log", "frontdesk:queue", "list", ("frontdesk:queue",), True, "Leads"),
             NavItem("Visitors & Appointments", "frontdesk:visitors", "users", ("frontdesk:visitors", "frontdesk:appointment")),
             NavItem("Business Cards", "frontdesk:cards", "contact", ("frontdesk:card",)),
+            NavItem("Weekend Roster", "frontdesk:weekend_roster", "calendar", ("frontdesk:weekend_roster",)),
             NavItem("Calendar", "frontdesk:calendar", "calendar", ("frontdesk:calendar",)),
             NavItem("Reports", "frontdesk:report", "bar-chart", ("frontdesk:report",), True, "Reports"),
             NavItem("User Manual", "frontdesk:manual", "file-text", ("frontdesk:manual",)),
@@ -94,10 +104,13 @@ MODULES: list[Module] = [
         [
             NavItem("Sales Dashboard", "sales:dashboard", "trending-up", ("sales:dashboard",), True, "Home"),
             NavItem("Pipeline Board", "sales:board", "columns", ("sales:board",), True, "Pipeline"),
-            NavItem("Leads", "leads:list", "inbox", ("leads:",), True, "Leads"),
+            # ---- working leads
+            NavItem("Leads", "leads:list", "inbox", ("leads:",), True, "Leads", section="Leads"),
             NavItem("Follow-ups", "sales:followups", "check-square", ("sales:followup",), True, "Tasks"),
             NavItem("Calls", "sales:calls", "phone", ("sales:call",)),
-            NavItem("Itineraries", "sales:itineraries", "route", ("sales:itinerar", "sales:template"), children=(
+            NavItem("WhatsApp Chats", "ict:chats", "whatsapp", ("ict:chat",), roles=frozenset({R.SALES_MANAGER})),
+            # ---- from itinerary to booking
+            NavItem("Itineraries", "sales:itineraries", "route", ("sales:itinerar", "sales:template"), section="Selling", children=(
                 NavItem("All itineraries", "sales:itineraries", "list", ("sales:itineraries", "sales:itinerary_detail", "sales:itinerary_edit", "sales:itinerary_print",
                                                                           "sales:itinerary_pdf", "sales:itinerary_quote", "sales:itinerary_send", "sales:itinerary_rate")),
                 NavItem("Build an itinerary", "sales:itinerary_new", "plus", ("sales:itinerary_new",), roles=frozenset({R.ADMIN, R.COO, R.SALES_MANAGER, R.SALES_AGENT})),
@@ -105,31 +118,35 @@ MODULES: list[Module] = [
                 NavItem("Photo Library", "catalog:library", "image", ("catalog:library", "catalog:photo")))),
             NavItem("Quotations", "sales:quotations", "file-text", ("sales:quotation",)),
             NavItem("Bookings", "sales:bookings", "briefcase", ("sales:booking",)),
-            NavItem("Client Feedback", "sales:feedback", "star", ("sales:feedback",), roles=MGR),
             NavItem("Letters", "sales:letters", "mail", ("sales:letter",)),
-            NavItem("Clients", "contacts:list", "users", ("contacts:",)),
+            NavItem("Client KYC", "deals:kyc", "shield", ("deals:kyc",), roles=frozenset(R.SALES_ROLES)),          # managers find these in Deal Desk
+            NavItem("E-Signatures", "deals:signatures", "edit", ("deals:signature",), roles=frozenset(R.SALES_ROLES)),
+            # ---- the people and trips agents sell to (shared records; other roles open them from Operations)
+            NavItem("Clients", "contacts:list", "users", ("contacts:",), section="Clients & packages"),
             NavItem("Packages", "catalog:packages", "map", ("catalog:package", "catalog:destination")),
-            NavItem("My Performance", "sales:me", "target", ("sales:me",), roles=frozenset({R.SALES_AGENT})),
+            NavItem("Customer Care", "insights:care", "alert", ("insights:care",), roles=frozenset(R.SALES_ROLES)),
+            NavItem("Client Feedback", "sales:feedback", "star", ("sales:feedback",), roles=MGR),
+            # ---- the agent's own corner
+            NavItem("My Performance", "sales:me", "target", ("sales:me",), roles=frozenset({R.SALES_AGENT}), section="My work"),
             NavItem("My QR Card", "sales:my_card", "id-card", ("sales:my_card",), roles=frozenset({R.SALES_AGENT, R.SALES_MANAGER})),
-            NavItem("Agent Cards", "sales:cards", "id-card", ("sales:cards", "sales:card_detail"), roles=frozenset({R.ADMIN, R.DIRECTOR, R.COO, R.SALES_MANAGER})),
+            NavItem("My Assistant", "coach:inbox", "bell", ("coach:inbox", "coach:reply"), roles=frozenset({R.SALES_AGENT, R.SALES_MANAGER})),
+            # ---- managing the team
+            NavItem("Assign Leads", "sales:assign_leads", "user-plus", ("sales:assign_leads",), roles=frozenset({R.SALES_MANAGER, R.COO, R.ADMIN, R.DIRECTOR}), section="Team & leads"),
             NavItem("Team", "sales:team", "id-card", ("sales:team",), roles=MGR),
-            NavItem("Lead Sources", "leads:sources", "share", ("leads:sources",), roles=frozenset({R.COO, R.ADMIN, R.DIRECTOR, R.SALES_MANAGER})),
-            NavItem("Assign Leads", "sales:assign_leads", "user-plus", ("sales:assign_leads",), roles=frozenset({R.SALES_MANAGER, R.COO, R.ADMIN, R.DIRECTOR})),
+            NavItem("Targets", "sales:targets", "target", ("sales:targets",), roles=MGR),
+            NavItem("Agent Cards", "sales:cards", "id-card", ("sales:cards", "sales:card_detail"), roles=frozenset({R.ADMIN, R.DIRECTOR, R.COO, R.SALES_MANAGER})),
+            NavItem("Team Performance", "coach:team", "bar-chart", ("coach:team",), roles=frozenset({R.SALES_MANAGER})),   # the others have it in Intelligence
             NavItem("Lead Routing", "sales:assignment", "shuffle", ("sales:assignment",), roles=MGR),
             NavItem("Double Allocation", "sales:double_allocation", "alert", ("sales:double_allocation",), roles=MGR),
-            NavItem("Targets", "sales:targets", "target", ("sales:targets",), roles=MGR),
-            NavItem("Automation", "sales:automation", "sparkles", ("sales:automation",), roles=MGR),
-            NavItem("Reports", "sales:reports", "bar-chart", ("sales:reports",), roles=MGR),
+            NavItem("Lead Sources", "leads:sources", "share", ("leads:sources",), roles=frozenset({R.COO, R.ADMIN, R.DIRECTOR, R.SALES_MANAGER})),
+            # ---- numbers
+            NavItem("Sales Reports", "sales:reports", "bar-chart", ("sales:reports",), roles=MGR, section="Reports"),
+            NavItem("Sales Insights", "insights:sales", "trending-up", ("insights:sales",), roles=frozenset({R.SALES_MANAGER})),   # the others have it in Intelligence
+            NavItem("Competitor Watch", "insights:competitors", "eye", ("insights:competitor",), roles=frozenset({R.SALES_MANAGER})),
             NavItem("All Reports", "reports:index", "bar-chart", ("reports:",)),
-            NavItem("Team Performance", "coach:team", "bar-chart", ("coach:team",), False, ""),
-            NavItem("My Assistant", "coach:inbox", "bell", ("coach:inbox", "coach:reply"), False, "", frozenset({R.SALES_AGENT, R.SALES_MANAGER, R.ADMIN, R.COO})),
-            NavItem("Sales Insights", "insights:sales", "trending-up", ("insights:sales",), False, "", frozenset({R.SALES_MANAGER, R.COO, R.DIRECTOR, R.ADMIN})),
-            NavItem("Market Research", "insights:research", "search", ("insights:research",), False, "", frozenset({R.SALES_MANAGER, R.COO, R.DIRECTOR, R.ADMIN, R.MARKETING})),
-            NavItem("Customer Care", "insights:care", "alert", ("insights:care",), False, ""),
-            NavItem("Assistant Settings", "coach:settings", "settings", ("coach:settings",), False, "", frozenset({R.SALES_MANAGER, R.COO, R.DIRECTOR, R.ADMIN})),
-            NavItem("Client KYC", "deals:kyc", "shield", ("deals:kyc",)),
-            NavItem("E-Signatures", "deals:signatures", "edit", ("deals:signature",)),
-            NavItem("WhatsApp Chats", "ict:chats", "whatsapp", ("ict:chat",), roles=MGR),
+            # ---- settings
+            NavItem("Automation", "sales:automation", "sparkles", ("sales:automation",), roles=MGR, section="Settings"),
+            NavItem("Assistant Settings", "coach:settings", "settings", ("coach:settings",), roles=frozenset({R.SALES_MANAGER, R.COO, R.DIRECTOR, R.ADMIN})),
         ],
     ),
     Module(
@@ -190,6 +207,7 @@ MODULES: list[Module] = [
             NavItem("Unified Inbox", "marketing:inbox", "mail", ("marketing:inbox",)),
             NavItem("Reviews", "marketing:reviews", "star", ("marketing:reviews",)),
             NavItem("Analytics", "marketing:analytics", "bar-chart", ("marketing:analytics",)),
+            NavItem("Market Research", "insights:research", "search", ("insights:research",)),
             NavItem("Facebook", "marketing:channel", "facebook", ("marketing:channel",), args=("facebook",), section="Social media"),
             NavItem("Instagram", "marketing:channel", "instagram", ("marketing:channel",), args=("instagram",)),
             NavItem("TikTok", "marketing:channel", "tiktok", ("marketing:channel",), args=("tiktok",)),
@@ -293,6 +311,7 @@ MODULES.append(Module(
      NavItem("Sales Insights", "insights:sales", "trending-up", ("insights:sales",), True, "Sales", frozenset({R.SALES_MANAGER, R.COO, R.DIRECTOR, R.ADMIN})),
      NavItem("Customer Care", "insights:care", "alert", ("insights:care",), True, "Care", frozenset({R.SALES_MANAGER, R.COO, R.DIRECTOR, R.ADMIN})),
      NavItem("Market Research", "insights:research", "search", ("insights:research",), True, "Research", frozenset({R.SALES_MANAGER, R.COO, R.DIRECTOR, R.ADMIN, R.MARKETING})),
+     NavItem("Competitor Watch", "insights:competitors", "eye", ("insights:competitor",), False, "", frozenset(R.ALL_ACCESS)),
      NavItem("Chat Analysis", "ict:analysis", "bar-chart", ("ict:analysis",), False, "", frozenset({R.ADMIN, R.COO, R.ICT_OFFICER})),
      NavItem("Team Performance", "coach:team", "users", ("coach:team",), False, "", frozenset({R.SALES_MANAGER, R.COO, R.DIRECTOR, R.ADMIN}))]))
 

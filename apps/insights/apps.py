@@ -6,3 +6,6 @@ class InsightsConfig(AppConfig):
     name = "apps.insights"
     label = "insights"
     verbose_name = "Insights"
+
+    def ready(self):
+        from . import tasks  # noqa: F401  (registers the competitor checks)

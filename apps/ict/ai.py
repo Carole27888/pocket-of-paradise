@@ -158,3 +158,78 @@ def _record(feature, provider, model, usage, error=""):
 
 def text_of(resp: dict) -> str:
     return "".join(b.get("text", "") for b in resp.get("content", []) if b.get("type") == "text").strip()
+
+
+# ---- web search (the competitor watcher's "search the web"): Claude's server-side web search tool, or OpenAI's Responses API
+_DYNAMIC_SEARCH = ("claude-fable-5", "claude-mythos-5", "claude-opus-5", "claude-opus-4-8", "claude-opus-4-7", "claude-opus-4-6",
+                   "claude-sonnet-5", "claude-sonnet-4-6")
+
+
+def _search_tool(model: str) -> dict:
+    """web_search_20260209 (dynamic filtering) on the models that support it; the basic variant on the rest."""
+    kind = "web_search_20260209" if model.startswith(_DYNAMIC_SEARCH) else "web_search_20250305"
+    return {"type": kind, "name": "web_search", "max_uses": 6}
+
+
+def _claude_search(system: str, prompt: str) -> dict:
+    model = get_credential("ai", "model") or settings.AI_MODEL
+    messages = [{"role": "user", "content": prompt}]
+    texts, sources, usage = [], [], {"input_tokens": 0, "output_tokens": 0}
+    for _ in range(4):                                   # a long search can pause (stop_reason pause_turn): send it back to continue
+        resp = _post({"model": model, "max_tokens": 8000, "system": system, "messages": messages, "tools": [_search_tool(model)]})
+        for k in usage:
+            usage[k] += int((resp.get("usage") or {}).get(k) or 0)
+        for b in resp.get("content", []):
+            if b.get("type") == "text":
+                texts.append(b.get("text", ""))
+                for c in b.get("citations") or []:
+                    if c.get("url"):
+                        sources.append({"url": c["url"], "title": c.get("title") or c["url"]})
+            elif b.get("type") == "web_search_tool_result" and isinstance(b.get("content"), list):   # an error result is an object, not a list
+                sources += [{"url": r.get("url", ""), "title": r.get("title") or r.get("url", "")} for r in b["content"] if r.get("url")]
+        if resp.get("stop_reason") != "pause_turn":
+            break
+        messages.append({"role": "assistant", "content": resp.get("content", [])})
+    _record("web_search", "claude", model, usage)
+    return {"text": "".join(texts).strip(), "sources": sources, "provider": "claude"}
+
+
+def _openai_search(system: str, prompt: str) -> dict:
+    key = get_credential("openai", "api_key")
+    if not key:
+        raise AIUnavailable("No OpenAI key saved.")
+    model = get_credential("openai", "model") or OPENAI_DEFAULT_MODEL
+    data = _http("https://api.openai.com/v1/responses", {"authorization": f"Bearer {key}"},
+                 {"model": model, "instructions": system, "input": prompt, "tools": [{"type": "web_search"}]})
+    texts, sources = [], []
+    for item in data.get("output", []):
+        for c in item.get("content", []) if item.get("type") == "message" else []:
+            if c.get("type") == "output_text":
+                texts.append(c.get("text", ""))
+                sources += [{"url": a["url"], "title": a.get("title") or a["url"]} for a in c.get("annotations", []) if a.get("type") == "url_citation" and a.get("url")]
+    u = data.get("usage") or {}
+    _record("web_search", "openai", model, {"input_tokens": u.get("input_tokens"), "output_tokens": u.get("output_tokens")})
+    return {"text": "".join(texts).strip(), "sources": sources, "provider": "openai"}
+
+
+def web_search(system: str, prompt: str) -> dict:
+    """Answer `prompt` from a live web search. Returns {"text", "sources": [{url, title}], "provider"}; raises AIUnavailable."""
+    names = order()
+    if not names:
+        raise AIUnavailable("No AI key saved. Add one under ICT → AI.")
+    last = None
+    for name in names:
+        try:
+            out = _openai_search(system, prompt) if name == "openai" else _claude_search(system, prompt)
+            seen, uniq = set(), []
+            for s in out["sources"]:
+                if s["url"] not in seen:
+                    seen.add(s["url"])
+                    uniq.append(s)
+            out["sources"] = uniq[:15]
+            if out["text"]:
+                return out
+            last = AIUnavailable("The search returned no answer.")
+        except AIUnavailable as e:
+            last = e
+    raise last

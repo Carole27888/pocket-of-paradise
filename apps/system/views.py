@@ -173,6 +173,8 @@ def credential_delete(request, provider):
 # ================================================================================================ private to-do list
 @module_required("me")
 def todo(request):
+    from apps.frontdesk.roster import my_shifts
+
     from . import planning
 
     items = TodoItem.objects.filter(user=request.user)   # strictly the owner's: no manager / CEO / admin override
@@ -186,7 +188,8 @@ def todo(request):
         "open": [i for i in items if not i.done_at], "done": [i for i in items if i.done_at][:15], "today": today,
         "days": days, "summary": summary, "monday": monday, "sunday": monday + timedelta(days=6),
         "prev_week": monday - timedelta(days=7), "next_week": monday + timedelta(days=7),
-        "this_week": monday == WeeklyPlanItem.monday(today), "nudge": planning.nudge(request.user)})
+        "this_week": monday == WeeklyPlanItem.monday(today), "nudge": planning.nudge(request.user),
+        "weekend_shifts": my_shifts(request.user)})
 
 
 def _is_modal(request):

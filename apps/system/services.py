@@ -50,6 +50,8 @@ PROVIDERS = {
     "tiktok": ("TikTok", [("access_token", "Access token", True)], {"access_token": "TIKTOK_ACCESS_TOKEN"}, "Stats and ads"),
     "google_ads": ("Google Ads", [("access_token", "Access token", True)], {"access_token": "GOOGLE_ADS_TOKEN"}, "Ad spend"),
     "youtube": ("YouTube", [("api_key", "API key", True)], {"api_key": "YOUTUBE_API_KEY"}, "Channel stats"),
+    "google_places": ("Google Places (competitor profiles)", [("api_key", "API key", True)], {"api_key": "GOOGLE_PLACES_API_KEY"},
+                      "Competitors' Google rating, review count and new reviews (Competitor Watch)"),
     "mpesa": ("M-PESA Daraja", [("consumer_key", "Consumer key", True), ("consumer_secret", "Consumer secret", True),
                                 ("shortcode", "Paybill / till", False)],
               {"consumer_key": "MPESA_CONSUMER_KEY", "consumer_secret": "MPESA_CONSUMER_SECRET", "shortcode": "MPESA_SHORTCODE"}, "C2B callbacks"),
@@ -171,6 +173,21 @@ def _test_sms(creds):
     return False, f"Africa's Talking error {status}: {text[:160]}"
 
 
+def _test_places(creds):
+    key = creds.get("api_key", "")
+    if not key:
+        return False, "No API key saved."
+    status, text = _http("https://places.googleapis.com/v1/places:searchText", {"X-Goog-Api-Key": key, "X-Goog-FieldMask": "places.id", "Content-Type": "application/json"},
+                         json.dumps({"textQuery": "Maasai Mara National Reserve"}).encode(), "POST")
+    if status == 200:
+        return True, "The key works: Google found a test place."
+    try:
+        msg = json.loads(text).get("error", {}).get("message", text)
+    except ValueError:
+        msg = text
+    return False, f"Google answered {status}: {msg[:200]}. Enable “Places API (New)” for this key in Google Cloud."
+
+
 def test_credentials(provider: str, user=None, request=None) -> tuple[bool, str]:
     """One real, minimal call to the provider when keys are live; reports the actual error. In mock mode no call is made."""
     row = IntegrationCredential.objects.filter(provider=provider).first()
@@ -193,6 +210,8 @@ def test_credentials(provider: str, user=None, request=None) -> tuple[bool, str]
         ok, msg = _test_brevo(creds)
     elif provider == "sms":
         ok, msg = _test_sms(creds)
+    elif provider == "google_places":
+        ok, msg = _test_places(creds)
     else:
         ok, msg = bool(any(creds.values())), "Saved. A live check isn't available for this provider yet; it is used when INTEGRATIONS_MODE=live."
     if row is not None:

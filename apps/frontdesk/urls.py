@@ -1,10 +1,11 @@
 from django.urls import path
 
-from . import views
+from . import roster, views
 
 app_name = "frontdesk"
 urlpatterns = [
     path("", views.dashboard, name="dashboard"),
+    path("weekend-roster/", roster.weekend_roster, name="weekend_roster"),
     path("new-lead/", views.new_lead, name="new_lead"),
     path("leads/<int:pk>/assign/", views.assign_lead, name="assign_lead"),
     path("leads/<int:pk>/suggest/", views.suggest_agent, name="suggest_agent"),

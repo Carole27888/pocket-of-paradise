@@ -8,22 +8,22 @@
   <title>{% block title %}{{ title|default:"Pocket of Paradise" }}{% endblock %} · Pocket of Paradise Travel Company</title>
   <link rel="preload" href="{% static 'fonts/manrope-latin-400-normal.woff2' %}" as="font" type="font/woff2" crossorigin>
   <link rel="preload" href="{% static 'fonts/manrope-latin-700-normal.woff2' %}" as="font" type="font/woff2" crossorigin>
-  <link rel="stylesheet" href="{% static 'css/tokens.css' %}">
-  <link rel="stylesheet" href="{% static 'css/base.css' %}">
-  <link rel="stylesheet" href="{% static 'css/layout.css' %}">
-  <link rel="stylesheet" href="{% static 'css/components.css' %}">
-  <link rel="stylesheet" href="{% static 'css/utilities.css' %}">
-  <link rel="stylesheet" href="{% static 'css/vibrant.css' %}">
-  <link rel="stylesheet" href="{% static 'css/media.css' %}">
+  <link rel="stylesheet" href="{% static 'css/tokens.css' %}?v={{ PWA_VERSION }}\">
+  <link rel="stylesheet" href="{% static 'css/base.css' %}?v={{ PWA_VERSION }}\">
+  <link rel="stylesheet" href="{% static 'css/layout.css' %}?v={{ PWA_VERSION }}\">
+  <link rel="stylesheet" href="{% static 'css/components.css' %}?v={{ PWA_VERSION }}\">
+  <link rel="stylesheet" href="{% static 'css/utilities.css' %}?v={{ PWA_VERSION }}\">
+  <link rel="stylesheet" href="{% static 'css/vibrant.css' %}?v={{ PWA_VERSION }}\">
+  <link rel="stylesheet" href="{% static 'css/media.css' %}?v={{ PWA_VERSION }}\">
   <style>#splash{position:fixed;inset:0;z-index:99999;display:grid;place-items:center;background:#1F6F6B;color:#fff;transition:opacity .45s ease,visibility .45s}#splash.out{opacity:0;visibility:hidden}.sp-in{text-align:center;padding:24px;animation:spin .7s ease both}.sp-in img{border-radius:22px;box-shadow:0 10px 40px rgba(0,0,0,.4)}.sp-name{margin-top:18px;font-weight:800;letter-spacing:.14em;font-size:15px}.sp-tag{margin-top:6px;font-size:12px;opacity:.7}.sp-bar{margin:22px auto 0;width:120px;height:3px;border-radius:3px;background:rgba(255,255,255,.15);overflow:hidden}.sp-bar i{display:block;height:100%;width:40%;background:#D98A22;border-radius:3px;animation:slide 1s ease-in-out infinite}@keyframes slide{0%{margin-left:-40%}100%{margin-left:100%}}@keyframes spin{from{opacity:0;transform:translateY(8px) scale(.97)}to{opacity:1;transform:none}}html.splashing{overflow:hidden}@media (prefers-reduced-motion:reduce){.sp-in,.sp-bar i{animation:none}}</style>
   {% block extra_css %}{% endblock %}
   <script src="{% static 'vendor/htmx/htmx.min.js' %}" defer></script>
   <script src="{% static 'vendor/alpine/alpine.min.js' %}" defer></script>
-  <script src="{% static 'js/modal-form.js' %}" defer></script>
-  <script src="{% static 'js/dropzone.js' %}" defer></script>
-  <script src="{% static 'js/autotitle.js' %}" defer></script>
+  <script src="{% static 'js/modal-form.js' %}?v={{ PWA_VERSION }}\" defer></script>
+  <script src="{% static 'js/dropzone.js' %}?v={{ PWA_VERSION }}\" defer></script>
+  <script src="{% static 'js/autotitle.js' %}?v={{ PWA_VERSION }}\" defer></script>
   {% block extra_vendor %}{% endblock %}
-  <script src="{% static 'js/app.js' %}" defer></script>
+  <script src="{% static 'js/app.js' %}?v={{ PWA_VERSION }}\" defer></script>
   {% block extra_js %}{% endblock %}
 </head>
 <body data-vapid="{{ VAPID_PUBLIC_KEY }}" class="{% block body_class %}{% endblock %}">

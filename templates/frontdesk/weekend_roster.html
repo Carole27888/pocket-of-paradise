@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% block title %}Weekend roster{% endblock %}
+{% block content %}
+<div class="page-header"><div><h1>Weekend roster</h1><p>Who comes in on each Saturday and Sunday. Everyone you add is told straight away on WhatsApp and in the app, sees it on their My To-Do, and is reminded on Friday afternoon. Clock-ins show who actually came.</p></div></div>
+
+{% if plan %}<div class="card mb-4"><div class="card-head"><h2>Add people</h2></div>
+  <form method="post" class="stack" style="gap:12px">{% csrf_token %}<input type="hidden" name="action" value="add">
+    <div class="form-grid">
+      <div class="field"><label for="wr-date">Day</label><select class="input select" id="wr-date" name="date" required>{% for r in rows %}<option value="{{ r.sat|date:'Y-m-d' }}">{{ r.sat|date:"l j F" }}</option><option value="{{ r.sun|date:'Y-m-d' }}">{{ r.sun|date:"l j F" }}</option>{% endfor %}</select></div>
+      <div class="field"><label for="wr-note">What they'll cover (optional)</label><input class="input" id="wr-note" name="note" maxlength="160" placeholder="e.g. reception, airport pick-ups"></div>
+      <div class="field"><label for="wr-s">From</label><input class="input" id="wr-s" type="time" name="start_time" value="{{ default_start }}"></div>
+      <div class="field"><label for="wr-e">To</label><input class="input" id="wr-e" type="time" name="end_time" value="{{ default_end }}"></div></div>
+    <fieldset class="wr-people"><legend class="text-sm fw-700">People <span class="text-muted fw-400">· tick everyone coming in that day</span></legend>
+      <input class="input mb-2" type="search" placeholder="Filter by name…" aria-label="Filter people" data-wr-filter>
+      <div class="wr-grid">{% for e in staff %}<label class="check-label" data-name="{{ e.full_name|lower }}"><input type="checkbox" name="employees" value="{{ e.pk }}"> {{ e.full_name }}{% if e.department %} <span class="text-xs text-muted">· {{ e.department.name }}</span>{% endif %}{% if not e.user_id %} <span class="text-xs text-muted">· no login, won't be alerted</span>{% endif %}</label>{% endfor %}</div></fieldset>
+    <div><button class="btn btn-primary" type="submit">{% include "components/icon.html" with name="plus" %} Add to the roster</button></div></form></div>{% endif %}
+
+<div class="stack" style="gap:16px">
+{% for r in rows %}<div class="card"><div class="card-head"><h2>Weekend of {{ r.sat|date:"j M" }}</h2>
+  {% if plan and not r.sat_shifts and not r.sun_shifts %}<form method="post">{% csrf_token %}<input type="hidden" name="action" value="copy"><input type="hidden" name="saturday" value="{{ r.sat|date:'Y-m-d' }}"><button class="btn btn-ghost btn-sm" type="submit">{% include "components/icon.html" with name="copy" %} Same people as the weekend before</button></form>{% endif %}</div>
+  <div class="grid grid-2">
+    {% include "frontdesk/_roster_day.html" with day=r.sat shifts=r.sat_shifts %}
+    {% include "frontdesk/_roster_day.html" with day=r.sun shifts=r.sun_shifts %}</div></div>
+{% endfor %}</div>
+<style>.wr-people{border:0;padding:0;margin:0}.wr-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:6px 14px;max-height:260px;overflow:auto;padding:4px}
+.wr-day h3{font-size:14px;margin:0 0 8px}.wr-shift{display:flex;gap:10px;align-items:center;padding:8px 0;border-top:1px solid var(--border)}</style>
+<script>(function(){var f=document.querySelector("[data-wr-filter]");if(!f)return;f.addEventListener("input",function(){var q=f.value.toLowerCase().trim();document.querySelectorAll(".wr-grid [data-name]").forEach(function(l){l.hidden=q&&l.dataset.name.indexOf(q)===-1})})})();</script>
+{% endblock %}

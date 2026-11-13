@@ -26,11 +26,12 @@ def _media(settings, tmp_path):
 
 @pytest.mark.django_db
 def test_library_upload_tag_search_and_delete(client, agent):
+    from apps.catalog.models import Destination
+
     client.force_login(agent.user)
-    assert client.get("/catalog/library/").status_code == 200
-    r = client.post("/catalog/library/", {"name": "Maasai Mara", "kind": "destination"})
-    assert r.status_code == 302
-    cat = PhotoCategory.objects.get(name="Maasai Mara")
+    page = client.get("/catalog/library/").content
+    assert b"Create pack" not in page and b'name="q"' in page                  # packs come from destinations and accommodations now
+    cat = Destination.objects.create(name="Maasai Mara").ensure_pack()
     url = reverse("catalog:photo_pack", args=[cat.slug])
     r = client.post(url, {"images": [img("a.png"), img("b.png")], "tags": "Lion, Sunset, lion"}, headers={"x-requested-with": "XMLHttpRequest"})
     assert r.json() == {"added": 2, "skipped": 0}
@@ -49,7 +50,7 @@ def test_library_upload_tag_search_and_delete(client, agent):
     client.post(reverse("catalog:photos_bulk", args=[cat.slug]), {"selected": ids[:1], "action": "delete"})
     assert cat.images.count() == 1
     client.post(reverse("catalog:pack_delete", args=[cat.slug]))
-    assert not PhotoCategory.objects.exists() and not LibraryPhoto.objects.exists()
+    assert not PhotoCategory.objects.exists() and not LibraryPhoto.objects.exists() and Destination.objects.get().photo_pack is None
 
 
 @pytest.mark.django_db
@@ -72,20 +73,19 @@ def _edit_post(client, it, **extra):
 
 @pytest.mark.django_db
 def test_builder_saves_photos_lines_hotels_and_prices_them(client, agent, mara):
-    pkg, _ = mara
+    pkg, lodge = mara
     it = services.create_itinerary(_lead(agent, pkg), agent.user, package=pkg)
     client.force_login(agent.user)
     pack = PhotoCategory.objects.create(name="Mara", kind="destination")
-    lodge_pack = PhotoCategory.objects.create(name="Serena photos", kind="accommodation")
     p1 = LibraryPhoto.objects.create(category=pack, image=img("1.png"), tags="lion")
-    LibraryPhoto.objects.create(category=lodge_pack, image=img("2.png"))
+    assert lodge.add_photos([img("2.png")], "pool") == (1, 0)
     r = client.get(reverse("sales:itinerary_edit", args=[it.pk]))
-    assert b"Choose photos" in r.content and b"Lodge options" in r.content and b"Extra priced lines" in r.content
+    assert b"Choose photos" in r.content and b"Accommodation options" in r.content and b"Extra priced lines" in r.content
     extra = {"photo_pack": pack.pk, "nights_override": "5", "inclusions": "Park fees\nGuide", "exclusions": "Flights", "terms": "30% deposit",
              "days-0-photos": [p1.pk],
              "price_lines-TOTAL_FORMS": "1", "price_lines-0-description": "Visa", "price_lines-0-quantity": "2", "price_lines-0-unit_price": "50",
              "hotels-TOTAL_FORMS": "2", "hotels-0-name": "Serena", "hotels-0-meal_plan": "Full Board", "hotels-0-price_per_person": "300",
-             "hotels-0-photo_pack": lodge_pack.pk, "hotels-1-name": "Sopa", "hotels-1-meal_plan": "Half Board", "hotels-1-price_per_person": "250"}
+             "hotels-0-accommodation": lodge.pk, "hotels-1-name": "Sopa", "hotels-1-meal_plan": "Half Board", "hotels-1-price_per_person": "250"}
     resp = _edit_post(client, it, **extra)
     assert resp.status_code == 302, getattr(resp, "context", None) and (resp.context["hotels"].errors, resp.context["lines"].errors, resp.context["formset"].errors)
     it = LeadItinerary.objects.get(pk=it.pk)
@@ -624,3 +624,111 @@ def test_client_opens_the_designed_proposal_and_pdf_without_a_login(client, agen
     token, proposal = it.share_token, it.proposal_path
     services.revoke_share(it, agent.user)
     assert client.get(proposal).status_code == 404 and client.get(reverse("public_trip_pdf", args=[token])).status_code == 404
+
+
+
+@pytest.mark.django_db
+def test_accommodation_photos_with_tags_feed_the_builder_options(client, agent, mara, make_user):
+    from apps.accounts import roles as R
+
+    pkg, lodge = mara
+    ops = make_user("ops@example.com", R.OPERATIONS)
+    client.force_login(ops)
+    r = client.post(reverse("catalog:accommodation_edit", args=[lodge.pk]), {"name": lodge.name, "destination": lodge.destination_id, "accommodation_type": "lodge",
+                                                                              "photos": [img("a.png"), img("b.png"), img("c.png")], "photo_tags": "Pool, Sunset"})
+    assert r.status_code == 302
+    lodge.refresh_from_db()
+    assert lodge.photos.count() == 3 and all(p.tags == "pool, sunset" for p in lodge.photos)
+    client.post(reverse("catalog:accommodation_photos", args=[lodge.pk]), {"photos": [img("d.png")], "tags": "room"})
+    assert lodge.photos.count() == 4
+    page = client.get(lodge.get_absolute_url())
+    assert page.status_code == 200 and b"4 photos" in page.content
+    # the photo library lists the accommodation's own set (it can't make packs of its own)
+    lib = client.get(reverse("catalog:library")).content
+    assert b"Create pack" not in lib and lodge.photo_pack.slug.encode() in lib
+    assert client.get(reverse("catalog:photo_pack", args=[lodge.photo_pack.slug])).status_code == 200
+    # an option picked from the accommodation shows its photos, including ones added later
+    it = services.create_itinerary(_lead(agent, pkg), agent.user, package=pkg)
+    h = ItineraryHotel.objects.create(itinerary=it, accommodation=lodge, name=lodge.name, price_per_person=300)
+    assert h.pack == lodge.photo_pack
+    from apps.sales import itinerary_pdf
+
+    assert lodge.photos.first().image.name in itinerary_pdf.shared_file_names(it)
+
+
+@pytest.mark.django_db
+def test_star_rating_is_clicked_and_bnb_is_a_type(client, mara, make_user):
+    from apps.accounts import roles as R
+
+    _, lodge = mara
+    client.force_login(make_user("ops2@example.com", R.OPERATIONS))
+    page = client.get(reverse("catalog:accommodation_edit", args=[lodge.pk])).content.decode()
+    assert 'class="star-input"' in page and page.count('name="star_rating"') == 6 and '<option value="bnb">BnB</option>' in page
+    data = {"name": "Kilifi Nest", "destination": lodge.destination_id, "accommodation_type": "bnb", "star_rating": "4"}
+    client.post(reverse("catalog:accommodation_edit", args=[lodge.pk]), data)
+    lodge.refresh_from_db()
+    assert lodge.star_rating == 4 and lodge.get_accommodation_type_display() == "BnB"
+    assert 'value="4" checked' in client.get(reverse("catalog:accommodation_edit", args=[lodge.pk])).content.decode()
+    client.post(reverse("catalog:accommodation_edit", args=[lodge.pk]), {**data, "star_rating": ""})
+    lodge.refresh_from_db()
+    assert lodge.star_rating is None
+    assert client.post(reverse("catalog:accommodation_edit", args=[lodge.pk]), {**data, "star_rating": "9"}).status_code == 200   # refused
+
+
+
+@pytest.mark.django_db
+def test_destination_photos_and_library_search(client, mara, make_user):
+    from apps.accounts import roles as R
+    from apps.catalog.models import Destination, DestinationPhoto
+
+    _, lodge = mara
+    dest = lodge.destination
+    client.force_login(make_user("ops3@example.com", R.OPERATIONS))
+    r = client.post(reverse("catalog:destination_edit", args=[dest.slug]), {"name": dest.name, "region": "mara", "country": "KE",
+                                                                           "photos": [img("m1.png"), img("m2.png")], "photo_tags": "Lion, Plains"})
+    assert r.status_code == 302, getattr(r, "context", None) and r.context["form"].errors
+    dest.refresh_from_db()
+    assert dest.pack_photos.count() == 2 and dest.pack_photos.first().tags == "lion, plains"
+    client.post(reverse("catalog:destination_photos", args=[dest.slug]), {"photos": [img("m3.png")], "tags": "balloon"})
+    assert dest.pack_photos.count() == 3
+    page = client.get(dest.get_absolute_url())
+    assert page.status_code == 200 and b"3 photos" in page.content
+    lodge.add_photos([img("p.png")], "pool")
+    lib = client.get(reverse("catalog:library")).content.decode()
+    assert dest.name in lib and lodge.name in lib and "Create pack" not in lib
+    hit = client.get(reverse("catalog:library"), {"q": "balloon"}).content.decode()
+    assert hit.count('class="lib-photos') == 1 and dest.photo_pack.slug in hit and lodge.photo_pack.slug not in hit
+    assert lodge.photo_pack.slug in client.get(reverse("catalog:library"), {"q": "pool"}).content.decode()
+    assert lodge.photo_pack.slug not in client.get(reverse("catalog:library"), {"kind": "destination"}).content.decode()
+    pack_page = client.get(reverse("catalog:photo_pack", args=[dest.photo_pack.slug])).content.decode()
+    assert f"Photos of {dest.name}" in pack_page and dest.get_absolute_url() in pack_page
+    # a day without picked photos falls back to its destination's photos
+    from apps.sales.models import LeadItineraryDay
+
+    assert LeadItineraryDay(destination=dest).picture_file.name == dest.pack_photos.first().image.name
+
+
+@pytest.mark.django_db
+def test_accommodation_delete_hides_it_but_keeps_old_itineraries(client, agent, mara, make_user):
+    from apps.accounts import roles as R
+    from apps.catalog.models import Accommodation
+
+    pkg, lodge = mara
+    it = services.create_itinerary(_lead(agent, pkg), agent.user, package=pkg)
+    h = ItineraryHotel.objects.create(itinerary=it, accommodation=lodge, name=lodge.name, price_per_person=300)
+    client.force_login(agent.user)                                                # an agent cannot
+    assert client.post(reverse("catalog:accommodation_delete", args=[lodge.pk])).status_code in (302, 403)
+    assert Accommodation.objects.alive().filter(pk=lodge.pk).exists()
+    client.force_login(make_user("ops4@example.com", R.OPERATIONS))
+    assert b"Delete" in client.get(lodge.get_absolute_url()).content
+    assert client.get(reverse("catalog:accommodation_delete", args=[lodge.pk])).status_code == 403    # only by the button (POST)
+    r = client.post(reverse("catalog:accommodation_delete", args=[lodge.pk]))
+    assert r.status_code == 302 and r.url == reverse("catalog:accommodations")
+    assert not Accommodation.objects.alive().filter(pk=lodge.pk).exists()
+    assert client.get(lodge.get_absolute_url()).status_code == 404
+    assert lodge.get_absolute_url().encode() not in client.get(reverse("catalog:accommodations")).content
+    h.refresh_from_db()
+    assert h.accommodation_id == lodge.pk                                         # the old option still knows its lodge
+    from apps.sales.forms import HotelForm
+
+    assert lodge not in HotelForm().fields["accommodation"].queryset              # but it can't be picked again

@@ -1016,9 +1016,9 @@ def trip_public(request, token):
         if d.accommodation and d.accommodation.name not in [s["name"] for s in stays]:
             stays.append({"name": d.accommodation.name, "nights": sum(1 for x in days if x.accommodation_id == d.accommodation_id)})
     cover = next((reverse("public_trip_image", args=[token, d.pk]) for d in days if d.gallery_files), "")
-    hotels = list(it.hotels.select_related("photo_pack"))
+    hotels = list(it.hotels.select_related("photo_pack", "accommodation__photo_pack"))
     for h in hotels:
-        h.cover = h.photo_pack.cover if h.photo_pack_id else None
+        h.cover = h.pack.cover if h.pack else None
     resp = render(request, "sales/public_trip.html", {"it": it, "days": days, "stays": stays, "cover": cover, "company": CompanySetting.load(), "hotels": hotels,
                                                       "agent": it.enquiry.assigned_agent, "client_first": it.enquiry.client.full_name.split()[0]})
     resp["X-Robots-Tag"] = "noindex, nofollow"
@@ -1134,8 +1134,8 @@ def trip_hotel_image(request, token, hotel_id):
     from django.http import FileResponse
 
     it = get_object_or_404(LeadItinerary, share_token=token)
-    h = get_object_or_404(it.hotels.select_related("photo_pack"), pk=hotel_id)
-    cover = h.photo_pack.cover if h.photo_pack_id else None
+    h = get_object_or_404(it.hotels.select_related("photo_pack", "accommodation__photo_pack"), pk=hotel_id)
+    cover = h.pack.cover if h.pack else None
     if not cover:
         raise Http404
     resp = FileResponse(cover.image.open("rb"), content_type=mimetypes.guess_type(cover.image.name)[0] or "image/jpeg")

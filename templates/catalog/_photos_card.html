@@ -1,0 +1,14 @@
+{# A destination's or accommodation's tagged photos, with "add more". Needs: obj, upload_url, used_for #}
+{% with photos=obj.pack_photos n=obj.pack_photos.count %}
+<div class="card mt-4" id="photos"><div class="card-head"><h2>Photos</h2><span class="sub">{{ n }} photo{{ n|pluralize }} · {{ used_for }}</span>
+  {% if obj.photo_pack %}<a class="btn btn-ghost btn-sm" href="{% url 'catalog:photo_pack' obj.photo_pack.slug %}">{% include "components/icon.html" with name="edit" %} Tag, caption or delete</a>{% endif %}</div>
+  {% if n %}<div class="acc-photos">{% for p in photos|slice:":24" %}<figure><img src="{{ p.thumb_url }}" alt="{{ p.caption|default:obj.name }}" loading="lazy">{% if p.tags %}<figcaption>{{ p.tags }}</figcaption>{% endif %}</figure>{% endfor %}</div>
+    {% if n > 24 %}<p class="text-xs text-muted mt-2">Showing 24 of {{ n }}. <a href="{% url 'catalog:photo_pack' obj.photo_pack.slug %}">See them all</a></p>{% endif %}
+  {% else %}<p class="text-sm text-muted">No photos yet.</p>{% endif %}
+  {% if can_add_photos %}<form method="post" action="{{ upload_url }}" enctype="multipart/form-data" class="inline-form mt-3">{% csrf_token %}
+    <div class="field grow"><label for="ph-files">Add photos (choose several at once)</label><input class="input" id="ph-files" type="file" name="photos" accept="image/*" multiple required></div>
+    <div class="field grow"><label for="ph-tags">Tags for these photos</label><input class="input" id="ph-tags" name="tags" placeholder="e.g. lion, sunset, pool"></div>
+    <button class="btn btn-primary" type="submit">{% include "components/icon.html" with name="plus" %} Add photos</button></form>{% endif %}
+</div>
+{% endwith %}
+<style>.acc-photos{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px}.acc-photos figure{margin:0}.acc-photos img{width:100%;aspect-ratio:4/3;object-fit:cover;border-radius:8px;border:1px solid var(--border);display:block}.acc-photos figcaption{font-size:11.5px;color:var(--text-muted);margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}</style>

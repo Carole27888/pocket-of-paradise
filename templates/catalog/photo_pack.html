@@ -1,11 +1,11 @@
 {% extends "base.html" %}{% load static %}
 {% block title %}{{ category.name }}{% endblock %}
 {% block content %}
-<div class="page-header"><div><div class="crumbs"><a href="{% url 'catalog:library' %}?kind={{ category.kind }}">{% include "components/icon.html" with name="arrow-left" size="14" %} Photo library</a></div>
-  <h1>{{ category.name }}</h1><p>{{ category.get_kind_display }} pack · pick these photos for any day or lodge when building an itinerary.</p></div>
+<div class="page-header"><div><div class="crumbs">{% if acc %}<a href="{{ acc.get_absolute_url }}">{% include "components/icon.html" with name="arrow-left" size="14" %} {{ acc.name }}</a>{% else %}<a href="{% url 'catalog:library' %}">{% include "components/icon.html" with name="arrow-left" size="14" %} Photo library</a>{% endif %}</div>
+  <h1>{% if acc %}Photos of {{ acc.name }}{% else %}{{ category.name }}{% endif %}</h1><p>{% if category.kind == "accommodation" and acc %}Shown on this accommodation's option in the itinerary builder, the client's page and the PDF.{% elif acc %}Pick these photos for any day in {{ acc.name }} when building an itinerary.{% else %}An older pack · pick these photos for any day when building an itinerary.{% endif %} Tag them so the right picture is easy to find.</p></div>
   {% if can_edit %}<div class="actions">
     <button type="button" class="btn btn-accent" onclick="document.getElementById('file-input').click()">{% include "components/icon.html" with name="plus" %} Upload photos</button>
-    <form method="post" action="{% url 'catalog:pack_delete' category.slug %}" onsubmit="return confirm('Delete this pack and ALL its photos?')">{% csrf_token %}<button class="btn btn-ghost text-danger">Delete pack</button></form></div>{% endif %}</div>
+    <form method="post" action="{% url 'catalog:pack_delete' category.slug %}" onsubmit="return confirm('{% if acc %}Delete ALL photos of {{ acc.name|escapejs }}?{% else %}Delete this pack and ALL its photos?{% endif %}')">{% csrf_token %}<button class="btn btn-ghost text-danger">{% if acc %}Delete all photos{% else %}Delete pack{% endif %}</button></form></div>{% endif %}</div>
 
 <div class="grid grid-4 mb-4">
   {% include "components/kpi_card.html" with label="Photos" value=total note="In this pack" accent=True %}

@@ -19,7 +19,6 @@
     {% if object.summary %}<p class="fw-600">{{ object.summary }}</p>{% endif %}
     <div class="text-muted">{{ object.description|linebreaks|default:"No description yet." }}</div>
     {% if object.activity_list %}<p class="section-title mt-4">Activities</p><div class="chips">{% for a in object.activity_list %}<span class="pill pill-accent">{{ a }}</span>{% endfor %}</div>{% endif %}
-    {% if object.photos.all %}<p class="section-title mt-4">Gallery</p><div class="gallery">{% for p in object.photos.all %}<figure class="media-card" style="margin:0"><div class="media-cover"><img src="{{ p.image.url }}" alt="{{ p.caption }}" loading="lazy"></div>{% if p.caption %}<figcaption class="media-body text-sm">{{ p.caption }}</figcaption>{% endif %}</figure>{% endfor %}</div>{% endif %}
   </div>
   <div class="stack">
     <div class="card"><dl class="dl">
@@ -30,7 +29,8 @@
     </dl></div>
   </div>
 </div>
-<div class="grid grid-2">
+{% url 'catalog:destination_photos' object.slug as up %}{% include "catalog/_photos_card.html" with obj=object upload_url=up used_for="pick them for any day in this destination when building an itinerary" %}
+<div class="grid grid-2 mt-4">
   <div class="card card-flush">
     <div class="card-head"><h2>Packages</h2><a href="{% url 'catalog:packages' %}?destinations={{ object.pk|unlocalize }}">All →</a></div>
     <div class="list" style="padding:0 20px 8px">

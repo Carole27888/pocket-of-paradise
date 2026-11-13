@@ -435,3 +435,16 @@ a.chip { cursor: pointer; }
 .channel-add { flex: none; margin-left: auto; }
 @media (max-width: 520px) { .channel-add { display: none; } .channel-tile { padding: 12px; gap: 10px; } }
 .chan-custom { letter-spacing: 0; text-transform: uppercase; box-shadow: inset 0 0 0 1px rgba(255,255,255,.18); }
+/* clickable star rating (apps.core.widgets.StarRatingInput): stars are drawn right-to-left so "this one and the ones before it" light up */
+.star-input { display: inline-flex; flex-direction: row-reverse; justify-content: flex-end; gap: 2px; }
+.star-input input { position: absolute; opacity: 0; width: 1px; height: 1px; }
+.star-input label { font-size: 30px; line-height: 1; color: var(--border-strong); cursor: pointer; padding: 2px; transition: color .1s, transform .1s; }
+.star-input label:hover, .star-input label:hover ~ label, .star-input input:checked ~ label { color: var(--sun); }
+.star-input label:hover { transform: scale(1.12); }
+.star-input input:focus-visible + label { outline: 2px solid var(--primary); outline-offset: 2px; border-radius: 4px; }
+/* the box looks like the other inputs: same border, radius, height and focus ring */
+.star-box { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; width: 100%; min-height: var(--tap); padding: 4px 12px;
+  border: 1px solid var(--border-strong); border-radius: var(--radius); background: #fff; }
+.star-box:focus-within { border-color: var(--accent); box-shadow: var(--focus); }
+.star-input label { font-size: 26px; }
+.star-clear { display: inline-flex; align-items: center; gap: 6px; font-size: 12.5px; color: var(--text-muted); cursor: pointer; white-space: nowrap; }

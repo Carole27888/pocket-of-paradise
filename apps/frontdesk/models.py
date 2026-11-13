@@ -1,3 +1,5 @@
+import datetime
+
 from django.conf import settings
 from django.db import models
 from django.urls import reverse
@@ -251,3 +253,22 @@ class BusinessCard(TimeStampedModel):
         self.phone = normalise_phone(self.phone) if self.phone else ""
         self.email = (self.email or "").strip().lower()
         super().save(*a, **kw)
+
+
+class WeekendShift(models.Model):
+    """Someone set by the Front Desk Manager to come in on a Saturday or Sunday."""
+
+    date = models.DateField(db_index=True)
+    employee = models.ForeignKey("people.Employee", on_delete=models.CASCADE, related_name="weekend_shifts")
+    start_time = models.TimeField(default=datetime.time(9, 0))
+    end_time = models.TimeField(default=datetime.time(17, 0))
+    note = models.CharField(max_length=160, blank=True, help_text="e.g. reception, airport pick-ups, covering calls")
+    created_by = models.ForeignKey(settings.AUTH_USER_MODEL, null=True, blank=True, on_delete=models.SET_NULL, related_name="+")
+    created_at = models.DateTimeField(default=timezone.now)
+
+    class Meta:
+        ordering = ["date", "start_time", "employee__full_name"]
+        unique_together = [("date", "employee")]
+
+    def __str__(self):
+        return f"{self.employee} · {self.date:%a %d %b}"

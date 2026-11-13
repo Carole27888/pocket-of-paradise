@@ -173,6 +173,8 @@ minutes, see section 2), which takes a database lock, retries failures 3 times w
 | `ict.process_broadcasts` / `ict.retry_meta_events` | every 1 / 15 min | Bulk SMS & e-mail batches; Meta lead lookups retried |
 | `ict.json_backup_due` | every 6 h | Prepares the portable JSON backup when the chosen frequency says one is due |
 | `tasks.escalate_overdue` | every 30 min | Overdue tasks and complaints: owner reminded, then manager, then executives |
+| `frontdesk.weekend_roster_reminder` | daily 16:00 (acts on Fridays) | Reminds everyone on this weekend's roster of their day and hours |
+| `insights.check_competitors` | daily 06:30 | Competitor Watch: re-reads competitors' website pages and Google profiles, alerts watchers about changes |
 
 ---
 
@@ -180,8 +182,8 @@ minutes, see section 2), which takes a database lock, retries failures 3 times w
 
 | Module | Who | Highlights |
 |---|---|---|
-| **Operations** | Admin, Director, Operations, Front Desk roles, Marketing, Finance | Shared records: enquiries, clients, destinations, packages, accommodations, fleet (fuel + maintenance log), staff |
-| **Front Desk** | Desk roles | Capture queues, trip movement (check-out/in, late alerts), visitor register, appointments, equipment register, shift notes, daily report |
+| **Operations** | Admin, Director, Operations, Front Desk roles, Marketing, Finance | Shared records: enquiries, clients, destinations, packages, accommodations (star rating, own tagged photos, delete), fleet (fuel + maintenance log), staff; photo library built from each destination's and accommodation's photos |
+| **Front Desk** | Desk roles | Capture queues, trip movement (check-out/in, late alerts), visitor register, appointments, equipment register, shift notes, weekend roster (Friday reminder, shown on My To-Do), daily report |
 | **Sales** | Sales Manager / Agents | Pipeline board, assignment (rules + round-robin + SLA), calls, follow-ups, versioned quotations (PDF), bookings, payments, double allocation, targets, performance, reports |
 | **Trip Readiness** | Operations, Front Desk Manager, Dispatch, Guides | Departures with the four readiness stages, resource rules, manifests and check-in (offline-tolerant), incidents, trip expenses, reports |
 | **Finance** | Finance, Admin (Director read-only) | Double-entry ledger, invoices (VAT, eTIMS no., PDF), receipts + M-PESA reconciliation, payables, expenses with approval, KRA obligations, payroll (PAYE/NSSF/SHIF/AHL), calendar, statements, budgets, 12 reports |
@@ -191,6 +193,7 @@ minutes, see section 2), which takes a database lock, retries failures 3 times w
 | **My Space** | Everyone | Private To-Do, Calendar (rank-based invites), My Leave, Budget Requests, Reports, User Manuals, Security (2FA) |
 | **HR & Leave** | Admin, COO, CEO; managers approve | Leave types and balances (derived), working-day maths with Kenyan public holidays, approvals (no self-approval except the CEO), cancellation flow, calendar sync, analytics |
 | **Deal Desk** | Sales, Finance | Client KYC (optional gate before a deposit), e-signature on quotations/bookings (public signing page), payment plans with instalment reminders |
+| **Intelligence** | Admin, Director, COO; Sales Manager; Operations | Command Centre, sales insights, customer care, market research, **Competitor Watch** (website change tracking, Google rating and reviews via a Google Places key, AI web searches with sources) |
 | **ICT & AI** | ICT Officer, Admin, COO, Sales | WhatsApp lead bot (fixed guardrails, lead capture, hand-over, take-over/resume, analysis) and the in-app assistant (read-only tools, same visibility as the screens) |
 | **Data Protection** | Admin | Data-subject requests (30-day clock), breach register, anonymisation, retention runs, public `/privacy/` |
 | **Administration** | Admin, ICT (limited) | Roles & Access board, System Logs, encrypted Integration Keys with Test key, Import Data with undo, status |

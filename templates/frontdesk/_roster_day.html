@@ -1,0 +1,6 @@
+<div class="wr-day"><h3>{{ day|date:"l j F" }}{% if day == today %} <span class="pill pill-accent">Today</span>{% endif %} <span class="text-xs text-muted">· {{ shifts|length }} {{ shifts|length|pluralize:"person,people" }}</span></h3>
+  {% for s in shifts %}<div class="wr-shift"><span class="avatar">{{ s.employee.initials|default:"?" }}</span>
+    <div class="grow"><b>{{ s.employee.full_name }}</b><div class="text-xs text-muted">{{ s.start_time|time:"H:i" }}–{{ s.end_time|time:"H:i" }}{% if s.note %} · {{ s.note }}{% endif %}{% if s.employee.phone %} · {{ s.employee.phone }}{% endif %}</div></div>
+    {% if s.came %}{% with t=s.came.clock_in_at|time:"H:i" %}{% status_pill "In at "|add:t "success" %}{% endwith %}{% elif s.past %}{% status_pill "Not clocked in" "danger" %}{% endif %}
+    {% if plan and not s.past %}<form method="post">{% csrf_token %}<input type="hidden" name="action" value="remove"><input type="hidden" name="pk" value="{{ s.pk }}"><button class="btn btn-ghost btn-sm" type="submit" aria-label="Take {{ s.employee.full_name }} off">✕</button></form>{% endif %}</div>
+  {% empty %}<p class="text-sm text-muted" style="border-top:1px solid var(--border);padding-top:8px;margin:0">Nobody yet.</p>{% endfor %}</div>

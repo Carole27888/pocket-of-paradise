@@ -14,6 +14,12 @@ from .forms import (AccommodationForm, DestinationForm, ItineraryDayFormSet, Pac
 from .models import Accommodation, Destination, Itinerary, TourPackage
 
 
+def _can_add_photos(user) -> bool:
+    from .library import _can_edit
+
+    return _can_edit(user)
+
+
 # ------------------------------------------------------------------ destinations
 class DestinationList(ListScreen):
     shared_with = ("sales",)
@@ -59,10 +65,22 @@ class DestinationDetail(ModuleMixin, DetailView):
         ctx["accommodations"] = d.accommodations.alive()
         ctx["recent_enquiries"] = d.enquiries.select_related("client", "assigned_agent").order_by("-created_at")[:8]
         ctx["open_enquiries"] = d.enquiries.filter(stage__in=OPEN_STAGES).count()
+        ctx["can_add_photos"] = _can_add_photos(self.request.user)
         return ctx
 
 
-class DestinationCreate(CreateScreen):
+class _PhotoMessage:
+    def form_valid(self, form):
+        resp = super().form_valid(form)
+        added, skipped = getattr(form, "photos_added", 0), getattr(form, "photos_skipped", 0)
+        if added:
+            messages.success(self.request, f"{added} photo{'s' if added != 1 else ''} added.")
+        if skipped:
+            messages.error(self.request, f"{skipped} file{'s' if skipped != 1 else ''} skipped: not a picture.")
+        return resp
+
+
+class DestinationCreate(_PhotoMessage, CreateScreen):
     model = Destination
     form_class = DestinationForm
     title = "New destination"
@@ -70,7 +88,7 @@ class DestinationCreate(CreateScreen):
     success_message = "Destination saved."
 
 
-class DestinationUpdate(UpdateScreen):
+class DestinationUpdate(_PhotoMessage, UpdateScreen):
     model = Destination
     form_class = DestinationForm
     slug_field = "slug"
@@ -199,17 +217,68 @@ class AccommodationDetail(ModuleMixin, DetailView):
     def get_queryset(self):
         return Accommodation.objects.alive().select_related("destination")
 
+    def get_context_data(self, **kw):
+        ctx = super().get_context_data(**kw)
+        ctx["can_add_photos"] = _can_add_photos(self.request.user)
+        return ctx
 
-class AccommodationCreate(CreateScreen):
+
+class AccommodationCreate(_PhotoMessage, CreateScreen):
     model = Accommodation
     form_class = AccommodationForm
     title = "New accommodation"
     cancel_url_name = "catalog:accommodations"
+    success_message = "Accommodation saved."
 
 
-class AccommodationUpdate(UpdateScreen):
+class AccommodationUpdate(_PhotoMessage, UpdateScreen):
     model = Accommodation
     form_class = AccommodationForm
+    success_message = "Accommodation updated."
+
+
+def _add_photos(request, obj):
+    """Add photos (with tags) straight from a destination's or accommodation's page."""
+    from django.core.exceptions import PermissionDenied
+
+    from .library import _can_edit
+
+    if request.method != "POST" or not _can_edit(request.user):
+        raise PermissionDenied
+    added, skipped = obj.add_photos(request.FILES.getlist("photos"), request.POST.get("tags", ""))
+    if added:
+        messages.success(request, f"{added} photo{'s' if added != 1 else ''} added to {obj.name}.")
+    if skipped:
+        messages.error(request, f"{skipped} file{'s' if skipped != 1 else ''} skipped: not a picture.")
+    if not added and not skipped:
+        messages.error(request, "Choose at least one photo.")
+    return redirect(obj)
+
+
+@module_required("operations", "sales")
+def accommodation_photos(request, pk):
+    return _add_photos(request, get_object_or_404(Accommodation.objects.alive(), pk=pk))
+
+
+@module_required("operations", "sales")
+def destination_photos(request, slug):
+    return _add_photos(request, get_object_or_404(Destination.objects.alive(), slug=slug))
+
+
+@module_required("operations")
+def accommodation_delete(request, pk):
+    """Remove an accommodation from lists and dropdowns. Itineraries, quotations and vouchers that already use it keep it."""
+    from django.core.exceptions import PermissionDenied
+
+    from apps.system.services import audit
+
+    acc = get_object_or_404(Accommodation.objects.alive(), pk=pk)
+    if request.method != "POST" or not request.user.can_edit_operations:
+        raise PermissionDenied
+    acc.soft_delete()
+    audit(request.user, "accommodation.deleted", acc, f"{acc.name} ({acc.destination.name}) removed", request)
+    messages.success(request, f"{acc.name} deleted. Itineraries and quotations that already use it are unchanged.")
+    return redirect("catalog:accommodations")
 
 
 @module_required("operations")

@@ -1,5 +1,6 @@
 from decimal import Decimal
 
+from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 from django.urls import reverse
 from django.utils.text import slugify
@@ -9,7 +10,51 @@ from apps.core.models import SoftDeleteModel, TimeStampedModel
 COUNTRY_CHOICES = [("KE", "Kenya"), ("TZ", "Tanzania"), ("UG", "Uganda"), ("RW", "Rwanda")]
 
 
-class Destination(SoftDeleteModel):
+class HasPhotoPack:
+    """Tagged photos kept in the photo library, one set per destination or accommodation. Needs a `photo_pack` field and PACK_KIND."""
+
+    PACK_KIND = ""
+
+    def pack_name(self) -> str:
+        return self.name
+
+    def ensure_pack(self) -> "PhotoCategory":
+        """This record's photo set, created the first time photos are added."""
+        if self.photo_pack_id:
+            return self.photo_pack
+        name = base = self.pack_name()[:90]
+        n = 2
+        while PhotoCategory.objects.filter(name__iexact=name).exists():
+            name, n = f"{base} ({n})"[:100], n + 1
+        self.photo_pack = PhotoCategory.objects.create(name=name, kind=self.PACK_KIND, description=f"Photos of {self.name}")
+        self.save(update_fields=["photo_pack"])
+        return self.photo_pack
+
+    def add_photos(self, files, tags: str = "") -> tuple[int, int]:
+        """Save uploaded pictures with the given tags. Returns (added, skipped)."""
+        from PIL import Image
+
+        pack, added, skipped = None, 0, 0
+        tags = LibraryPhoto.normalize_tags(tags)
+        for f in files:
+            try:
+                Image.open(f).verify()
+                f.seek(0)
+            except Exception:
+                skipped += 1
+                continue
+            pack = pack or self.ensure_pack()
+            LibraryPhoto.objects.create(category=pack, image=f, tags=tags)
+            added += 1
+        return added, skipped
+
+    @property
+    def pack_photos(self):
+        return self.photo_pack.images.all() if self.photo_pack_id else LibraryPhoto.objects.none()
+
+
+class Destination(HasPhotoPack, SoftDeleteModel):
+    PACK_KIND = "destination"
     REGION_CHOICES = [
         ("mara", "Maasai Mara"), ("amboseli", "Amboseli"), ("tsavo", "Tsavo"), ("nakuru", "Lake Nakuru"),
         ("naivasha", "Lake Naivasha"), ("coast", "Diani / Coast"), ("mtkenya", "Mt Kenya"),
@@ -29,6 +74,8 @@ class Destination(SoftDeleteModel):
     latitude = models.DecimalField(max_digits=9, decimal_places=6, null=True, blank=True)
     longitude = models.DecimalField(max_digits=9, decimal_places=6, null=True, blank=True)
     is_featured = models.BooleanField(default=False)
+    photo_pack = models.OneToOneField("PhotoCategory", null=True, blank=True, on_delete=models.SET_NULL, related_name="destination", editable=False,
+                                      help_text="This destination's own photos (tagged), picked per day in the itinerary builder.")
 
     class Meta:
         ordering = ["name"]
@@ -67,17 +114,20 @@ class DestinationPhoto(TimeStampedModel):
         ordering = ["sort_order", "pk"]
 
 
-class Accommodation(SoftDeleteModel):
-    TYPE_CHOICES = [("lodge", "Lodge"), ("camp", "Tented camp"), ("hotel", "Hotel"), ("homestay", "Homestay")]
+class Accommodation(HasPhotoPack, SoftDeleteModel):
+    PACK_KIND = "accommodation"
+    TYPE_CHOICES = [("lodge", "Lodge"), ("camp", "Tented camp"), ("hotel", "Hotel"), ("bnb", "BnB"), ("homestay", "Homestay")]
 
     name = models.CharField(max_length=120)
     destination = models.ForeignKey(Destination, on_delete=models.PROTECT, related_name="accommodations")
     accommodation_type = models.CharField(max_length=10, choices=TYPE_CHOICES, default="lodge")
-    star_rating = models.PositiveSmallIntegerField(null=True, blank=True)
+    star_rating = models.PositiveSmallIntegerField(null=True, blank=True, validators=[MinValueValidator(1), MaxValueValidator(5)])
     contact_name = models.CharField(max_length=80, blank=True)
     contact_phone = models.CharField(max_length=20, blank=True)
     contact_email = models.EmailField(blank=True)
     contract_notes = models.TextField(blank=True)
+    photo_pack = models.OneToOneField("PhotoCategory", null=True, blank=True, on_delete=models.SET_NULL, related_name="accommodation", editable=False,
+                                      help_text="This accommodation's own photos (tagged). Used for its option in the itinerary builder.")
 
     class Meta:
         ordering = ["destination__name", "name"]
@@ -87,6 +137,14 @@ class Accommodation(SoftDeleteModel):
 
     def get_absolute_url(self):
         return reverse("catalog:accommodation_detail", args=[self.pk])
+
+    def pack_name(self) -> str:
+        clash = PhotoCategory.objects.filter(name__iexact=self.name).exists()
+        return f"{self.name} · {self.destination.name}" if clash else self.name
+
+    @property
+    def photos(self):
+        return self.pack_photos
 
 
 class RoomRate(TimeStampedModel):

@@ -6,6 +6,8 @@
     <h1>{{ object.name }}</h1>
     <p>{{ object.get_accommodation_type_display }}{% if object.star_rating %} · {{ object.star_rating }}★{% endif %} · <a href="{{ object.destination.get_absolute_url }}">{{ object.destination.name }}</a></p></div>
   {% if request.user.can_edit_operations %}<div class="actions">
+    <form method="post" action="{% url 'catalog:accommodation_delete' object.pk %}" onsubmit="return confirm('Delete {{ object.name|escapejs }}? It disappears from lists and the itinerary builder. Itineraries and quotations that already use it are not changed.')">{% csrf_token %}
+      <button class="btn btn-ghost text-danger" type="submit">{% include "components/icon.html" with name="x" %} Delete</button></form>
     <a class="btn btn-secondary" href="{% url 'catalog:accommodation_edit' object.pk %}">{% include "components/icon.html" with name="edit" %} Edit</a>
     <a class="btn btn-primary" href="{% url 'catalog:accommodation_rates' object.pk %}">{% include "components/icon.html" with name="wallet" %} Edit rates</a></div>{% endif %}
 </div>
@@ -32,4 +34,5 @@
     {% if object.contract_notes %}<p class="section-title mt-4">Contract notes</p><p class="text-sm">{{ object.contract_notes|linebreaksbr }}</p>{% endif %}
   </div>
 </div>
+{% url 'catalog:accommodation_photos' object.pk as up %}{% include "catalog/_photos_card.html" with obj=object upload_url=up used_for="shown on this accommodation's option in the itinerary builder, the client's page and the PDF" %}
 {% endblock %}

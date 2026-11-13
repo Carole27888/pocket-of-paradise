@@ -43,9 +43,9 @@ def shared_file_names(it) -> set:
         names.update(f.name for f in d.gallery_files)
     if it.photo_pack_id:
         names.update(p.image.name for p in it.photo_pack.images.all())
-    for h in it.hotels.select_related("photo_pack"):
-        if h.photo_pack_id:
-            names.update(p.image.name for p in h.photo_pack.images.all())
+    for h in it.hotels.select_related("photo_pack", "accommodation__photo_pack"):
+        if h.pack:
+            names.update(p.image.name for p in h.pack.images.all())
     return names
 
 
@@ -100,8 +100,8 @@ def build_context(it, company, web=False) -> dict:
     cover = _cycle(pack_uris or [p for e in days for p in e["photos"]], 3)
 
     hotels = []
-    for h in it.hotels.select_related("photo_pack"):
-        photos = [u for u in (_uri(p.image, web) for p in list(h.photo_pack.images.all())[::-1][:5]) if u] if h.photo_pack_id else []
+    for h in it.hotels.select_related("photo_pack", "accommodation__photo_pack"):
+        photos = [u for u in (_uri(p.image, web) for p in list(h.pack.images.all())[::-1][:5]) if u] if h.pack else []
         hotels.append({"h": h, "photos": photos, "total": h.total})
     # a lodge with no photos of its own borrows the trip's pictures so its page is never a blank panel
     spare = list(dict.fromkeys([p for e in days for p in e["photos"]] + pack_uris))
@@ -160,7 +160,7 @@ def _travel_price_row(it):
 
 def pricing_summary(it) -> dict:
     """The same money picture as the PDF, without file paths: package + extras, each lodge option all-in, and the total."""
-    hotels = list(it.hotels.select_related("photo_pack"))
+    hotels = list(it.hotels.select_related("photo_pack", "accommodation__photo_pack"))
     base = it.day_sell + it.lines_total + it.travel_from
     options = [{"h": h, "all_in": base + h.total, "all_in_pp": (base + h.total) / it.pax if it.pax else None}
                for h in hotels if h.price_per_person]

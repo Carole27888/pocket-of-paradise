@@ -1,12 +1,12 @@
 {% extends "base.html" %}{% load static %}
 {% block title %}Itinerary builder{% endblock %}
-{% block extra_css %}<link rel="stylesheet" href="{% static 'css/sales.css' %}"><link rel="stylesheet" href="{% static 'css/itinerary.css' %}">{% endblock %}
+{% block extra_css %}<link rel="stylesheet" href="{% static 'css/sales.css' %}?v={{ PWA_VERSION }}"><link rel="stylesheet" href="{% static 'css/itinerary.css' %}?v={{ PWA_VERSION }}">{% endblock %}
 {% block content %}
 <div class="page-header"><div><div class="crumbs"><a href="{{ it.get_absolute_url }}">{% include "components/icon.html" with name="arrow-left" size="14" %} {{ it.title|truncatechars:40 }}</a></div>
   <h1>Itinerary builder</h1><p>{{ it.enquiry.reference }} · {{ it.enquiry.client.full_name }} · {{ it.enquiry.party_label }} ({{ pax }} guest{{ pax|pluralize }}). Pick a lodge and the catalogue rate fills in.</p></div></div>
 <form method="post" enctype="multipart/form-data" novalidate id="itin-form" data-floor="{{ margin_floor|default:0 }}" data-pax="{{ pax }}" data-rate-url="{% url 'sales:itinerary_rate' %}" data-photo-url="{% url 'catalog:photo_search' %}" data-packs='{{ packs_json }}'>{% csrf_token %}
   <div class="ib-bar" id="ib-bar" role="region" aria-label="Itinerary summary">
-    <nav class="ib-jump" aria-label="Jump to a section"><a href="#ib-basics">Basics</a><a href="#ib-days">Days <b id="ib-ndays">0</b></a><a href="#ib-extras">Extras</a><a href="#ib-lodges">Lodges</a><a href="#ib-travel">Travel</a></nav>
+    <nav class="ib-jump" aria-label="Jump to a section"><a href="#ib-basics">Basics</a><a href="#ib-days">Days <b id="ib-ndays">0</b></a><a href="#ib-extras">Extras</a><a href="#ib-lodges">Accommodation</a><a href="#ib-travel">Travel</a></nav>
     <div class="ib-figs"><div><small>Total price</small><b id="ib-total">—</b></div><div><small>Per person</small><b id="ib-pp">—</b></div></div>
     <div class="ib-actions">
       <div class="ib-ready-wrap"><button type="button" class="ib-ready" id="ib-ready" aria-expanded="false">{% include "components/icon.html" with name="check" size="14" %}<span id="ib-ready-text">Checking…</span></button><div class="ib-pop" id="ib-pop" hidden></div></div>
@@ -24,21 +24,21 @@
     {{ lines.management_form }}<div id="price_lines-forms">{% for f in lines %}{% include "sales/partials/price_line_form.html" with form=f %}{% endfor %}</div>
     <template id="price_lines-empty">{% include "sales/partials/price_line_form.html" with form=lines.empty_form %}</template>
     <button type="button" class="btn btn-secondary mt-3" data-add-form="price_lines">{% include "components/icon.html" with name="plus" %} Add line</button></div>
-  <div class="card mt-4" id="ib-lodges"><div class="card-head"><h2>Lodge options</h2><span class="sub">Offer the client alternatives, each with its own price per person. The cheapest is used in the headline price. Each option gets its own page in the PDF.</span></div>
+  <div class="card mt-4" id="ib-lodges"><div class="card-head"><h2>Accommodation options</h2><span class="sub">Offer the client alternatives from the Accommodations list, each with its own price per person; its photos come with it. The cheapest is used in the headline price. Each option gets its own page in the PDF.</span></div>
     {{ hotels.management_form }}<div id="hotels-forms">{% for f in hotels %}{% include "sales/partials/hotel_form.html" with form=f %}{% endfor %}</div>
     <template id="hotels-empty">{% include "sales/partials/hotel_form.html" with form=hotels.empty_form %}</template>
-    <button type="button" class="btn btn-secondary mt-3" data-add-form="hotels">{% include "components/icon.html" with name="plus" %} Add lodge option</button></div>
+    <button type="button" class="btn btn-secondary mt-3" data-add-form="hotels">{% include "components/icon.html" with name="plus" %} Add accommodation option</button></div>
   <div class="card mt-4" id="ib-travel"><div class="card-head"><h2>Travel options</h2><span class="sub">How the group gets there: a safari van, a Noah, a Land Cruiser, the SGR or a flight. Offer alternatives, each with its own price. The cheapest is used in the headline price.</span></div>
     {{ travel.management_form }}<div id="travel-forms">{% for f in travel %}{% include "sales/partials/travel_form.html" with form=f %}{% endfor %}</div>
     <template id="travel-empty">{% include "sales/partials/travel_form.html" with form=travel.empty_form %}</template>
     <button type="button" class="btn btn-secondary mt-3" data-add-form="travel">{% include "components/icon.html" with name="plus" %} Add travel option</button></div>
   <div class="card mt-4"><div class="flex justify-between items-center wrap gap-3"><button type="button" class="btn btn-secondary" data-add-form="days">{% include "components/icon.html" with name="plus" %} Add day</button>
-    <div class="totals" style="margin:0"><div><span>Cost to us</span><b id="t-cost">—</b></div><div><span>Margin <span id="t-margin-pct"></span></span><b id="t-margin">—</b></div><div><span>Extra lines + lodge + travel</span><b id="t-extra">—</b></div><div class="grand"><span>Total price</span><span id="t-sell">—</span></div><div class="text-sm text-muted" style="display:flex;justify-content:space-between"><span>Per person</span><b id="t-pp">—</b></div></div></div></div>
+    <div class="totals" style="margin:0"><div><span>Cost to us</span><b id="t-cost">—</b></div><div><span>Margin <span id="t-margin-pct"></span></span><b id="t-margin">—</b></div><div><span>Extra lines + accommodation + travel</span><b id="t-extra">—</b></div><div class="grand"><span>Total price</span><span id="t-sell">—</span></div><div class="text-sm text-muted" style="display:flex;justify-content:space-between"><span>Per person</span><b id="t-pp">—</b></div></div></div></div>
   <div class="form-actions"><a class="btn btn-secondary" href="{{ it.get_absolute_url }}">Cancel</a><button class="btn btn-secondary" type="submit" name="save_pdf" value="1">Save &amp; make PDF</button><button class="btn btn-primary" type="submit">{% include "components/icon.html" with name="check" %} Save itinerary</button></div>
 </form>
-<script src="{% static 'js/itinerary-dnd.js' %}"></script>
-<script src="{% static 'js/itinerary-builder.js' %}"></script>
-<script src="{% static 'js/photo-picker.js' %}"></script>
+<script src="{% static 'js/itinerary-dnd.js' %}?v={{ PWA_VERSION }}"></script>
+<script src="{% static 'js/itinerary-builder.js' %}?v={{ PWA_VERSION }}"></script>
+<script src="{% static 'js/photo-picker.js' %}?v={{ PWA_VERSION }}"></script>
 <script>
 (function () {
   const form = document.getElementById("itin-form");
@@ -126,7 +126,14 @@
   form.addEventListener("input", calc);
   form.addEventListener("change", (e) => {
     calc();
-    if (e.target.matches('[name$="-accommodation"]')) { const row = e.target.closest(".day-row"); if (!num(row.querySelector('[name$="-lodging_pp"]'))) suggest(row); }
+    if (e.target.matches('[name$="-accommodation"]')) {
+      const row = e.target.closest(".day-row");
+      if (row) { if (!num(row.querySelector('[name$="-lodging_pp"]'))) suggest(row); }
+      else {                                   // an accommodation option: show its name to the client unless one was typed
+        const opt = e.target.closest("[data-hotel]"), name = opt && opt.querySelector('[name$="-name"]');
+        if (name && e.target.value && (!name.value || name.dataset.auto)) { name.value = e.target.options[e.target.selectedIndex].text.split(" · ")[0]; name.dataset.auto = "1"; }
+      }
+    }
   });
   form.addEventListener("click", (e) => { const b = e.target.closest("[data-suggest]"); if (b) suggest(b.closest(".day-row")); if (e.target.closest("[data-add-form]")) setTimeout(calc, 0); });
   calc();

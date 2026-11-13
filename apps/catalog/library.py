@@ -10,7 +10,7 @@ from apps.accounts.permissions import module_required
 
 from .models import LibraryPhoto, PhotoCategory
 
-KINDS = ("destination", "accommodation")
+KINDS = ("destination",)   # lodge, camp and hotel photos now live on each accommodation (Accommodations module)
 
 
 def _can_edit(user) -> bool:
@@ -20,6 +20,16 @@ def _can_edit(user) -> bool:
 def _need_edit(user):
     if not _can_edit(user):
         raise PermissionDenied
+
+
+def _owner(cat):
+    """The destination or accommodation a photo set belongs to (None for an older, unlinked pack)."""
+    for attr in ("accommodation", "destination"):
+        try:
+            return getattr(cat, attr)
+        except Exception:   # the reverse one-to-one raises when there is no owner of that kind
+            continue
+    return None
 
 
 def tag_counts(qs, limit=40):
@@ -33,20 +43,29 @@ def tag_counts(qs, limit=40):
 
 @module_required("operations", "sales")
 def library(request):
-    kind = request.GET.get("kind") if request.GET.get("kind") in KINDS else "destination"
-    if request.method == "POST":
-        _need_edit(request.user)
-        name = (request.POST.get("name") or "").strip()[:100]
-        k = request.POST.get("kind") if request.POST.get("kind") in KINDS else kind
-        if not name or PhotoCategory.objects.filter(name__iexact=name).exists():
-            messages.error(request, "Give the pack a name that isn't already used.")
-            return redirect(f"{request.path}?kind={k}")
-        cat = PhotoCategory.objects.create(name=name, kind=k, description=(request.POST.get("description") or "")[:255])
-        messages.success(request, f"Pack “{cat.name}” created. Add some photos.")
-        return redirect("catalog:photo_pack", slug=cat.slug)
-    cats = PhotoCategory.objects.filter(kind=kind).annotate(n=Count("images")).prefetch_related("images")
-    counts = {k: PhotoCategory.objects.filter(kind=k).count() for k in KINDS}
-    return render(request, "catalog/library.html", {"categories": cats, "kind": kind, "counts": counts, "can_edit": _can_edit(request.user)})
+    """Every destination's and accommodation's photos in one place, with a search. Photos are added on the destination or accommodation
+    (or inside its set here); the library no longer makes packs of its own."""
+    kind = request.GET.get("kind") if request.GET.get("kind") in ("destination", "accommodation") else ""
+    q = (request.GET.get("q") or "").strip()[:80]
+    linked = PhotoCategory.objects.filter(Q(destination__isnull=False, destination__deleted_at__isnull=True) |
+                                          Q(accommodation__isnull=False, accommodation__deleted_at__isnull=True))
+    counts = {"destination": linked.filter(kind="destination").count(), "accommodation": linked.filter(kind="accommodation").count()}
+    cats = linked.filter(kind=kind) if kind else linked
+    photos = []
+    if q:
+        terms = q.split()
+        for t in terms:
+            cats = cats.filter(Q(name__icontains=t) | Q(destination__name__icontains=t) | Q(accommodation__name__icontains=t)
+                               | Q(accommodation__destination__name__icontains=t) | Q(images__tags__icontains=t) | Q(images__caption__icontains=t))
+        ph = LibraryPhoto.objects.filter(category__in=linked.filter(kind=kind) if kind else linked).select_related("category")
+        for t in terms:
+            ph = ph.filter(Q(tags__icontains=t) | Q(caption__icontains=t) | Q(category__name__icontains=t))
+        photos = list(ph[:60])
+    cats = (cats.distinct().select_related("destination", "accommodation__destination").annotate(n=Count("images", distinct=True))
+            .order_by("kind", "name"))
+    older = PhotoCategory.objects.filter(destination__isnull=True, accommodation__isnull=True).annotate(n=Count("images")) if not q and not kind else []
+    return render(request, "catalog/library.html", {"categories": cats, "kind": kind, "q": q, "counts": counts, "photos": photos, "older": older,
+                                                    "can_edit": _can_edit(request.user)})
 
 
 @module_required("operations", "sales")
@@ -84,7 +103,7 @@ def photo_pack(request, slug):
     elif tag:
         images = [i for i in images if tag in i.tag_list]
     return render(request, "catalog/photo_pack.html", {
-        "category": cat, "images": images, "q": q, "tag": tag, "tag_counts": tag_counts(cat.images.all()),
+        "category": cat, "acc": _owner(cat), "images": images, "q": q, "tag": tag, "tag_counts": tag_counts(cat.images.all()),
         "untagged": cat.images.filter(tags="").count(), "tagged": cat.images.exclude(tags="").count(), "total": cat.images.count(), "can_edit": _can_edit(request.user)})
 
 
@@ -139,8 +158,9 @@ def photos_bulk(request, slug):
 def pack_delete(request, slug):
     _need_edit(request.user)
     cat = get_object_or_404(PhotoCategory, slug=slug)
+    acc = _owner(cat)
     for im in cat.images.all():
         im.delete()
     cat.delete()
-    messages.success(request, "Pack deleted.")
-    return redirect("catalog:library")
+    messages.success(request, "All photos deleted." if acc else "Pack deleted.")
+    return redirect(acc) if acc else redirect("catalog:library")

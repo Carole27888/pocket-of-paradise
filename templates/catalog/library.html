@@ -1,14 +1,38 @@
 {% extends "base.html" %}{% load static %}
 {% block title %}Photo library{% endblock %}
-{% block extra_css %}<link rel="stylesheet" href="{% static 'css/itinerary.css' %}">{% endblock %}
+{% block extra_css %}<link rel="stylesheet" href="{% static 'css/itinerary.css' %}?v={{ PWA_VERSION }}">{% endblock %}
 {% block content %}
-<div class="page-header"><div><h1>Photo library</h1><p>A pack of tagged photos for each destination and lodge. Pick them per day when you build an itinerary.</p></div></div>
-<div class="mchips"><a class="chip {% if kind == 'destination' %}active{% endif %}" href="?kind=destination">Destinations <b>{{ counts.destination }}</b></a><a class="chip {% if kind == 'accommodation' %}active{% endif %}" href="?kind=accommodation">Lodges &amp; hotels <b>{{ counts.accommodation }}</b></a></div>
-{% if can_edit %}<form method="post" class="card lib-new">{% csrf_token %}<input type="hidden" name="kind" value="{{ kind }}">
-  <input class="input" name="name" required maxlength="100" placeholder="{% if kind == 'destination' %}New destination pack, e.g. Maasai Mara{% else %}New lodge pack, e.g. Mara Serena Lodge{% endif %}">
-  <button class="btn btn-primary" type="submit">{% include "components/icon.html" with name="plus" %} Create pack</button></form>{% endif %}
+<div class="page-header"><div><h1>Photo library</h1><p>The tagged photos of every destination and accommodation, in one place. Add photos on the destination or accommodation itself (Operations), or inside its set here. Pick them per day when you build an itinerary.</p></div></div>
+
+<form method="get" class="lib-search card mb-3" role="search">
+  {% if kind %}<input type="hidden" name="kind" value="{{ kind }}">{% endif %}
+  <span class="lib-search-ico">{% include "components/icon.html" with name="search" %}</span>
+  <label class="visually-hidden" for="lib-q">Search photos</label>
+  <input class="input" id="lib-q" name="q" value="{{ q }}" placeholder="Search a place or a tag: Mara, Serena, lion, pool, sunset…" autocomplete="off">
+  <button class="btn btn-primary" type="submit">Search</button>{% if q %}<a class="btn btn-ghost" href="?{% if kind %}kind={{ kind }}{% endif %}">Clear</a>{% endif %}
+</form>
+<div class="mchips"><a class="chip {% if not kind %}active{% endif %}" href="?{% if q %}q={{ q|urlencode }}{% endif %}">All <b>{{ counts.destination|add:counts.accommodation }}</b></a>
+  <a class="chip {% if kind == 'destination' %}active{% endif %}" href="?kind=destination{% if q %}&q={{ q|urlencode }}{% endif %}">Destinations <b>{{ counts.destination }}</b></a>
+  <a class="chip {% if kind == 'accommodation' %}active{% endif %}" href="?kind=accommodation{% if q %}&q={{ q|urlencode }}{% endif %}">Accommodations <b>{{ counts.accommodation }}</b></a></div>
+
+{% if q %}<h2 class="rep-sub" style="margin:4px 0 10px">Photos matching “{{ q }}” <span class="text-muted">· {{ photos|length }}{% if photos|length == 60 %}+{% endif %}</span></h2>
+  {% if photos %}<div class="lib-photos mb-4">{% for p in photos %}<a href="{% url 'catalog:photo_pack' p.category.slug %}" title="{{ p.category.name }}{% if p.tags %} · {{ p.tags }}{% endif %}"><img src="{{ p.thumb_url }}" alt="{{ p.caption|default:p.category.name }}" loading="lazy"><span>{{ p.category.name }}</span></a>{% endfor %}</div>
+  {% else %}<p class="text-sm text-muted mb-4">No photo has that tag or caption.</p>{% endif %}
+  <h2 class="rep-sub" style="margin:4px 0 10px">Places</h2>{% endif %}
+
 <div class="lib-grid">{% for c in categories %}
   <a class="lib-card" href="{% url 'catalog:photo_pack' c.slug %}"><div class="lib-cover">{% with cv=c.cover %}{% if cv %}<img src="{{ cv.thumb_url }}" alt="" loading="lazy">{% else %}<span>No photos yet</span>{% endif %}{% endwith %}</div>
-    <div class="lib-meta"><b>{{ c.name }}</b><span class="text-muted text-sm">{{ c.n }} photo{{ c.n|pluralize }}</span></div></a>
-{% empty %}<div class="card empty">No packs here yet. Create one above, then add photos.</div>{% endfor %}</div>
+    <div class="lib-meta"><b>{% if c.accommodation %}{{ c.accommodation.name }}{% elif c.destination %}{{ c.destination.name }}{% else %}{{ c.name }}{% endif %}</b>
+      <span class="text-muted text-sm">{% if c.accommodation %}{{ c.accommodation.get_accommodation_type_display }} · {{ c.accommodation.destination.name }}{% else %}Destination{% endif %} · {{ c.n }} photo{{ c.n|pluralize }}</span></div></a>
+{% empty %}<div class="card empty">{% if q %}Nothing matches “{{ q }}”.{% else %}No photos yet. Open a destination or an accommodation (Operations) and add photos there.{% endif %}</div>{% endfor %}</div>
+
+{% if older %}<h2 class="rep-sub" style="margin:24px 0 10px">Older packs <span class="text-muted">· not linked to a destination or accommodation</span></h2>
+<div class="lib-grid">{% for c in older %}<a class="lib-card" href="{% url 'catalog:photo_pack' c.slug %}"><div class="lib-cover">{% with cv=c.cover %}{% if cv %}<img src="{{ cv.thumb_url }}" alt="" loading="lazy">{% else %}<span>No photos</span>{% endif %}{% endwith %}</div>
+  <div class="lib-meta"><b>{{ c.name }}</b><span class="text-muted text-sm">{{ c.n }} photo{{ c.n|pluralize }}</span></div></a>{% endfor %}</div>{% endif %}
+<style>
+.lib-search{display:flex;gap:10px;align-items:center;flex-wrap:wrap;padding:12px}.lib-search .input{flex:1 1 240px}.lib-search-ico{color:var(--text-muted);display:inline-flex}
+.lib-photos{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px}.lib-photos a{display:block;color:inherit;text-decoration:none}
+.lib-photos img{width:100%;aspect-ratio:4/3;object-fit:cover;border-radius:8px;border:1px solid var(--border);display:block}.lib-photos a:hover img{border-color:var(--primary)}
+.lib-photos span{display:block;font-size:11.5px;color:var(--text-muted);margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+</style>
 {% endblock %}

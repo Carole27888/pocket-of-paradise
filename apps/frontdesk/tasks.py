@@ -60,3 +60,24 @@ def daily_desk_report(day: str = ""):
                    level="info", dedupe_key=f"deskreport:{d.isoformat()}", push=False)
         count += bool(n)
     return body
+
+
+@daily(hour=16, minute=0)
+@task("frontdesk.weekend_roster_reminder")
+def weekend_roster_reminder():
+    """Friday afternoon: remind everyone on this weekend's roster of their day and hours."""
+    from datetime import timedelta
+
+    from apps.notifications.services import notify
+
+    from .models import WeekendShift
+
+    today = timezone.localdate()
+    if today.weekday() != 4:
+        return "not Friday"
+    n = 0
+    for s in WeekendShift.objects.filter(date__in=[today + timedelta(days=1), today + timedelta(days=2)]).select_related("employee__user"):
+        if s.employee.user_id:
+            n += bool(notify(s.employee.user, f"Reminder: you're in on {s.date:%A}", f"{s.date:%d %b}, {s.start_time:%H:%M}–{s.end_time:%H:%M}" + (f" · {s.note}" if s.note else ""),
+                             "/system/todo/", "info", dedupe_key=f"wkshift-remind:{s.pk}"))
+    return f"{n} reminded"

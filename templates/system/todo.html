@@ -3,6 +3,8 @@
 {% block content %}
 <div class="page-header"><div><h1>My To-Do</h1><p>Your week plan, checked off each day, and a private to-do list nobody else can see.</p></div>
   <div class="actions"><a class="btn btn-accent" href="{% url 'system:plan_add' %}?day={{ today|date:'Y-m-d' }}" data-modal-form="{% url 'system:plan_add' %}?day={{ today|date:'Y-m-d' }}" data-modal-title="Add to my week">{% include "components/icon.html" with name="plus" %} Add to my week</a></div></div>
+{% if weekend_shifts %}<div class="alert alert-info mb-4" style="display:block"><b>{% include "components/icon.html" with name="calendar" %} You're on the weekend roster</b>
+  <ul style="margin:6px 0 0;padding-left:18px">{% for s in weekend_shifts %}<li>{{ s.date|date:"l j F" }}, {{ s.start_time|time:"H:i" }}–{{ s.end_time|time:"H:i" }}{% if s.note %} · {{ s.note }}{% endif %}</li>{% endfor %}</ul></div>{% endif %}
 
 {% if nudge and this_week %}
 <section class="plan-nudge {{ nudge.kind }}" role="alert">

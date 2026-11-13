@@ -2,12 +2,49 @@ from django import forms
 from django.forms import inlineformset_factory
 
 from apps.core.forms import StyledModelForm
+from apps.core.widgets import StarRatingInput
 
 from .models import Accommodation, Destination, Itinerary, ItineraryDay, RoomRate, TourPackage
 
 
-class DestinationForm(StyledModelForm):
-    full_width_fields = ("summary", "description", "activities")
+class MultipleImageInput(forms.ClearableFileInput):
+    allow_multiple_selected = True
+
+
+class MultipleImageField(forms.FileField):
+    """Any number of pictures in one go."""
+
+    def __init__(self, *a, **kw):
+        kw.setdefault("widget", MultipleImageInput(attrs={"accept": "image/*", "multiple": True}))
+        super().__init__(*a, **kw)
+
+    def clean(self, data, initial=None):
+        single = super().clean
+        if isinstance(data, (list, tuple)):
+            return [single(d, initial) for d in data if d]
+        return [single(data, initial)] if data else []
+
+
+class PhotoUploadMixin:
+    """Adds "Photos" (any number at once) and "Tags for these photos" to a destination or accommodation form."""
+
+    def save(self, commit=True):
+        obj = super().save(commit)
+        files = self.cleaned_data.get("photos") or []
+        if files and commit:
+            self.photos_added, self.photos_skipped = obj.add_photos(files, self.cleaned_data.get("photo_tags", ""))
+        return obj
+
+
+def _photo_fields():
+    return (MultipleImageField(required=False, label="Photos", help_text="Choose as many pictures as you like at once. JPG, PNG or WebP."),
+            forms.CharField(required=False, max_length=300, label="Tags for these photos", widget=forms.TextInput(attrs={"placeholder": "e.g. lion, sunset, beach"}),
+                            help_text="Comma separated. They help find the right picture later; you can change tags per photo afterwards."))
+
+
+class DestinationForm(PhotoUploadMixin, StyledModelForm):
+    full_width_fields = ("summary", "description", "activities", "photos", "photo_tags")
+    photos, photo_tags = _photo_fields()
 
     class Meta:
         model = Destination
@@ -34,13 +71,15 @@ class PackageForm(StyledModelForm):
             choices=[("KES", "KES"), ("USD", "USD"), ("EUR", "EUR"), ("GBP", "GBP")], attrs={"class": "input select"})
 
 
-class AccommodationForm(StyledModelForm):
-    full_width_fields = ("contract_notes",)
+class AccommodationForm(PhotoUploadMixin, StyledModelForm):
+    full_width_fields = ("contract_notes", "photos", "photo_tags")
+    photos, photo_tags = _photo_fields()
 
     class Meta:
         model = Accommodation
         fields = ["name", "destination", "accommodation_type", "star_rating", "contact_name", "contact_phone",
                   "contact_email", "contract_notes"]
+        widgets = {"star_rating": StarRatingInput()}
 
 
 class ItineraryDayForm(StyledModelForm):
